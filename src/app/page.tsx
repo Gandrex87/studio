@@ -6,7 +6,7 @@ import { ChatMessage } from "@/components/autopilot/chat-message";
 import { ChatInput } from "@/components/autopilot/chat-input";
 import { TypingIndicator } from "@/components/autopilot/typing-indicator";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { cn } from "@/lib/utils";
+import { useToast } from "@/hooks/use-toast";
 
 export interface Message {
   id: string;
@@ -23,33 +23,51 @@ const cannedResponses = [
 ];
 
 export default function Home() {
-  const [hasStarted, setHasStarted] = useState(false);
+  const [sessionStarted, setSessionStarted] = useState(false);
+  const [threadId, setThreadId] = useState<string | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   
-  const scrollAreaRef = useRef<HTMLDivElement>(null);
-  const viewportRef = useRef<HTMLDivElement>(null);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const { toast } = useToast();
 
-
-  useEffect(() => {
-    if (viewportRef.current) {
-      viewportRef.current.scrollTo({ top: viewportRef.current.scrollHeight, behavior: 'smooth' });
-    }
-  }, [messages, isLoading]);
-
-  const handleStart = () => {
-    setMessages([
-      {
-        id: "0",
-        role: "agent",
-        content:
-          "Hello! I'm AutoPilot AI. How can I help you find the perfect car today? Tell me a bit about what you're looking for.",
-      },
-    ]);
-    setHasStarted(true);
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
-  const handleSendMessage = (content: string) => {
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages, isLoading]);
+
+  const handleStartSession = async () => {
+    setIsLoading(true);
+    try {
+      // Mock API call to /start
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      const newThreadId = `thread_${Math.random().toString(36).substring(2, 9)}`;
+      setThreadId(newThreadId);
+      
+      setMessages([
+        {
+          id: "0",
+          role: "agent",
+          content: "Hello! I'm AutoPilot AI. How can I help you find the perfect car today? Tell me a bit about what you're looking for.",
+        },
+      ]);
+      setSessionStarted(true);
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "Error Starting Session",
+        description: "Could not start a new session. Please try again later.",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleSendMessage = async (content: string) => {
     if (isLoading) return;
 
     const userMessage: Message = {
@@ -60,7 +78,10 @@ export default function Home() {
     setMessages((prev) => [...prev, userMessage]);
     setIsLoading(true);
 
-    setTimeout(() => {
+    try {
+      // Mock API call to /conversation/{thread_id}/message
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      
       const randomResponse = cannedResponses[Math.floor(Math.random() * cannedResponses.length)];
       const agentMessage: Message = {
         id: String(Date.now() + 1),
@@ -68,19 +89,27 @@ export default function Home() {
         content: randomResponse,
       };
       setMessages((prev) => [...prev, agentMessage]);
-      setIsLoading(false);
-    }, 1500 + Math.random() * 500);
+    } catch (error) {
+       toast({
+        variant: "destructive",
+        title: "Error Sending Message",
+        description: "Could not send your message. Please try again later.",
+      });
+       // Optional: remove optimistic user message on failure
+       setMessages(prev => prev.filter(m => m.id !== userMessage.id));
+    } finally {
+        setIsLoading(false);
+    }
   };
 
   return (
     <main className="flex flex-col h-screen bg-background">
-      {!hasStarted ? (
-        <WelcomeScreen onStart={handleStart} />
+      {!sessionStarted ? (
+        <WelcomeScreen onStartSession={handleStartSession} isLoading={isLoading} />
       ) : (
         <div className="flex flex-col h-full w-full max-w-3xl mx-auto p-4 md:p-6">
-          <div className="flex-1 overflow-y-auto pr-4">
-             <ScrollArea className="h-full" ref={scrollAreaRef}>
-              <div className="space-y-6" ref={viewportRef}>
+          <ScrollArea className="flex-1 pr-4">
+              <div className="space-y-6">
                   {messages.map((message) => (
                     <ChatMessage
                       key={message.id}
@@ -89,9 +118,9 @@ export default function Home() {
                     />
                   ))}
                   {isLoading && <TypingIndicator />}
+                  <div ref={messagesEndRef} />
               </div>
-            </ScrollArea>
-          </div>
+          </ScrollArea>
           <div className="pt-6">
             <ChatInput onSubmit={handleSendMessage} isLoading={isLoading} />
           </div>
