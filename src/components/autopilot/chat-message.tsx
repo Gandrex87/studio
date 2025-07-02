@@ -1,7 +1,7 @@
 "use client";
 
 import ReactMarkdown from 'react-markdown';
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import Image from 'next/image';
 import { Bot, User } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -21,29 +21,41 @@ export function ChatMessage({ role, content }: ChatMessageProps) {
       )}
     >
       {isAgent && (
-        <Avatar className="w-8 h-8 border border-primary">
-          <AvatarFallback className="bg-transparent text-primary">
-            <Bot className="w-5 h-5" />
-          </AvatarFallback>
-        </Avatar>
+        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground">
+          <Bot className="w-5 h-5" />
+        </div>
       )}
 
       <div
         className={cn(
-          "max-w-md rounded-lg px-4 py-3 text-sm",
+          "max-w-md rounded-lg px-4 py-3 text-sm shadow-md",
           isAgent
             ? "bg-card text-card-foreground"
             : "bg-primary text-primary-foreground"
         )}
       >
         <ReactMarkdown
+          className="prose prose-sm dark:prose-invert max-w-none"
           components={{
-            p: ({ node, ...props }) => <p className="mb-2 last:mb-0" {...props} />,
-            ul: ({ node, ...props }) => <ul className="list-disc space-y-1 pl-4 my-2" {...props} />,
-            ol: ({ node, ...props }) => <ol className="list-decimal space-y-1 pl-4 my-2" {...props} />,
-            li: ({ node, ...props }) => <li className="pb-1" {...props} />,
-            strong: ({ node, ...props }) => <strong className="font-semibold" {...props} />,
-            code: ({ node, ...props }) => <code className="bg-muted text-muted-foreground rounded-sm px-1 py-0.5 font-mono text-xs" {...props} />,
+            a: ({ node, ...props }) => (
+              <a {...props} target="_blank" rel="noopener noreferrer" />
+            ),
+            img: ({ node, ...props }) => {
+                const hint = props.alt || "car image";
+                return (
+                    <Image
+                      src={props.src || ""}
+                      alt={hint}
+                      width={300}
+                      height={200}
+                      className="rounded-lg border my-2 shadow-md"
+                      data-ai-hint={hint}
+                   />
+                )
+            },
+            h3: ({ node, ...props }) => (
+              <h3 className="text-base font-semibold mt-4 mb-2" {...props} />
+            ),
           }}
         >
           {content}
@@ -51,11 +63,9 @@ export function ChatMessage({ role, content }: ChatMessageProps) {
       </div>
       
       {!isAgent && (
-         <Avatar className="w-8 h-8 border border-muted-foreground">
-           <AvatarFallback className="bg-transparent text-muted-foreground">
-             <User className="w-5 h-5" />
-           </AvatarFallback>
-        </Avatar>
+         <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-muted text-muted-foreground">
+           <User className="w-5 h-5" />
+         </div>
       )}
     </div>
   );

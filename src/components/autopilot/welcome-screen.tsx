@@ -15,14 +15,14 @@ export function WelcomeScreen({ onStartSession, isLoading }: WelcomeScreenProps)
          <Car className="w-16 h-16" />
       </div>
       <h1 className="text-4xl md:text-5xl font-bold font-headline mb-2 text-primary">
-        AutoPilot AI
+        CarBlau AI
       </h1>
       <p className="text-lg text-muted-foreground mb-8 max-w-md">
-        Your personal AI car shopping assistant. Let's find the perfect ride for you.
+      Tu asistente inteligente para encontrar el auto ideal.
       </p>
       <Button size="lg" onClick={onStartSession} disabled={isLoading}>
         {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-        Start Session
+        Inicia la conversación
       </Button>
     </div>
   );
