@@ -1,7 +1,8 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { Car, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
+import Image from "next/image";
 
 interface WelcomeScreenProps {
   onStartSession: () => void;
@@ -11,9 +12,14 @@ interface WelcomeScreenProps {
 export function WelcomeScreen({ onStartSession, isLoading }: WelcomeScreenProps) {
   return (
     <div className="flex flex-col items-center justify-center h-full text-center p-4">
-      <div className="mb-4 p-4 rounded-full bg-primary/20 text-primary">
-         <Car className="w-16 h-16" />
-      </div>
+      <Image
+        src="/logo.png"
+        alt="CarBlau AI Logo"
+        width={96}
+        height={96}
+        className="mb-4 rounded-xl"
+        priority
+      />
       <h1 className="text-4xl md:text-5xl font-bold font-headline mb-2 text-primary">
         CarBlau AI
       </h1>
