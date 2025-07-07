@@ -13,11 +13,12 @@ export function WelcomeScreen({ onStartSession, isLoading }: WelcomeScreenProps)
   return (
     <div className="flex flex-col items-center justify-center h-full text-center p-4">
       <Image
-        src="/logo.png"
+        src="https://placehold.co/96x96.png"
         alt="CarBlau AI Logo"
         width={96}
         height={96}
         className="mb-4 rounded-xl"
+        data-ai-hint="logo"
         priority
       />
       <h1 className="text-4xl md:text-5xl font-bold font-headline mb-2 text-primary">
