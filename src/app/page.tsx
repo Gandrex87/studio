@@ -54,7 +54,7 @@ export default function Home() {
       const initialMessage: Message = {
         id: String(Date.now()),
         role: 'agent',
-        content: data.message.content
+        content: data.content
       };
 
       setThreadId(newThreadId);
