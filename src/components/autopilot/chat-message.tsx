@@ -30,7 +30,7 @@ export function ChatMessage({ role, content }: ChatMessageProps) {
         className={cn(
           "max-w-md rounded-lg px-4 py-3 text-sm shadow-md",
           isAgent
-            ? "bg-card text-card-foreground"
+            ? "bg-muted text-muted-foreground"
             : "bg-primary text-primary-foreground"
         )}
       >

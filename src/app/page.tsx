@@ -42,7 +42,7 @@ export default function Home() {
         const initialMessage: Message = {
           id: String(Date.now()),
           role: 'agent',
-          content: 'Hello! I am your personal AI car shopping assistant. How can I help you find the perfect car today?'
+          content: 'Hola! Soy CarBlau, tu asistente personal para la compra de coches. Para poder ayudarte mejor, ¿podrías indicarme tu código postal?'
         };
 
         setThreadId(newThreadId);
@@ -113,7 +113,7 @@ export default function Home() {
              <h1 className="text-2xl font-bold">CarBlau AI</h1>
              <Button variant="outline" size="sm" onClick={handleResetSession}>
                <RotateCw className="mr-2 h-4 w-4" />
-               Reset Conversation
+               Reiniciar Conversación
              </Button>
           </div>
           <ScrollArea className="flex-1 pr-4 -mr-4">
