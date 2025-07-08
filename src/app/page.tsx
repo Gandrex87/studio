@@ -16,6 +16,8 @@ export interface Message {
   content: string;
 }
 
+const API_BASE_URL = "https://carblau-agent-api-1063747381969.europe-west1.run.app";
+
 export default function Home() {
   const [sessionStarted, setSessionStarted] = useState(false);
   const [threadId, setThreadId] = useState<string | null>(null);
@@ -33,35 +35,44 @@ export default function Home() {
     scrollToBottom();
   }, [messages, isLoading]);
 
-  const handleStartSession = () => {
+  const handleStartSession = async () => {
     setIsLoading(true);
-    // Mock API call to /start
-    setTimeout(() => {
-      try {
-        const newThreadId = `thread_${Math.random().toString(36).substring(2)}`;
-        const initialMessage: Message = {
-          id: String(Date.now()),
-          role: 'agent',
-          content: 'Hola! Soy CarBlau, tu asistente personal para la compra de coches. Para poder ayudarte mejor, ¿podrías indicarme tu código postal?'
-        };
+    try {
+      const response = await fetch(`${API_BASE_URL}/start`, {
+        method: "POST",
+      });
 
-        setThreadId(newThreadId);
-        setMessages([initialMessage]);
-        setSessionStarted(true);
-      } catch (error) {
-        console.error("Error starting session:", error);
-        toast({
-          variant: "destructive",
-          title: "Error Starting Session",
-          description: "Could not start a new session. Please try again later.",
-        });
-      } finally {
-        setIsLoading(false);
+      if (!response.ok) {
+        const errorData = await response.text();
+        console.error("Failed to start session:", errorData);
+        throw new Error(`Failed to start session: ${response.statusText}`);
       }
-    }, 1000); // 1-second delay
+
+      const data = await response.json();
+      
+      const newThreadId = data.thread_id;
+      const initialMessage: Message = {
+        id: String(Date.now()),
+        role: 'agent',
+        content: data.message.content
+      };
+
+      setThreadId(newThreadId);
+      setMessages([initialMessage]);
+      setSessionStarted(true);
+    } catch (error) {
+      console.error("Error starting session:", error);
+      toast({
+        variant: "destructive",
+        title: "Error Starting Session",
+        description: "Could not start a new session. Please try again later.",
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const handleSendMessage = (content: string) => {
+  const handleSendMessage = async (content: string) => {
     if (isLoading || !threadId) return;
 
     const userMessage: Message = {
@@ -72,28 +83,41 @@ export default function Home() {
     setMessages((prev) => [...prev, userMessage]);
     setIsLoading(true);
 
-    // Mock API call to /conversation/{thread_id}/message
-    setTimeout(() => {
-       try {
-        const agentResponse: Message = {
-            id: String(Date.now() + 1),
-            role: 'agent',
-            content: `Based on your request for "${content}", here are a few recommendations:\n\n### 1. Tesla Model 3\n*   **Why:** Great for tech-lovers, amazing performance, and eco-friendly.\n*   **Price:** Starting around $40,000\n\n![electric car](https://placehold.co/300x200.png)\n\n### 2. Honda CR-V\n*   **Why:** Reliable, spacious, and fuel-efficient. A perfect family SUV.\n*   **Price:** Starting around $28,000\n\n![family suv](https://placehold.co/300x200.png)`
-        };
-        setMessages(prev => [...prev, agentResponse]);
-       } catch (error) {
-          console.error("Error sending message:", error);
-          toast({
-            variant: "destructive",
-            title: "Error Sending Message",
-            description: "Could not send your message. Please check your connection.",
-          });
-          // Rollback user message on error
-          setMessages(prev => prev.filter(m => m.id !== userMessage.id));
-       } finally {
-         setIsLoading(false);
-       }
-    }, 1500); // 1.5-second delay
+    try {
+      const response = await fetch(`${API_BASE_URL}/conversation/${threadId}/message`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ content }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.text();
+        console.error("Failed to send message:", errorData);
+        throw new Error(`Failed to send message: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      
+      const agentResponse: Message = {
+          id: String(Date.now() + 1),
+          role: 'agent',
+          content: data.content
+      };
+      setMessages(prev => [...prev, agentResponse]);
+    } catch (error) {
+       console.error("Error sending message:", error);
+       toast({
+         variant: "destructive",
+         title: "Error Sending Message",
+         description: "Could not send your message. Please check your connection.",
+       });
+       // Rollback user message on error
+       setMessages(prev => prev.filter(m => m.id !== userMessage.id));
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleResetSession = () => {
