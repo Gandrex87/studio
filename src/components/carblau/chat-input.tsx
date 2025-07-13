@@ -49,7 +49,7 @@ export function ChatInput({ onSubmit, isLoading }: ChatInputProps) {
             <FormItem className="flex-1">
               <FormControl>
                 <Textarea
-                  placeholder="Pregunta por tu coche ideal..."
+                  placeholder="Cada detalle nos acerca a tu coche ideal..."
                   rows={1}
                   className="resize-none pr-12"
                   {...field}

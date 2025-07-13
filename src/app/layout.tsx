@@ -3,8 +3,8 @@ import './globals.css';
 import { Toaster } from "@/components/ui/toaster";
 
 export const metadata: Metadata = {
-  title: 'AutoPilot AI',
-  description: 'Your personal AI car shopping assistant',
+  title: 'CarBlau AI',
+  description: 'Tu asistente inteligente para encontrar el auto ideal',
 };
 
 export default function RootLayout({

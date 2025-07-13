@@ -1,10 +1,10 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { WelcomeScreen } from "@/components/autopilot/welcome-screen";
-import { ChatMessage } from "@/components/autopilot/chat-message";
-import { ChatInput } from "@/components/autopilot/chat-input";
-import { TypingIndicator } from "@/components/autopilot/typing-indicator";
+import { WelcomeScreen } from "@/components/carblau/welcome-screen";
+import { ChatMessage } from "@/components/carblau/chat-message";
+import { ChatInput } from "@/components/carblau/chat-input";
+import { TypingIndicator } from "@/components/carblau/typing-indicator";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
@@ -16,6 +16,7 @@ export interface Message {
   content: string;
 }
 
+// ✅ TU URL DE CLOUD RUN (está correcta)
 const API_BASE_URL = "https://carblau-agent-api-1063747381969.europe-west1.run.app";
 
 export default function Home() {
@@ -50,16 +51,11 @@ export default function Home() {
 
       const data = await response.json();
       
-      const newThreadId = data.thread_id;
-      const initialMessage: Message = {
-        id: String(Date.now()),
-        role: 'agent',
-        content: data.content
-      };
-
-      setThreadId(newThreadId);
-      setMessages([initialMessage]);
+      // ✅ CORREGIDO: Usamos los datos directamente de la API como la "fuente de verdad"
+      setThreadId(data.thread_id);
+      setMessages(data.messages); // La API ya nos da la lista de mensajes iniciales
       setSessionStarted(true);
+
     } catch (error) {
       console.error("Error starting session:", error);
       toast({
@@ -76,10 +72,11 @@ export default function Home() {
     if (isLoading || !threadId) return;
 
     const userMessage: Message = {
-      id: String(Date.now()),
+      id: String(Date.now()), // ID temporal para la UI optimista
       role: "user",
       content,
     };
+    // Actualización optimista de la UI
     setMessages((prev) => [...prev, userMessage]);
     setIsLoading(true);
 
@@ -89,7 +86,10 @@ export default function Home() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ content }),
+        // ✅ CORREGIDO: El cuerpo de la petición ahora coincide con lo que espera el backend
+        body: JSON.stringify({
+          messages: [{ role: 'user', content: content }]
+        }),
       });
 
       if (!response.ok) {
@@ -100,12 +100,10 @@ export default function Home() {
 
       const data = await response.json();
       
-      const agentResponse: Message = {
-          id: String(Date.now() + 1),
-          role: 'agent',
-          content: data.content
-      };
-      setMessages(prev => [...prev, agentResponse]);
+      // ✅ CORREGIDO: Reemplazamos TODO el historial con la respuesta del backend.
+      // Esto mantiene el frontend perfectamente sincronizado.
+      setMessages(data.messages);
+
     } catch (error) {
        console.error("Error sending message:", error);
        toast({
@@ -113,7 +111,7 @@ export default function Home() {
          title: "Error Sending Message",
          description: "Could not send your message. Please check your connection.",
        });
-       // Rollback user message on error
+       // Si hay un error, eliminamos el mensaje optimista que añadimos
        setMessages(prev => prev.filter(m => m.id !== userMessage.id));
     } finally {
       setIsLoading(false);
@@ -142,9 +140,10 @@ export default function Home() {
           </div>
           <ScrollArea className="flex-1 pr-4 -mr-4">
               <div className="space-y-6 pr-4">
-                  {messages.map((message, index) => (
+                  {messages.map((message) => (
+                    // ✨ MEJORA: Usar solo message.id como key, ya que la API lo proporciona y es único.
                     <ChatMessage
-                      key={`${message.id}-${index}`}
+                      key={message.id}
                       role={message.role}
                       content={message.content}
                     />
