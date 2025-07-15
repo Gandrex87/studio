@@ -23,7 +23,7 @@ export function WelcomeScreen({ onStartSession, isLoading }: WelcomeScreenProps)
         />
       </div>
       <p className="text-lg mb-8 max-w-md text-[#0c1c3c]">
-      Tu asistente inteligente para encontrar el auto ideal.
+      Tu asistente inteligente para que encuentres el coche ideal.
       </p>
       <Button 
         size="lg" 
