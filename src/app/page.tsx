@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import { WelcomeScreen } from "@/components/carblau/welcome-screen";
 import { ChatMessage } from "@/components/carblau/chat-message";
-import { ChatInput } from "@/components/carblau/chat-input";
+import { ChatInput, type ChatInputHandle } from "@/components/carblau/chat-input";
 import { TypingIndicator } from "@/components/carblau/typing-indicator";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useToast } from "@/hooks/use-toast";
@@ -16,7 +16,6 @@ export interface Message {
   content: string;
 }
 
-// ✅ TU URL DE CLOUD RUN (está correcta)
 const API_BASE_URL = "https://carblau-agent-api-1063747381969.europe-west1.run.app";
 
 export default function Home() {
@@ -26,6 +25,7 @@ export default function Home() {
   const [isLoading, setIsLoading] = useState(false);
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const chatInputRef = useRef<ChatInputHandle>(null);
   const { toast } = useToast();
 
   const scrollToBottom = () => {
@@ -34,6 +34,12 @@ export default function Home() {
 
   useEffect(() => {
     scrollToBottom();
+  }, [messages, isLoading]);
+
+  useEffect(() => {
+    if (messages.length > 0 && !isLoading && messages[messages.length - 1].role === 'agent') {
+      chatInputRef.current?.focus();
+    }
   }, [messages, isLoading]);
 
   const handleStartSession = async () => {
@@ -51,9 +57,8 @@ export default function Home() {
 
       const data = await response.json();
       
-      // ✅ CORREGIDO: Usamos los datos directamente de la API como la "fuente de verdad"
       setThreadId(data.thread_id);
-      setMessages(data.messages); // La API ya nos da la lista de mensajes iniciales
+      setMessages(data.messages);
       setSessionStarted(true);
 
     } catch (error) {
@@ -69,14 +74,16 @@ export default function Home() {
   };
 
   const handleSendMessage = async (content: string) => {
+    console.log("Iniciando handleSendMessage. ¿Está cargando?", isLoading);
+
     if (isLoading || !threadId) return;
 
     const userMessage: Message = {
-      id: String(Date.now()), // ID temporal para la UI optimista
+      id: String(Date.now()),
       role: "user",
       content,
     };
-    // Actualización optimista de la UI
+    
     setMessages((prev) => [...prev, userMessage]);
     setIsLoading(true);
 
@@ -86,7 +93,6 @@ export default function Home() {
         headers: {
           "Content-Type": "application/json",
         },
-        // ✅ CORREGIDO: El cuerpo de la petición ahora coincide con lo que espera el backend
         body: JSON.stringify({
           messages: [{ role: 'user', content: content }]
         }),
@@ -100,8 +106,6 @@ export default function Home() {
 
       const data = await response.json();
       
-      // ✅ CORREGIDO: Reemplazamos TODO el historial con la respuesta del backend.
-      // Esto mantiene el frontend perfectamente sincronizado.
       setMessages(data.messages);
 
     } catch (error) {
@@ -111,7 +115,6 @@ export default function Home() {
          title: "Error Sending Message",
          description: "Could not send your message. Please check your connection.",
        });
-       // Si hay un error, eliminamos el mensaje optimista que añadimos
        setMessages(prev => prev.filter(m => m.id !== userMessage.id));
     } finally {
       setIsLoading(false);
@@ -141,7 +144,6 @@ export default function Home() {
           <ScrollArea className="flex-1 pr-4 -mr-4">
               <div className="space-y-6 pr-4">
                   {messages.map((message) => (
-                    // ✨ MEJORA: Usar solo message.id como key, ya que la API lo proporciona y es único.
                     <ChatMessage
                       key={message.id}
                       role={message.role}
@@ -153,7 +155,8 @@ export default function Home() {
               </div>
           </ScrollArea>
           <div className="pt-6">
-            <ChatInput onSubmit={handleSendMessage} isLoading={isLoading} />
+            {/* ✅ CORREGIDO: Añadido el 'ref' que faltaba para el auto-foco */}
+            <ChatInput ref={chatInputRef} onSubmit={handleSendMessage} isLoading={isLoading} />
           </div>
         </div>
       )}

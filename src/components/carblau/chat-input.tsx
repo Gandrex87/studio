@@ -1,5 +1,6 @@
 "use client";
 
+import { forwardRef, useImperativeHandle, useRef } from "react";
 import { useForm, SubmitHandler } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -13,58 +14,78 @@ interface ChatInputProps {
   isLoading: boolean;
 }
 
+export interface ChatInputHandle {
+  focus: () => void;
+}
+
 const formSchema = z.object({
   message: z.string().min(1, "Message cannot be empty."),
 });
 
 type FormData = z.infer<typeof formSchema>;
 
-export function ChatInput({ onSubmit, isLoading }: ChatInputProps) {
-  const form = useForm<FormData>({
-    resolver: zodResolver(formSchema),
-    defaultValues: {
-      message: "",
-    },
-  });
+export const ChatInput = forwardRef<ChatInputHandle, ChatInputProps>(
+  ({ onSubmit, isLoading }, ref) => {
+    const form = useForm<FormData>({
+      resolver: zodResolver(formSchema),
+      defaultValues: {
+        message: "",
+      },
+    });
 
-  const handleFormSubmit: SubmitHandler<FormData> = (data) => {
-    onSubmit(data.message);
-    form.reset();
-  };
-  
-  const handleKeyDown = (event: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (event.key === 'Enter' && !event.shiftKey && !isLoading) {
-      event.preventDefault();
-      form.handleSubmit(handleFormSubmit)();
-    }
-  };
+    const textareaRef = useRef<HTMLTextAreaElement | null>(null);
 
-  return (
-    <Form {...form}>
-      <form onSubmit={form.handleSubmit(handleFormSubmit)} className="flex items-start gap-4">
-        <FormField
-          control={form.control}
-          name="message"
-          render={({ field }) => (
-            <FormItem className="flex-1">
-              <FormControl>
-                <Textarea
-                  placeholder="Cada detalle nos acerca a tu coche ideal..."
-                  rows={1}
-                  className="resize-none pr-12"
-                  {...field}
-                  onKeyDown={handleKeyDown}
-                  disabled={isLoading}
-                />
-              </FormControl>
-            </FormItem>
-          )}
-        />
-        <Button type="submit" size="icon" disabled={isLoading || !form.formState.isValid}>
-          <SendHorizonal className="h-5 w-5" />
-          <span className="sr-only">Send</span>
-        </Button>
-      </form>
-    </Form>
-  );
-}
+    useImperativeHandle(ref, () => ({
+      focus: () => {
+        textareaRef.current?.focus();
+      },
+    }));
+
+    const handleFormSubmit: SubmitHandler<FormData> = (data) => {
+      onSubmit(data.message);
+      form.reset();
+    };
+
+    return (
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(handleFormSubmit)} className="flex items-start gap-4">
+          <FormField
+            control={form.control}
+            name="message"
+            render={({ field }) => {
+              // ✅ SOLUCIÓN: Destructuramos 'ref' para manejarlo manualmente
+              // y evitamos el conflicto con el spread operator.
+              const { ref: fieldRef, ...restOfField } = field;
+
+              return (
+                <FormItem className="flex-1">
+                  <FormControl>
+                    <Textarea
+                      // ✅ Asignamos ambas referencias en el callback
+                      ref={(e) => {
+                        fieldRef(e); // 1. Asigna la ref para react-hook-form
+                        textareaRef.current = e; // 2. Asigna nuestra ref local
+                      }}
+                      placeholder="Cada detalle nos acerca a tu coche ideal..."
+                      rows={1}
+                      className="resize-none pr-12"
+                      // ✅ Usamos el resto de las propiedades del campo, ya sin 'ref'
+                      {...restOfField}
+                      disabled={isLoading}
+                    />
+                  </FormControl>
+                </FormItem>
+              );
+            }}
+          />
+          <Button type="submit" size="icon" disabled={isLoading || !form.formState.isValid}>
+            <SendHorizonal className="h-5 w-5" />
+            <span className="sr-only">Send</span>
+          </Button>
+        </form>
+      </Form>
+    );
+  }
+);
+
+ChatInput.displayName = 'ChatInput';

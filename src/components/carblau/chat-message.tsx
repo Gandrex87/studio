@@ -12,23 +12,30 @@ interface ChatMessageProps {
 export function ChatMessage({ role, content }: ChatMessageProps) {
   const isAgent = role === "agent";
 
-  // ✅ LÓGICA CORREGIDA:
-  // En lugar de múltiples burbujas, creamos una sola.
-  // Primero, separamos el texto de introducción de las fichas de los coches.
-  const separatorIndex = content.indexOf('---');
+  // ✅ LÓGICA MEJORADA: Se distinguen 3 partes: introducción, coches y conclusión.
+  const firstSeparator = content.indexOf('---');
+  const lastSeparator = content.lastIndexOf('---');
   
   let introText = content;
   let carParts: string[] = [];
+  let outroText = '';
 
-  if (separatorIndex !== -1) {
-    introText = content.substring(0, separatorIndex).trim();
-    const carData = content.substring(separatorIndex);
-    carParts = carData.split('---').filter(part => part.trim() !== '');
+  if (firstSeparator !== -1) {
+    introText = content.substring(0, firstSeparator).trim();
+    
+    // Si hay una conclusión después de la lista de coches
+    if (lastSeparator > firstSeparator) {
+      const carData = content.substring(firstSeparator, lastSeparator);
+      carParts = carData.split('---').filter(part => part.trim() !== '');
+      outroText = content.substring(lastSeparator + 3).trim(); // +3 para saltar '---'
+    } else { // Si solo hay coches y no hay conclusión
+      const carData = content.substring(firstSeparator);
+      carParts = carData.split('---').filter(part => part.trim() !== '');
+    }
   }
 
-  // Componentes de renderizado para ReactMarkdown
   const markdownComponents = {
-    img: ({ node, ...props }) => (
+    img: ({ node, ...props }: any) => (
       <div className="flex justify-center my-3">
         <img
           src={props.src || ""}
@@ -37,10 +44,10 @@ export function ChatMessage({ role, content }: ChatMessageProps) {
         />
       </div>
     ),
-    h3: ({ node, ...props }) => (
+    h3: ({ node, ...props }: any) => (
       <h3 className="text-lg font-bold mt-0 mb-2 text-center" {...props} />
     ),
-    blockquote: ({ node, ...props }) => {
+    blockquote: ({ node, ...props }: any) => {
       let text = '';
       const pNode = node?.children?.[0];
       if (pNode && pNode.type === 'element') {
@@ -60,7 +67,7 @@ export function ChatMessage({ role, content }: ChatMessageProps) {
         </div>
       );
     },
-    p: ({ node, ...props }) => {
+    p: ({ node, ...props }: any) => {
       const firstChild = node?.children[0];
       if (firstChild?.type === 'element' && firstChild.tagName === 'strong') {
         return <p className="text-center font-semibold text-base my-2" {...props} />;
@@ -81,7 +88,6 @@ export function ChatMessage({ role, content }: ChatMessageProps) {
         </div>
       )}
 
-      {/* ✅ DISEÑO CORREGIDO: Una sola burbuja para todo el mensaje del agente */}
       <div className={cn(
         "rounded-lg px-4 py-3 text-sm shadow-md w-full max-w-lg",
         isAgent ? "bg-muted text-muted-foreground" : "bg-primary text-primary-foreground"
@@ -91,7 +97,7 @@ export function ChatMessage({ role, content }: ChatMessageProps) {
           {introText}
         </ReactMarkdown>
 
-        {/* Renderiza las fichas de los coches una debajo de la otra */}
+        {/* Renderiza las fichas de los coches */}
         {carParts.length > 0 && (
           <div className="flex flex-col gap-4 mt-4">
             {carParts.map((part, index) => (
@@ -102,6 +108,13 @@ export function ChatMessage({ role, content }: ChatMessageProps) {
               </div>
             ))}
           </div>
+        )}
+
+        {/* Renderiza el texto de conclusión si existe */}
+        {outroText && (
+          <ReactMarkdown className="prose prose-sm dark:prose-invert max-w-none mt-4">
+            {outroText}
+          </ReactMarkdown>
         )}
       </div>
 
