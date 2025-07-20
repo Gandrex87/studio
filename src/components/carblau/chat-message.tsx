@@ -9,31 +9,8 @@ interface ChatMessageProps {
   content: string;
 }
 
-export function ChatMessage({ role, content }: ChatMessageProps) {
-  const isAgent = role === "agent";
-
-  // ✅ LÓGICA MEJORADA: Se distinguen 3 partes: introducción, coches y conclusión.
-  const firstSeparator = content.indexOf('---');
-  const lastSeparator = content.lastIndexOf('---');
-  
-  let introText = content;
-  let carParts: string[] = [];
-  let outroText = '';
-
-  if (firstSeparator !== -1) {
-    introText = content.substring(0, firstSeparator).trim();
-    
-    // Si hay una conclusión después de la lista de coches
-    if (lastSeparator > firstSeparator) {
-      const carData = content.substring(firstSeparator, lastSeparator);
-      carParts = carData.split('---').filter(part => part.trim() !== '');
-      outroText = content.substring(lastSeparator + 3).trim(); // +3 para saltar '---'
-    } else { // Si solo hay coches y no hay conclusión
-      const carData = content.substring(firstSeparator);
-      carParts = carData.split('---').filter(part => part.trim() !== '');
-    }
-  }
-
+// Componente para renderizar una única ficha de coche
+const CarCard = ({ markdownContent }: { markdownContent: string }) => {
   const markdownComponents = {
     img: ({ node, ...props }: any) => (
       <div className="flex justify-center my-3">
@@ -81,6 +58,42 @@ export function ChatMessage({ role, content }: ChatMessageProps) {
   };
 
   return (
+    <div className="bg-background/50 rounded-lg p-3 shadow-sm">
+      <ReactMarkdown components={markdownComponents}>
+        {markdownContent}
+      </ReactMarkdown>
+    </div>
+  );
+};
+
+
+export function ChatMessage({ role, content }: ChatMessageProps) {
+  const isAgent = role === "agent";
+
+  const carCardRegex = /---\s*###(.*?)(?=\n---|\n*$)/gs;
+  
+  let introText = content;
+  const carParts: string[] = [];
+  let outroText = '';
+
+  const matches = [...content.matchAll(carCardRegex)];
+
+  if (matches.length > 0) {
+    const firstMatchIndex = content.indexOf(matches[0][0]);
+    introText = content.substring(0, firstMatchIndex).trim();
+
+    matches.forEach(match => {
+      // ✅ CORREGIDO: Añadimos un espacio después de '###' para que Markdown
+      // lo reconozca como un título y no como un párrafo.
+      carParts.push(`### ${match[1].trim()}`);
+    });
+
+    const lastMatch = matches[matches.length - 1];
+    const lastMatchEndIndex = content.indexOf(lastMatch[0]) + lastMatch[0].length;
+    outroText = content.substring(lastMatchEndIndex).replace(/---/g, '').trim();
+  }
+
+  return (
     <div className={cn("flex items-start gap-4", !isAgent && "justify-end")}>
       {isAgent && (
         <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground">
@@ -92,25 +105,20 @@ export function ChatMessage({ role, content }: ChatMessageProps) {
         "rounded-lg px-4 py-3 text-sm shadow-md w-full max-w-lg",
         isAgent ? "bg-muted text-muted-foreground" : "bg-primary text-primary-foreground"
       )}>
-        {/* Renderiza el texto de introducción */}
-        <ReactMarkdown className="prose prose-sm dark:prose-invert max-w-none">
-          {introText}
-        </ReactMarkdown>
+        {introText && (
+          <ReactMarkdown className="prose prose-sm dark:prose-invert max-w-none">
+            {introText}
+          </ReactMarkdown>
+        )}
 
-        {/* Renderiza las fichas de los coches */}
         {carParts.length > 0 && (
           <div className="flex flex-col gap-4 mt-4">
             {carParts.map((part, index) => (
-              <div key={index} className="bg-background/50 rounded-lg p-3 shadow-sm">
-                <ReactMarkdown components={markdownComponents}>
-                  {part}
-                </ReactMarkdown>
-              </div>
+              <CarCard key={index} markdownContent={part} />
             ))}
           </div>
         )}
 
-        {/* Renderiza el texto de conclusión si existe */}
         {outroText && (
           <ReactMarkdown className="prose prose-sm dark:prose-invert max-w-none mt-4">
             {outroText}

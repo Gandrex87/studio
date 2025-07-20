@@ -45,6 +45,17 @@ export const ChatInput = forwardRef<ChatInputHandle, ChatInputProps>(
       onSubmit(data.message);
       form.reset();
     };
+    
+    // ✅ CORREGIDO: Reintroducimos la función para manejar la tecla "Enter".
+    const handleKeyDown = (event: React.KeyboardEvent<HTMLTextAreaElement>) => {
+      // Si se presiona 'Enter' (sin la tecla Shift) y no estamos cargando...
+      if (event.key === 'Enter' && !event.shiftKey && !isLoading) {
+        // ...prevenimos la acción por defecto (que es crear una nueva línea).
+        event.preventDefault();
+        // ...y enviamos el formulario.
+        form.handleSubmit(handleFormSubmit)();
+      }
+    };
 
     return (
       <Form {...form}>
@@ -53,24 +64,22 @@ export const ChatInput = forwardRef<ChatInputHandle, ChatInputProps>(
             control={form.control}
             name="message"
             render={({ field }) => {
-              // ✅ SOLUCIÓN: Destructuramos 'ref' para manejarlo manualmente
-              // y evitamos el conflicto con el spread operator.
               const { ref: fieldRef, ...restOfField } = field;
 
               return (
                 <FormItem className="flex-1">
                   <FormControl>
                     <Textarea
-                      // ✅ Asignamos ambas referencias en el callback
                       ref={(e) => {
-                        fieldRef(e); // 1. Asigna la ref para react-hook-form
-                        textareaRef.current = e; // 2. Asigna nuestra ref local
+                        fieldRef(e);
+                        textareaRef.current = e;
                       }}
                       placeholder="Cada detalle nos acerca a tu coche ideal..."
                       rows={1}
                       className="resize-none pr-12"
-                      // ✅ Usamos el resto de las propiedades del campo, ya sin 'ref'
                       {...restOfField}
+                      // ✅ CORREGIDO: Volvemos a añadir el manejador onKeyDown.
+                      onKeyDown={handleKeyDown}
                       disabled={isLoading}
                     />
                   </FormControl>
