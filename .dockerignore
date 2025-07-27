@@ -1,0 +1,56 @@
+#Ignorar entorno virtual
+# .dockerignore en la raíz de tu proyecto. Esto le dice a Docker qué archivos y carpetas ignorar al construir la imagen.
+
+car_env/
+.venv/
+
+# Ignorar archivos de configuración local y secretos
+.env
+env
+*.env
+
+# Ignorar directorios de Python y caché
+__pycache__/
+__pycache__/
+
+*.pyc
+*.pyo
+
+# Ignorar directorios de IDE y sistema operativo
+.vscode/
+.vscode
+.idea/
+.DS_Store
+img
+*img
+
+# Ignorar directorios de Git
+.git/
+.gitignore
+
+#archivos que se quitan:
+*rag_carroceria.py
+*rag_rader.py
+*build_faiss_index.py
+*embedings
+embedings
+bigquery_tools_prueba.ipynb
+docker_guia.md
+pruebas_carV1.py
+pruebas_carV1.ipynb
+*tests
+tests
+query_prueba.ipynb
+*query_prueba.ipynb
+/img
+img
+calculadora_pesos.py
+calculadora_pesos_paso1.py
+calculadora_pesos_paso2.py
+calculadora_pesos_paso3.py
+docker_guia.md
+*notebooks/
+*pruebas_conexion_cloud.ipynb
+*pruebas_nvo_llm.ipynb
+temp.py
+*temp.py

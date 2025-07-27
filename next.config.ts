@@ -1,7 +1,7 @@
-import type {NextConfig} from 'next';
+import type { NextConfig } from 'next';
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  output: 'export', // 👈 ESTA LÍNEA es clave para generar `/out`
   typescript: {
     ignoreBuildErrors: true,
   },
@@ -10,14 +10,12 @@ const nextConfig: NextConfig = {
   },
   images: {
     remotePatterns: [
-      // El patrón que ya tenías (lo conservamos)
       {
         protocol: 'https',
         hostname: 'placehold.co',
         port: '',
         pathname: '/**',
       },
-      // El nuevo patrón que añadimos para las imágenes de coches
       {
         protocol: 'https',
         hostname: 'assets.adac.de',
@@ -29,4 +27,3 @@ const nextConfig: NextConfig = {
 };
 
 export default nextConfig;
-
