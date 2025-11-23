@@ -19,6 +19,10 @@ interface Car {
   price: string;
   score: string;
   analysis: string;
+  // Nuevos campos para el sistema de leads
+  carId?: string;
+  sessionId?: string;
+  actionType?: string;
 }
 
 export interface CarRecommendationPayload {
@@ -37,7 +41,10 @@ export interface Message {
   };
 }
 
-const API_BASE_URL = "https://carblau-agent-api-1063747381969.europe-west1.run.app";
+// version 1 del backend corriendo para NEEDCARHELP
+//const API_BASE_URL = "https://carblau-agent-api-1063747381969.europe-west1.run.app";
+// version 2 del backend con mejoras y listo para carticket, a partir del 10 de oct tambien NEEDCARHELP
+const API_BASE_URL = "https://carblau-agent-api-v2-1063747381969.europe-west1.run.app";
 
 export default function Home() {
   const [sessionStarted, setSessionStarted] = useState(false);

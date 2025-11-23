@@ -1,7 +1,8 @@
 import type { NextConfig } from 'next';
 
 const nextConfig: NextConfig = {
-  output: 'export', // 👈 ESTA LÍNEA es clave para generar `/out`
+  //output: 'export', // 👈 ESTA LÍNEA es clave para generar `/out`
+  output: 'standalone',
   typescript: {
     ignoreBuildErrors: true,
   },
