@@ -35,16 +35,16 @@ export function WelcomeScreen({ onStartSession, isLoading }: WelcomeScreenProps)
         </Button>
       </div>
 
-      <div className="w-full max-w-3xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-8 pb-8">
-        <div className="flex flex-col items-center text-[#0c1c3c]">
+      <div className="w-full max-w-4xl mx-auto flex justify-around items-start gap-4 pb-8">
+        <div className="flex flex-col items-center text-[#0c1c3c] max-w-xs">
           <Clock className="w-8 h-8 mb-2" />
           <span className="font-semibold">Ahorra tiempo</span>
         </div>
-        <div className="flex flex-col items-center text-[#0c1c3c]">
+        <div className="flex flex-col items-center text-[#0c1c3c] max-w-xs">
           <Compass className="w-8 h-8 mb-2" />
           <span className="font-semibold">Decide con independencia</span>
         </div>
-        <div className="flex flex-col items-center text-[#0c1c3c]">
+        <div className="flex flex-col items-center text-[#0c1c3c] max-w-xs">
           <Shield className="w-8 h-8 mb-2" />
           <span className="font-semibold">Compra con seguridad</span>
         </div>
