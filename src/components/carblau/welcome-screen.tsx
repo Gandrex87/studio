@@ -35,7 +35,7 @@ export function WelcomeScreen({ onStartSession, isLoading }: WelcomeScreenProps)
         </Button>
       </div>
 
-      <div className="w-full max-w-4xl mx-auto flex justify-around items-start gap-4 pb-8">
+      <div className="w-full max-w-4xl mx-auto flex justify-center items-start gap-8 pb-8 pt-4">
         <div className="flex flex-col items-center text-[#0c1c3c] max-w-xs">
           <Clock className="w-8 h-8 mb-2" />
           <span className="font-semibold">Ahorra tiempo</span>
