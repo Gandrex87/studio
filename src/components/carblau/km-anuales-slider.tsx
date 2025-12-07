@@ -2,54 +2,61 @@
 
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { Home, Building2, Route, MapPin } from "lucide-react";
-// O también puedes usar: Navigation, Route, Map
+import { Building2, Car, Navigation, Plane } from "lucide-react";
 
-interface DistanceSliderProps {
-  onSelect: (distance: string) => void;
+interface KmAnualesSliderProps {
+  onSelect: (kmText: string) => void;
   isLoading: boolean;
 }
 
-const DISTANCE_OPTIONS = [
+const KM_OPTIONS = [
   {
-    value: "Menos de 10 km",
-    icon: Home,
-    label: "Menos de 10 km",
-    description: "Trayectos muy cortos",
+    value: "Sí, unos 10.000 km/año",
+    km: 10000,
+    icon: Building2,
+    label: "5-10k km/año",
+    description: "Poco",
+    subtitle: "Uso urbano diario",
     color: "text-green-600",
     bgColor: "bg-green-50",
     borderColor: "border-green-300",
   },
   {
-    value: "Entre 10 y 50 km",
-    icon: Building2,
-    label: "Entre 10 y 50 km",
-    description: "Trayectos medios ",
+    value: "Sí, unos 15.000 km/año",
+    km: 15000,
+    icon: Car,
+    label: "10-20k km/año",
+    description: "Ocasional",
+    subtitle: "Trayectos regulares",
     color: "text-blue-600",
     bgColor: "bg-blue-50",
     borderColor: "border-blue-300",
   },
   {
-    value: "Entre 51 y 150 km",
-    icon: Route,
-    label: "Entre 51 y 150 km",
-    description: "Trayectos largos",
+    value: "Sí, unos 25.000 km/año",
+    km: 25000,
+    icon: Navigation,
+    label: "20-30k km/año",
+    description: "Moderado",
+    subtitle: "Distancias largas",
     color: "text-orange-600",
     bgColor: "bg-orange-50",
     borderColor: "border-orange-300",
   },
   {
-    value: "Más de 150 km",
-    icon: MapPin,
-    label: "Más de 150 km",
-    description: "Largas distancias",
+    value: "Sí, más de 30.000 km/año",
+    km: 35000,
+    icon: Plane,
+    label: "30k+ km/año",
+    description: "Intensivo",
+    subtitle: "Uso muy intensivo",
     color: "text-purple-600",
     bgColor: "bg-purple-50",
     borderColor: "border-purple-300",
   },
 ];
 
-export function DistanceSlider({ onSelect, isLoading }: DistanceSliderProps) {
+export function KmAnualesSlider({ onSelect, isLoading }: KmAnualesSliderProps) {
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
 
@@ -57,12 +64,17 @@ export function DistanceSlider({ onSelect, isLoading }: DistanceSliderProps) {
     if (isLoading) return;
     
     setSelectedIndex(index);
-    const option = DISTANCE_OPTIONS[index];
+    const option = KM_OPTIONS[index];
     
-    // Pequeño delay para que el usuario vea la selección antes de enviar
+    // Pequeño delay para que el usuario vea la selección
     setTimeout(() => {
       onSelect(option.value);
     }, 300);
+  };
+
+  const handleNoSe = () => {
+    if (isLoading) return;
+    onSelect("❌ No lo sé, ayúdame a calcularlo");
   };
 
   return (
@@ -73,7 +85,7 @@ export function DistanceSlider({ onSelect, isLoading }: DistanceSliderProps) {
     >
       {/* Título */}
       <div className="text-sm font-medium text-muted-foreground text-center">
-        Selecciona la distancia de tus trayectos habituales
+        Selecciona cuánto usarías el coche aproximadamente
       </div>
 
       {/* Slider Container */}
@@ -87,7 +99,7 @@ export function DistanceSlider({ onSelect, isLoading }: DistanceSliderProps) {
             className="absolute top-1/2 left-8 h-1.5 bg-gradient-to-r from-green-500 via-blue-500 via-orange-500 to-purple-500 rounded-full -translate-y-1/2"
             initial={{ width: 0 }}
             animate={{
-              width: `${(selectedIndex / (DISTANCE_OPTIONS.length - 1)) * 100}%`,
+              width: `calc(${(selectedIndex / (KM_OPTIONS.length - 1)) * 100}% - 2rem)`,
             }}
             transition={{ duration: 0.3, ease: "easeOut" }}
           />
@@ -95,7 +107,7 @@ export function DistanceSlider({ onSelect, isLoading }: DistanceSliderProps) {
 
         {/* Opciones */}
         <div className="relative grid grid-cols-4 gap-2">
-          {DISTANCE_OPTIONS.map((option, index) => {
+          {KM_OPTIONS.map((option, index) => {
             const Icon = option.icon;
             const isSelected = selectedIndex === index;
             const isHovered = hoveredIndex === index;
@@ -151,7 +163,7 @@ export function DistanceSlider({ onSelect, isLoading }: DistanceSliderProps) {
                 {/* Indicador de selección (punto debajo) */}
                 {isSelected && (
                   <motion.div
-                    layoutId="selected-indicator"
+                    layoutId="km-selected-indicator"
                     className={`absolute -bottom-2 w-2 h-2 rounded-full ${option.color.replace('text-', 'bg-')}`}
                     initial={{ scale: 0 }}
                     animate={{ scale: 1 }}
@@ -164,6 +176,19 @@ export function DistanceSlider({ onSelect, isLoading }: DistanceSliderProps) {
         </div>
       </div>
 
+      {/* Botón "No lo sé" */}
+      <div className="flex justify-center pt-2">
+        <motion.button
+          onClick={handleNoSe}
+          disabled={isLoading}
+          className="px-4 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-muted/50 rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+          whileHover={{ scale: isLoading ? 1 : 1.03 }}
+          whileTap={{ scale: isLoading ? 1 : 0.97 }}
+        >
+          🤔 No lo sé, ayúdame a calcularlo
+        </motion.button>
+      </div>
+
       {/* Feedback de la selección */}
       {selectedIndex !== null && (
         <motion.div
@@ -174,8 +199,11 @@ export function DistanceSlider({ onSelect, isLoading }: DistanceSliderProps) {
           <div className="text-sm">
             <span className="text-muted-foreground">Has seleccionado: </span>
             <span className="font-semibold text-foreground">
-              {DISTANCE_OPTIONS[selectedIndex].value}
+              {KM_OPTIONS[selectedIndex].description}
             </span>
+          </div>
+          <div className="text-xs text-muted-foreground mt-1">
+            {KM_OPTIONS[selectedIndex].subtitle}
           </div>
         </motion.div>
       )}

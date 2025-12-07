@@ -7,6 +7,7 @@ import { CarResultsMessage } from "@/components/carblau/car-results-message";
 import { ChatInput, type ChatInputHandle } from "@/components/carblau/chat-input";
 import { QuickReplies } from "@/components/carblau/quick-replies"; // ✅ NUEVO
 import { DistanceSlider } from "@/components/carblau/distance-slider"; // ✅ NUEVO
+import { KmAnualesSlider } from "@/components/carblau/km-anuales-slider";
 import { TypingIndicator } from "@/components/carblau/typing-indicator";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useToast } from "@/hooks/use-toast";
@@ -37,9 +38,9 @@ export interface CarRecommendationPayload {
 }
 // ✅ NUEVO: Interface para configuración de quick replies
 export interface QuickReplyConfig {
-  type: "buttons" | "distance_slider";
+  type: "buttons" | "distance_slider" | "km_anuales_slider";  // ✅ Añadir nuevo tipo
   options?: string[];  // Para botones
-  field?: string;      // Para sliders (ej: "distancia_trayecto")
+  field?: string;      // Para sliders (ej: "distancia_trayecto", "km_anuales")
 }
 
 export interface Message {
@@ -72,6 +73,7 @@ export default function Home() {
   // ✅ Estados para UI dinámica
   const [currentQuickReplies, setCurrentQuickReplies] = useState<string[] | null>(null);
   const [showDistanceSlider, setShowDistanceSlider] = useState(false);
+  const [showKmAnualesSlider, setShowKmAnualesSlider] = useState(false);
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const chatInputRef = useRef<ChatInputHandle>(null);
@@ -120,35 +122,45 @@ export default function Home() {
           if (uiType === 'distance_slider') {
             // Mostrar slider de distancia
             setShowDistanceSlider(true);
+            setShowKmAnualesSlider(false);
             setCurrentQuickReplies(null);
             console.log("🎚️ Mostrando distance slider");
+          } else if (uiType === 'km_anuales_slider') {
+            // ✅ NUEVO: Mostrar slider de km anuales
+            setShowDistanceSlider(false);
+            setShowKmAnualesSlider(true);
+            setCurrentQuickReplies(null);
+            console.log("🎚️ Mostrando km anuales slider");
           } else if (uiType === 'buttons' && quickReplyConfig.options) {
             // Mostrar botones normales
             setShowDistanceSlider(false);
+            setShowKmAnualesSlider(false);
             setCurrentQuickReplies(quickReplyConfig.options);
             console.log("🔘 Mostrando botones:", quickReplyConfig.options);
           } else {
             // Sin UI especial
             setShowDistanceSlider(false);
+            setShowKmAnualesSlider(false);
             setCurrentQuickReplies(null);
             console.log("📝 Sin UI especial");
           }
         } else {
           // No hay configuración de quick replies
           setShowDistanceSlider(false);
+          setShowKmAnualesSlider(false);
           setCurrentQuickReplies(null);
           console.log("⚠️ No hay quick_reply_config");
         }
       } else {
         // Último mensaje es del usuario, limpiar UI
         setShowDistanceSlider(false);
+        setShowKmAnualesSlider(false);
         setCurrentQuickReplies(null);
-        console.log("👤 Último mensaje del usuario - limpiando UI");
       }
     } else {
       setShowDistanceSlider(false);
+      setShowKmAnualesSlider(false);
       setCurrentQuickReplies(null);
-      console.log("⚠️ No hay mensajes o está cargando - limpiando UI");
     }
   }, [messages, isLoading]);
 
@@ -261,7 +273,9 @@ export default function Home() {
     setThreadId(null);
     setMessages([]);
     setIsLoading(false);
-    setCurrentQuickReplies(null); // ✅ Limpiar quick replies
+    setCurrentQuickReplies(null);
+    setShowDistanceSlider(false);
+    setShowKmAnualesSlider(false);  // ✅ AÑADIR
   };
 
   // ═══════════════════════════════════════════════════════════════════
@@ -321,6 +335,14 @@ export default function Home() {
             {/* ✅ Distance Slider */}
             {showDistanceSlider && (
               <DistanceSlider
+                onSelect={handleQuickReplySelect}
+                isLoading={isLoading}
+              />
+            )}
+
+            {/* ✅ NUEVO: Km Anuales Slider */}
+            {showKmAnualesSlider && (
+              <KmAnualesSlider
                 onSelect={handleQuickReplySelect}
                 isLoading={isLoading}
               />
