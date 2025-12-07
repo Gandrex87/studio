@@ -6,6 +6,7 @@ import { ChatMessage } from "@/components/carblau/chat-message";
 import { CarResultsMessage } from "@/components/carblau/car-results-message";
 import { ChatInput, type ChatInputHandle } from "@/components/carblau/chat-input";
 import { QuickReplies } from "@/components/carblau/quick-replies"; // ✅ NUEVO
+import { DistanceSlider } from "@/components/carblau/distance-slider"; // ✅ NUEVO
 import { TypingIndicator } from "@/components/carblau/typing-indicator";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useToast } from "@/hooks/use-toast";
@@ -34,6 +35,12 @@ export interface CarRecommendationPayload {
   cars: Car[];
   outroText?: string;
 }
+// ✅ NUEVO: Interface para configuración de quick replies
+export interface QuickReplyConfig {
+  type: "buttons" | "distance_slider";
+  options?: string[];  // Para botones
+  field?: string;      // Para sliders (ej: "distancia_trayecto")
+}
 
 export interface Message {
   id: string;
@@ -42,6 +49,7 @@ export interface Message {
   additional_kwargs?: {
     payload?: CarRecommendationPayload;
     quick_replies?: string[]; // ✅ NUEVO
+    quick_reply_config?: QuickReplyConfig;  // ✅ AÑADIR
   };
 }
 
@@ -61,8 +69,9 @@ export default function Home() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   
-  // ✅ NUEVO: Estado para opciones de respuesta rápida
+  // ✅ Estados para UI dinámica
   const [currentQuickReplies, setCurrentQuickReplies] = useState<string[] | null>(null);
+  const [showDistanceSlider, setShowDistanceSlider] = useState(false);
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const chatInputRef = useRef<ChatInputHandle>(null);
@@ -71,7 +80,6 @@ export default function Home() {
   // ═══════════════════════════════════════════════════════════════════
   // EFFECTS
   // ═══════════════════════════════════════════════════════════════════
-
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
@@ -86,42 +94,61 @@ export default function Home() {
     }
   }, [messages, isLoading]);
 
-  // ✅ NUEVO: Actualizar quick replies cuando cambian los mensajes
+// ✅ Detectar tipo de UI a mostrar (quick replies, slider, etc.)
   useEffect(() => {
     console.log("🔄 useEffect disparado - messages.length:", messages.length, "isLoading:", isLoading);
     
     if (messages.length > 0 && !isLoading) {
       const lastMessage = messages[messages.length - 1];
-
-      // ✅ VER EL CONTENIDO COMPLETO DE additional_kwargs
-      console.log("🔍 additional_kwargs COMPLETO:", JSON.stringify(lastMessage.additional_kwargs, null, 2));
-    
       
       console.log("🔍 Último mensaje:", {
         id: lastMessage.id,
         role: lastMessage.role,
         content: lastMessage.content.substring(0, 50) + "...",
         hasAdditionalKwargs: !!lastMessage.additional_kwargs,
-        hasQuickReplies: !!lastMessage.additional_kwargs?.quick_replies
       });
       
-      // Solo mostrar quick replies si el último mensaje es del agente
+      // Solo procesar si el último mensaje es del agente
       if (lastMessage.role === 'agent') {
-        const quickReplies = lastMessage.additional_kwargs?.quick_replies;
+        const quickReplyConfig = lastMessage.additional_kwargs?.quick_reply_config;
         
-        if (quickReplies && quickReplies.length > 0) {
-          setCurrentQuickReplies(quickReplies);
-          console.log("🔘 Quick replies detectadas:", quickReplies);
+        console.log("🔍 quick_reply_config:", quickReplyConfig);
+        
+        if (quickReplyConfig) {
+          const uiType = quickReplyConfig.type;
+          
+          if (uiType === 'distance_slider') {
+            // Mostrar slider de distancia
+            setShowDistanceSlider(true);
+            setCurrentQuickReplies(null);
+            console.log("🎚️ Mostrando distance slider");
+          } else if (uiType === 'buttons' && quickReplyConfig.options) {
+            // Mostrar botones normales
+            setShowDistanceSlider(false);
+            setCurrentQuickReplies(quickReplyConfig.options);
+            console.log("🔘 Mostrando botones:", quickReplyConfig.options);
+          } else {
+            // Sin UI especial
+            setShowDistanceSlider(false);
+            setCurrentQuickReplies(null);
+            console.log("📝 Sin UI especial");
+          }
         } else {
+          // No hay configuración de quick replies
+          setShowDistanceSlider(false);
           setCurrentQuickReplies(null);
-          console.log("📝 Sin quick replies en este mensaje");
+          console.log("⚠️ No hay quick_reply_config");
         }
       } else {
-        // Si el último mensaje es del usuario, limpiar quick replies
+        // Último mensaje es del usuario, limpiar UI
+        setShowDistanceSlider(false);
         setCurrentQuickReplies(null);
+        console.log("👤 Último mensaje del usuario - limpiando UI");
       }
     } else {
+      setShowDistanceSlider(false);
       setCurrentQuickReplies(null);
+      console.log("⚠️ No hay mensajes o está cargando - limpiando UI");
     }
   }, [messages, isLoading]);
 
@@ -291,7 +318,15 @@ export default function Home() {
 
           {/* Input Area */}
           <div className="p-4 border-t space-y-3">
-            {/* ✅ NUEVO: Quick Replies */}
+            {/* ✅ Distance Slider */}
+            {showDistanceSlider && (
+              <DistanceSlider
+                onSelect={handleQuickReplySelect}
+                isLoading={isLoading}
+              />
+            )}
+            
+            {/* ✅ Quick Replies (botones normales) */}
             {currentQuickReplies && currentQuickReplies.length > 0 && (
               <QuickReplies
                 options={currentQuickReplies}
