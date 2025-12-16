@@ -6,7 +6,10 @@ import { ChatMessage } from "@/components/carblau/chat-message";
 import { CarResultsMessage } from "@/components/carblau/car-results-message";
 import { ChatInput, type ChatInputHandle } from "@/components/carblau/chat-input";
 import { QuickReplies } from "@/components/carblau/quick-replies"; // ✅ NUEVO
-import { DistanceSlider } from "@/components/carblau/distance-slider"; // ✅ NUEVO
+import { DistanceSlider } from "@/components/carblau/distance-slider";
+import { PresupuestoSlider } from "@/components/carblau/presupuesto-slider";
+import { PresupuestoUnificado } from "@/components/carblau/presupuesto-unificado";
+import { PasajerosSlider } from "@/components/carblau/pasajeros-slider";
 import { KmAnualesSlider } from "@/components/carblau/km-anuales-slider";
 import { TypingIndicator } from "@/components/carblau/typing-indicator";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -38,7 +41,7 @@ export interface CarRecommendationPayload {
 }
 // ✅ NUEVO: Interface para configuración de quick replies
 export interface QuickReplyConfig {
-  type: "buttons" | "distance_slider" | "km_anuales_slider";  // ✅ Añadir nuevo tipo
+  type: "buttons" | "distance_slider" | "km_anuales_slider" | "pasajeros_slider" | "presupuesto_slider"  | "presupuesto_unificado";  // ✅ NUEVO;  // ✅ Añadir nuevo tipo
   options?: string[];  // Para botones
   field?: string;      // Para sliders (ej: "distancia_trayecto", "km_anuales")
 }
@@ -74,6 +77,9 @@ export default function Home() {
   const [currentQuickReplies, setCurrentQuickReplies] = useState<string[] | null>(null);
   const [showDistanceSlider, setShowDistanceSlider] = useState(false);
   const [showKmAnualesSlider, setShowKmAnualesSlider] = useState(false);
+  const [showPasajerosSlider, setShowPasajerosSlider] = useState(false);
+  const [showPresupuestoSlider, setShowPresupuestoSlider] = useState(false);
+  const [showPresupuestoUnificado, setShowPresupuestoUnificado] = useState(false); 
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const chatInputRef = useRef<ChatInputHandle>(null);
@@ -97,72 +103,101 @@ export default function Home() {
   }, [messages, isLoading]);
 
 // ✅ Detectar tipo de UI a mostrar (quick replies, slider, etc.)
-  useEffect(() => {
-    console.log("🔄 useEffect disparado - messages.length:", messages.length, "isLoading:", isLoading);
+useEffect(() => {
+  if (messages.length > 0 && !isLoading) {
+    const lastMessage = messages[messages.length - 1];
     
-    if (messages.length > 0 && !isLoading) {
-      const lastMessage = messages[messages.length - 1];
+    if (lastMessage.role === 'agent') {
+      const quickReplyConfig = lastMessage.additional_kwargs?.quick_reply_config;
       
-      console.log("🔍 Último mensaje:", {
-        id: lastMessage.id,
-        role: lastMessage.role,
-        content: lastMessage.content.substring(0, 50) + "...",
-        hasAdditionalKwargs: !!lastMessage.additional_kwargs,
-      });
-      
-      // Solo procesar si el último mensaje es del agente
-      if (lastMessage.role === 'agent') {
-        const quickReplyConfig = lastMessage.additional_kwargs?.quick_reply_config;
+      if (quickReplyConfig) {
+        const uiType = quickReplyConfig.type;
         
-        console.log("🔍 quick_reply_config:", quickReplyConfig);
-        
-        if (quickReplyConfig) {
-          const uiType = quickReplyConfig.type;
-          
-          if (uiType === 'distance_slider') {
-            // Mostrar slider de distancia
-            setShowDistanceSlider(true);
-            setShowKmAnualesSlider(false);
-            setCurrentQuickReplies(null);
-            console.log("🎚️ Mostrando distance slider");
-          } else if (uiType === 'km_anuales_slider') {
-            // ✅ NUEVO: Mostrar slider de km anuales
-            setShowDistanceSlider(false);
-            setShowKmAnualesSlider(true);
-            setCurrentQuickReplies(null);
-            console.log("🎚️ Mostrando km anuales slider");
-          } else if (uiType === 'buttons' && quickReplyConfig.options) {
-            // Mostrar botones normales
-            setShowDistanceSlider(false);
-            setShowKmAnualesSlider(false);
-            setCurrentQuickReplies(quickReplyConfig.options);
-            console.log("🔘 Mostrando botones:", quickReplyConfig.options);
-          } else {
-            // Sin UI especial
-            setShowDistanceSlider(false);
-            setShowKmAnualesSlider(false);
-            setCurrentQuickReplies(null);
-            console.log("📝 Sin UI especial");
-          }
-        } else {
-          // No hay configuración de quick replies
+        if (uiType === 'distance_slider') {
+          setShowDistanceSlider(true);
+          setShowKmAnualesSlider(false);
+          setShowPasajerosSlider(false);
+          setShowPresupuestoSlider(false);  // ✅
+          setShowPresupuestoUnificado(false);  // ✅ AÑADIR
+          setCurrentQuickReplies(null);
+        } else if (uiType === 'km_anuales_slider') {
+          setShowDistanceSlider(false);
+          setShowKmAnualesSlider(true);
+          setShowPasajerosSlider(false);
+          setShowPresupuestoSlider(false);  // ✅
+          setShowPresupuestoUnificado(false);  // ✅ AÑADIR
+          setCurrentQuickReplies(null);
+        } else if (uiType === 'pasajeros_slider') {
           setShowDistanceSlider(false);
           setShowKmAnualesSlider(false);
+          setShowPasajerosSlider(true);
+          setShowPresupuestoSlider(false);  // ✅
+          setShowPresupuestoUnificado(false); 
           setCurrentQuickReplies(null);
-          console.log("⚠️ No hay quick_reply_config");
+        } else if (uiType === 'presupuesto_slider') {  // ✅ NUEVO
+          setShowDistanceSlider(false);
+          setShowKmAnualesSlider(false);
+          setShowPasajerosSlider(false);
+          setShowPresupuestoSlider(true);
+          setShowPresupuestoUnificado(false);  // ✅ AÑADIR
+          setCurrentQuickReplies(null);
+          console.log("🎚️ Mostrando presupuesto slider");
+        } 
+        // ✅ NUEVO: Presupuesto unificado
+        else if (uiType === 'presupuesto_unificado') {
+          setShowDistanceSlider(false);
+          setShowKmAnualesSlider(false);
+          setShowPasajerosSlider(false);
+          setShowPresupuestoSlider(false);
+          setShowPresupuestoUnificado(true);
+          setCurrentQuickReplies(null);
+          console.log("🎚️ Mostrando presupuesto unificado (tabs + slider)");
+        }
+        else if (uiType === 'buttons' && quickReplyConfig.options) {
+          setShowDistanceSlider(false);
+          setShowKmAnualesSlider(false);
+          setShowPasajerosSlider(false);
+          setShowPresupuestoSlider(false);  // ✅
+          setShowPresupuestoUnificado(false);  // ✅ AÑADIR
+          setCurrentQuickReplies(quickReplyConfig.options);
+        } 
+        else {
+           // Clear all
+          setShowDistanceSlider(false);
+          setShowKmAnualesSlider(false);
+          setShowPasajerosSlider(false);
+          setShowPresupuestoSlider(false);  // ✅
+          setShowPresupuestoUnificado(false);  // ✅ AÑADIR
+          setCurrentQuickReplies(null);
         }
       } else {
-        // Último mensaje es del usuario, limpiar UI
+        // No quick reply config
         setShowDistanceSlider(false);
         setShowKmAnualesSlider(false);
+        setShowPasajerosSlider(false);
+        setShowPresupuestoSlider(false);  // ✅
+        setShowPresupuestoUnificado(false);  // ✅ AÑADIR
         setCurrentQuickReplies(null);
       }
     } else {
+      // User message
       setShowDistanceSlider(false);
       setShowKmAnualesSlider(false);
+      setShowPasajerosSlider(false);
+      setShowPresupuestoSlider(false);
+      setShowPresupuestoUnificado(false);  // ✅
       setCurrentQuickReplies(null);
     }
-  }, [messages, isLoading]);
+  } else {
+    // No messages or loading
+    setShowDistanceSlider(false);
+    setShowKmAnualesSlider(false);
+    setShowPasajerosSlider(false);
+    setShowPresupuestoSlider(false);  // ✅
+    setShowPresupuestoUnificado(false);
+    setCurrentQuickReplies(null);
+  }
+}, [messages, isLoading]);
 
   // ═══════════════════════════════════════════════════════════════════
   // HANDLERS
@@ -275,7 +310,10 @@ export default function Home() {
     setIsLoading(false);
     setCurrentQuickReplies(null);
     setShowDistanceSlider(false);
-    setShowKmAnualesSlider(false);  // ✅ AÑADIR
+    setShowKmAnualesSlider(false);
+    setShowPasajerosSlider(false);     // ✅ AÑADIR
+    setShowPresupuestoSlider(false);   // ✅ AÑADIR
+    setShowPresupuestoUnificado(false);  // ✅ AÑADIR
   };
 
   // ═══════════════════════════════════════════════════════════════════
@@ -283,7 +321,8 @@ export default function Home() {
   // ═══════════════════════════════════════════════════════════════════
 
   return (
-    <main className="flex flex-col h-screen bg-background">
+    //<main className="flex flex-col h-screen bg-background">
+    <main className="flex flex-col h-screen">
       {!sessionStarted ? (
         <WelcomeScreen onStartSession={handleStartSession} isLoading={isLoading} />
       ) : (
@@ -346,6 +385,19 @@ export default function Home() {
                 onSelect={handleQuickReplySelect}
                 isLoading={isLoading}
               />
+            )}
+
+            {/* ✅ NUEVO */}
+            {showPasajerosSlider && (
+              <PasajerosSlider onSelect={handleQuickReplySelect} isLoading={isLoading} />
+            )}
+            {showPresupuestoSlider && (
+              <PresupuestoSlider onSelect={handleQuickReplySelect} isLoading={isLoading} />
+            )}
+
+            {/* ✅ NUEVO: Presupuesto unificado */}
+            {showPresupuestoUnificado && (
+              <PresupuestoUnificado onSelect={handleQuickReplySelect} isLoading={isLoading} />
             )}
             
             {/* ✅ Quick Replies (botones normales) */}

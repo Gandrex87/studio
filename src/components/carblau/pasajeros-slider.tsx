@@ -2,61 +2,57 @@
 
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { Building2, Car, Navigation, Plane } from "lucide-react";
+import { User, Users } from "lucide-react";
 
-interface KmAnualesSliderProps {
-  onSelect: (kmText: string) => void;
+interface PasajerosSliderProps {
+  onSelect: (numText: string) => void;
   isLoading: boolean;
 }
 
-const KM_OPTIONS = [
+const PASAJEROS_OPTIONS = [
   {
-    value: "Sí, unos 10.000 km/año",
-    km: 10000,
-    icon: Building2,
-    label: "5-10k km/año",
-    description: "Poco",
-    subtitle: "Uso urbano diario",
-    color: "text-green-600",
-    bgColor: "bg-green-50",
-    borderColor: "border-green-300",
-  },
-  {
-    value: "Sí, unos 15.000 km/año",
-    km: 15000,
-    icon: Car,
-    label: "10-20k km/año",
-    description: "Ocasional",
-    subtitle: "Trayectos regulares",
+    value: "1 persona",
+    num: 1,
+    icon: User,
+    label: "1",
+    description: "Solo 1 pasajero",
     color: "text-blue-600",
     bgColor: "bg-blue-50",
     borderColor: "border-blue-300",
   },
   {
-    value: "Sí, unos 25.000 km/año",
-    km: 25000,
-    icon: Navigation,
-    label: "20-30k km/año",
-    description: "Moderado",
-    subtitle: "Distancias largas",
+    value: "2 personas",
+    num: 2,
+    icon: Users,
+    label: "2",
+    description: "2 pasajeros",
+    color: "text-green-600",
+    bgColor: "bg-green-50",
+    borderColor: "border-green-300",
+  },
+  {
+    value: "3 personas",
+    num: 3,
+    icon: Users,
+    label: "3",
+    description: "3 pasajeros",
     color: "text-orange-600",
     bgColor: "bg-orange-50",
     borderColor: "border-orange-300",
   },
   {
-    value: "Sí, más de 30.000 km/año",
-    km: 35000,
-    icon: Plane,
-    label: "30k+ km/año",
-    description: "Intensivo",
-    subtitle: "Uso muy intensivo",
+    value: "4 o más",
+    num: 4,
+    icon: Users,
+    label: "4+",
+    description: "4 o más pasajeros",
     color: "text-purple-600",
     bgColor: "bg-purple-50",
     borderColor: "border-purple-300",
   },
 ];
 
-export function KmAnualesSlider({ onSelect, isLoading }: KmAnualesSliderProps) {
+export function PasajerosSlider({ onSelect, isLoading }: PasajerosSliderProps) {
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
 
@@ -64,17 +60,11 @@ export function KmAnualesSlider({ onSelect, isLoading }: KmAnualesSliderProps) {
     if (isLoading) return;
     
     setSelectedIndex(index);
-    const option = KM_OPTIONS[index];
+    const option = PASAJEROS_OPTIONS[index];
     
-    // Pequeño delay para que el usuario vea la selección
     setTimeout(() => {
       onSelect(option.value);
     }, 300);
-  };
-
-  const handleNoSe = () => {
-    if (isLoading) return;
-    onSelect("❌ No lo sé, ayúdame a calcularlo");
   };
 
   return (
@@ -85,21 +75,21 @@ export function KmAnualesSlider({ onSelect, isLoading }: KmAnualesSliderProps) {
     >
       {/* Título */}
       <div className="text-sm font-medium text-muted-foreground text-center">
-        Selecciona cuánto usarías el coche aproximadamente
+        Selecciona cuántos pasajeros sueles llevar
       </div>
 
       {/* Slider Container */}
       <div className="relative px-4 py-8">
-        {/* Línea de conexión - Gradiente */}
-        <div className="absolute top-1/2 left-8 right-8 h-1.5 bg-gradient-to-r from-green-300 via-blue-300 via-orange-300 to-purple-300 rounded-full -translate-y-1/2 opacity-40" />
+        {/* Línea de conexión */}
+        <div className="absolute top-1/2 left-8 right-8 h-1.5 bg-gradient-to-r from-blue-300 via-green-300 via-orange-300 to-purple-300 rounded-full -translate-y-1/2 opacity-40" />
 
-        {/* Línea de progreso (hasta la opción seleccionada) */}
+        {/* Línea de progreso */}
         {selectedIndex !== null && (
           <motion.div
-            className="absolute top-1/2 left-8 h-1.5 bg-gradient-to-r from-green-500 via-blue-500 via-orange-500 to-purple-500 rounded-full -translate-y-1/2"
+            className="absolute top-1/2 left-8 h-1.5 bg-gradient-to-r from-blue-500 via-green-500 via-orange-500 to-purple-500 rounded-full -translate-y-1/2"
             initial={{ width: 0 }}
             animate={{
-              width: `calc(${(selectedIndex / (KM_OPTIONS.length - 1)) * 100}% - 2rem)`,
+              width: `calc(${(selectedIndex / (PASAJEROS_OPTIONS.length - 1)) * 100}% - 2rem)`,
             }}
             transition={{ duration: 0.3, ease: "easeOut" }}
           />
@@ -107,7 +97,7 @@ export function KmAnualesSlider({ onSelect, isLoading }: KmAnualesSliderProps) {
 
         {/* Opciones */}
         <div className="relative grid grid-cols-4 gap-2">
-          {KM_OPTIONS.map((option, index) => {
+          {PASAJEROS_OPTIONS.map((option, index) => {
             const Icon = option.icon;
             const isSelected = selectedIndex === index;
             const isHovered = hoveredIndex === index;
@@ -149,7 +139,7 @@ export function KmAnualesSlider({ onSelect, isLoading }: KmAnualesSliderProps) {
                 <div className="text-center">
                   <div
                     className={`
-                      text-xs font-semibold transition-colors
+                      text-lg font-bold transition-colors
                       ${isActive ? "text-foreground" : "text-muted-foreground"}
                     `}
                   >
@@ -160,10 +150,10 @@ export function KmAnualesSlider({ onSelect, isLoading }: KmAnualesSliderProps) {
                   </div>
                 </div>
 
-                {/* Indicador de selección (punto debajo) */}
+                {/* Indicador */}
                 {isSelected && (
                   <motion.div
-                    layoutId="km-selected-indicator"
+                    layoutId="pasajeros-selected"
                     className={`absolute -bottom-2 w-2 h-2 rounded-full ${option.color.replace('text-', 'bg-')}`}
                     initial={{ scale: 0 }}
                     animate={{ scale: 1 }}
@@ -176,20 +166,7 @@ export function KmAnualesSlider({ onSelect, isLoading }: KmAnualesSliderProps) {
         </div>
       </div>
 
-      {/* Botón "No lo sé" */}
-      <div className="flex justify-center pt-2">
-        <motion.button
-          onClick={handleNoSe}
-          disabled={isLoading}
-          className="px-4 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-muted/50 rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-          whileHover={{ scale: isLoading ? 1 : 1.03 }}
-          whileTap={{ scale: isLoading ? 1 : 0.97 }}
-        >
-          ❌ No lo sé, ayúdame a calcularlo
-        </motion.button>
-      </div>
-
-      {/* Feedback de la selección */}
+      {/* Feedback */}
       {selectedIndex !== null && (
         <motion.div
           initial={{ opacity: 0, y: -10 }}
@@ -199,11 +176,8 @@ export function KmAnualesSlider({ onSelect, isLoading }: KmAnualesSliderProps) {
           <div className="text-sm">
             <span className="text-muted-foreground">Has seleccionado: </span>
             <span className="font-semibold text-foreground">
-              {KM_OPTIONS[selectedIndex].description}
+              {PASAJEROS_OPTIONS[selectedIndex].value}
             </span>
-          </div>
-          <div className="text-xs text-muted-foreground mt-1">
-            {KM_OPTIONS[selectedIndex].subtitle}
           </div>
         </motion.div>
       )}

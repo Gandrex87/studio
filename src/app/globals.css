@@ -43,6 +43,7 @@ body {
     --sidebar-ring: 217.2 91.2% 59.8%;
   }
   .dark {
+    /*--background: 202 96% 14%;*/
     --background: 202 96% 14%;
     --foreground: 0 0% 98%;
     --card: 202 50% 18%;
@@ -87,6 +88,7 @@ body {
   }
 }
 
+
 @layer utilities {
   .typing-dot {
     animation: typing-blink 1.4s infinite both;
@@ -110,3 +112,47 @@ body {
     opacity: 0.2;
   }
 }
+
+/* ============================================
+   OPCIÓN 4: GLASSMORPHISM BURBUJAS
+   ============================================ */
+  @layer base {
+    body {
+      background-color: hsl(202 96% 14%);
+      background-attachment: fixed;
+      position: relative;
+    }
+    
+    body::before,
+    body::after {
+      content: '';
+      position: fixed;
+      border-radius: 50%;
+      filter: blur(80px);
+      opacity: 0.3;
+      z-index: -1;
+    }
+    
+    body::before {
+      width: 500px;
+      height: 500px;
+      background: hsl(180 100% 50% / 0.4);
+      top: -10%;
+      left: -5%;
+      animation: float 20s ease-in-out infinite;
+    }
+    
+    body::after {
+      width: 400px;
+      height: 400px;
+      background: hsl(190 100% 40% / 0.3);
+      bottom: -10%;
+      right: -5%;
+      animation: float 25s ease-in-out infinite reverse;
+    }
+  }
+  
+  @keyframes float {
+    0%, 100% { transform: translate(0, 0); }
+    50% { transform: translate(50px, 50px); }
+  } 
