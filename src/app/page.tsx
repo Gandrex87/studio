@@ -12,7 +12,6 @@ import { PresupuestoUnificado } from "@/components/carblau/presupuesto-unificado
 import { PasajerosSlider } from "@/components/carblau/pasajeros-slider";
 import { KmAnualesSlider } from "@/components/carblau/km-anuales-slider";
 import { TypingIndicator } from "@/components/carblau/typing-indicator";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { RotateCw } from "lucide-react";
@@ -82,6 +81,7 @@ export default function Home() {
   const [showPresupuestoUnificado, setShowPresupuestoUnificado] = useState(false); 
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const scrollAreaRef = useRef<HTMLDivElement>(null);  // ✅ NUEVO
   const chatInputRef = useRef<ChatInputHandle>(null);
   const { toast } = useToast();
 
@@ -89,7 +89,17 @@ export default function Home() {
   // EFFECTS
   // ═══════════════════════════════════════════════════════════════════
   const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    // Opción 1: Scroll al elemento final
+    messagesEndRef.current?.scrollIntoView({ 
+      behavior: "smooth",
+      block: "end",
+      inline: "nearest"
+    });
+    
+    // Opción 2: Scroll directo al contenedor (más confiable en móvil)
+    if (scrollAreaRef.current) {
+      scrollAreaRef.current.scrollTop = scrollAreaRef.current.scrollHeight;
+    }
   };
 
   useEffect(() => {
@@ -337,8 +347,16 @@ useEffect(() => {
           </div>
 
           {/* Messages Area */}
-          <ScrollArea className="flex-1">
-            <div className="space-y-6 p-4">
+          {/* Messages Area */}
+          <div 
+            className="flex-1 overflow-y-auto overflow-x-hidden scroll-smooth"
+            ref={scrollAreaRef}
+            style={{
+              WebkitOverflowScrolling: 'touch',
+              scrollBehavior: 'smooth'
+            }}
+          >
+            <div className="space-y-6 p-4 pb-20">
               {messages.map((message) => {
                 const carPayload = message.additional_kwargs?.payload;
                 const isCarRecommendation = 
@@ -367,8 +385,7 @@ useEffect(() => {
               {isLoading && <TypingIndicator />}
               <div ref={messagesEndRef} />
             </div>
-          </ScrollArea>
-
+          </div>
           {/* Input Area */}
           <div className="p-4 border-t space-y-3">
             {/* ✅ Distance Slider */}
