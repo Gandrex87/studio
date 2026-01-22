@@ -387,7 +387,8 @@ useEffect(() => {
             </div>
           </div>
           {/* Input Area */}
-          <div className="p-4 border-t space-y-3">
+          {/* Input Area - FIJO en la parte inferior */}
+          <div className="sticky bottom-0 left-0 right-0 p-4 border-t space-y-3 bg-background z-10 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)]">
             {/* ✅ Distance Slider */}
             {showDistanceSlider && (
               <DistanceSlider
