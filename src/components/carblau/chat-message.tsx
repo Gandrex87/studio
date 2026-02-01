@@ -1,7 +1,7 @@
 "use client";
 
 import ReactMarkdown from 'react-markdown';
-import { Car, User } from "lucide-react"; 
+import { User } from "lucide-react"; 
 import { cn } from "@/lib/utils";
 
 interface ChatMessageProps {
@@ -9,20 +9,23 @@ interface ChatMessageProps {
   content: string;
 }
 
-// Componente para renderizar una única ficha de coche
+// ═══════════════════════════════════════════════════════════════════
+// COMPONENTE FICHA DE COCHE (CAR CARD)
+// ═══════════════════════════════════════════════════════════════════
 const CarCard = ({ markdownContent }: { markdownContent: string }) => {
-  const markdownComponents = {
+  
+  const markdownComponents: any = {
     img: ({ node, ...props }: any) => (
       <div className="flex justify-center my-3">
         <img
           src={props.src || ""}
           alt={props.alt || "Coche recomendado"}
-          className="rounded-lg border shadow-md max-w-full h-auto"
+          className="rounded-lg border border-gray-200 shadow-sm max-w-full h-auto"
         />
       </div>
     ),
     h3: ({ node, ...props }: any) => (
-      <h3 className="text-lg font-bold mt-0 mb-2 text-center" {...props} />
+      <h3 className="text-lg font-bold mt-0 mb-2 text-center text-slate-900" {...props} />
     ),
     blockquote: ({ node, ...props }: any) => {
       let text = '';
@@ -37,7 +40,7 @@ const CarCard = ({ markdownContent }: { markdownContent: string }) => {
       return (
         <div className="flex justify-center gap-2 my-3 flex-wrap not-prose">
           {specs.map((spec, i) => (
-            <span key={i} className="bg-primary/10 text-primary text-xs font-semibold px-2.5 py-1 rounded-full">
+            <span key={i} className="bg-slate-200 text-slate-800 border border-slate-300 text-xs font-semibold px-2.5 py-1 rounded-full">
               {spec}
             </span>
           ))}
@@ -47,18 +50,18 @@ const CarCard = ({ markdownContent }: { markdownContent: string }) => {
     p: ({ node, ...props }: any) => {
       const firstChild = node?.children[0];
       if (firstChild?.type === 'element' && firstChild.tagName === 'strong') {
-        return <p className="text-center font-semibold text-base my-2" {...props} />;
+        return <p className="text-center font-semibold text-base my-2 text-slate-800" {...props} />;
       }
       if (firstChild?.type === 'element' && firstChild.tagName === 'em') {
-        return <p className="text-center text-xs text-muted-foreground/80 italic mt-3" {...props} />;
+        return <p className="text-center text-xs text-slate-500 italic mt-3" {...props} />;
       }
-      return <p {...props} />;
+      return <p className="text-slate-700" {...props} />;
     },
     hr: () => null,
   };
 
   return (
-    <div className="bg-background/50 rounded-lg p-3 shadow-sm">
+    <div className="bg-white rounded-lg p-4 shadow-sm border border-gray-200/50">
       <ReactMarkdown components={markdownComponents}>
         {markdownContent}
       </ReactMarkdown>
@@ -66,11 +69,13 @@ const CarCard = ({ markdownContent }: { markdownContent: string }) => {
   );
 };
 
-
+// ═══════════════════════════════════════════════════════════════════
+// COMPONENTE PRINCIPAL DEL MENSAJE
+// ═══════════════════════════════════════════════════════════════════
 export function ChatMessage({ role, content }: ChatMessageProps) {
   const isAgent = role === "agent";
 
-  const carCardRegex = /---\s*###(.*?)(?=\n---|\n*$)/gs;
+  const carCardRegex = /---\s*###([\s\S]*?)(?=\n---|\n*$)/g;
   
   let introText = content;
   const carParts: string[] = [];
@@ -83,8 +88,6 @@ export function ChatMessage({ role, content }: ChatMessageProps) {
     introText = content.substring(0, firstMatchIndex).trim();
 
     matches.forEach(match => {
-      // ✅ CORREGIDO: Añadimos un espacio después de '###' para que Markdown
-      // lo reconozca como un título y no como un párrafo.
       carParts.push(`### ${match[1].trim()}`);
     });
 
@@ -94,19 +97,34 @@ export function ChatMessage({ role, content }: ChatMessageProps) {
   }
 
   return (
-    <div className={cn("flex items-start gap-4", !isAgent && "justify-end")}>
+    <div className={cn("flex items-start gap-3", !isAgent && "justify-end")}>
+      
+      {/* 🖼️ AVATAR DEL AGENTE (TU IMAGEN) */}
       {isAgent && (
-        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground">
-           <Car className="w-5 h-5" />
+        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white border border-gray-200 shadow-sm overflow-hidden">
+           {/* Aquí cargamos tu favicon */}
+           <img 
+             src="/favicon_cb.jpeg" 
+             alt="CarBlau Agent" 
+             className="h-full w-full object-cover" // object-cover asegura que rellene el círculo sin deformarse
+           />
         </div>
       )}
 
+      {/* 🗨️ BURBUJA DE CHAT */}
       <div className={cn(
-        "rounded-lg px-4 py-3 text-sm shadow-md w-full max-w-lg",
-        isAgent ? "bg-muted text-muted-foreground" : "bg-primary text-primary-foreground"
+        "rounded-2xl px-5 py-4 text-sm shadow-md w-full max-w-lg leading-relaxed",
+        isAgent 
+          ? "bg-[#ECEBE7] text-slate-900 rounded-tl-none" 
+          : "!bg-[#082144] !text-white rounded-tr-none" 
       )}>
         {introText && (
-          <ReactMarkdown className="prose prose-sm dark:prose-invert max-w-none">
+          <ReactMarkdown className={cn(
+            "prose prose-sm max-w-none",
+            isAgent 
+              ? "prose-neutral text-slate-800 marker:text-slate-800" 
+              : "prose-invert !text-white marker:text-white"
+          )}>
             {introText}
           </ReactMarkdown>
         )}
@@ -120,14 +138,20 @@ export function ChatMessage({ role, content }: ChatMessageProps) {
         )}
 
         {outroText && (
-          <ReactMarkdown className="prose prose-sm dark:prose-invert max-w-none mt-4">
+          <ReactMarkdown className={cn(
+            "prose prose-sm max-w-none mt-4",
+            isAgent 
+              ? "prose-neutral text-slate-800" 
+              : "prose-invert !text-white"
+          )}>
             {outroText}
           </ReactMarkdown>
         )}
       </div>
 
+      {/* ÍCONO DEL USUARIO */}
       {!isAgent && (
-         <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-muted text-muted-foreground">
+         <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#082144] text-white border border-white/20 shadow-sm">
            <User className="w-5 h-5" />
          </div>
       )}

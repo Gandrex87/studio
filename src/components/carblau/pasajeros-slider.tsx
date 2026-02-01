@@ -73,9 +73,11 @@ export function PasajerosSlider({ onSelect, isLoading }: PasajerosSliderProps) {
       animate={{ opacity: 1, y: 0 }}
       className="space-y-4 mb-4"
     >
-      {/* Título */}
-      <div className="text-sm font-medium text-muted-foreground text-center">
-        Selecciona cuántos pasajeros sueles llevar
+      {/* Título Estilo Cápsula */}
+      <div className="flex justify-center">
+        <div className="text-sm font-semibold text-slate-800 text-center bg-white/80 backdrop-blur-sm py-1 px-4 rounded-full border border-white/20 shadow-sm">
+          Selecciona cuántos pasajeros sueles llevar
+        </div>
       </div>
 
       {/* Slider Container */}
@@ -110,17 +112,17 @@ export function PasajerosSlider({ onSelect, isLoading }: PasajerosSliderProps) {
                 onMouseEnter={() => !isLoading && setHoveredIndex(index)}
                 onMouseLeave={() => setHoveredIndex(null)}
                 disabled={isLoading}
-                className="relative flex flex-col items-center gap-2 p-3 rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+                className="relative flex flex-col items-center gap-2 p-1 rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none"
                 whileHover={{ scale: isLoading ? 1 : 1.05 }}
                 whileTap={{ scale: isLoading ? 1 : 0.95 }}
               >
                 {/* Icono Container */}
                 <motion.div
                   className={`
-                    w-14 h-14 rounded-full flex items-center justify-center border-2
-                    ${isActive ? option.bgColor : "bg-gray-50"}
-                    ${isActive ? option.borderColor : "border-gray-200"}
-                    ${isActive ? option.color : "text-gray-400"}
+                    w-14 h-14 rounded-full flex items-center justify-center border-2 shadow-sm
+                    ${isActive ? option.bgColor : "bg-white"}
+                    ${isActive ? option.borderColor : "border-slate-200"}
+                    ${isActive ? option.color : "text-slate-400"}
                     transition-all duration-200
                   `}
                   animate={{
@@ -136,16 +138,16 @@ export function PasajerosSlider({ onSelect, isLoading }: PasajerosSliderProps) {
                 </motion.div>
 
                 {/* Label */}
-                <div className="text-center">
+                <div className="text-center bg-white/60 backdrop-blur-[2px] rounded-lg px-1 py-1">
                   <div
                     className={`
                       text-lg font-bold transition-colors
-                      ${isActive ? "text-foreground" : "text-muted-foreground"}
+                      ${isActive ? "text-[#082144]" : "text-slate-700"}
                     `}
                   >
                     {option.label}
                   </div>
-                  <div className="text-[10px] text-muted-foreground leading-tight">
+                  <div className="text-[10px] text-slate-500 leading-tight">
                     {option.description}
                   </div>
                 </div>
@@ -171,11 +173,11 @@ export function PasajerosSlider({ onSelect, isLoading }: PasajerosSliderProps) {
         <motion.div
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="text-center p-3 bg-muted/50 rounded-lg"
+          className="text-center p-3 bg-white border border-slate-200 rounded-lg shadow-sm mx-4"
         >
           <div className="text-sm">
-            <span className="text-muted-foreground">Has seleccionado: </span>
-            <span className="font-semibold text-foreground">
+            <span className="text-slate-500">Has seleccionado: </span>
+            <span className="font-bold text-[#082144]">
               {PASAJEROS_OPTIONS[selectedIndex].value}
             </span>
           </div>

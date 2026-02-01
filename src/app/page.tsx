@@ -331,111 +331,139 @@ useEffect(() => {
   // ═══════════════════════════════════════════════════════════════════
 
   return (
-    //<main className="flex flex-col h-screen bg-background">
-    <main className="flex flex-col h-screen">
-      {!sessionStarted ? (
-        <WelcomeScreen onStartSession={handleStartSession} isLoading={isLoading} />
-      ) : (
-        <div className="flex flex-col h-full w-full max-w-3xl mx-auto">
-          {/* Header */}
-          <div className="flex justify-between items-center p-4 border-b">
-            <h1 className="text-2xl font-bold">CarBlau AI</h1>
-            <Button variant="outline" size="sm" onClick={handleResetSession}>
-              <RotateCw className="mr-2 h-4 w-4" />
-              Reiniciar Conversación
-            </Button>
-          </div>
+    <main className="flex flex-col h-screen relative overflow-hidden bg-background">
+      
+      {/* 🖼️ CAPA 1: TU IMAGEN PURA */}
+      <div 
+        className="absolute inset-0 z-0" 
+        style={{
+          backgroundImage: "url('/fondo-pattern.png')",
+          backgroundRepeat: "repeat", // Se repite como mosaico
+          
+          // 🔧 AQUÍ ESTÁ LA SOLUCIÓN DEL ZOOM:
+          // "auto" = Usa el tamaño real de la imagen (sin zoom).
+          // Si aún se ven grandes, pon un número pequeño, ej: "150px"
+          backgroundSize: "800px", 
+          
+          backgroundPosition: "top left", // Empieza desde la esquina
+          opacity: 1 
+        }}
+      />
 
-          {/* Messages Area */}
-          {/* Messages Area */}
-          <div 
-            className="flex-1 overflow-y-auto overflow-x-hidden scroll-smooth"
-            ref={scrollAreaRef}
-            style={{
-              WebkitOverflowScrolling: 'touch',
-              scrollBehavior: 'smooth'
-            }}
-          >
-            <div className="space-y-6 p-4 pb-20">
-              {messages.map((message) => {
-                const carPayload = message.additional_kwargs?.payload;
-                const isCarRecommendation = 
-                  message.role === 'agent' && 
-                  carPayload && 
-                  carPayload.type === 'car_recommendation';
+      {/* ❌ ELIMINADAS TODAS LAS CAPAS DE OSCURECIMIENTO (OVERLAYS) */}
 
-                if (isCarRecommendation) {
-                  return (
-                    <CarResultsMessage 
-                      key={message.id} 
-                      data={carPayload} 
-                    />
-                  );
-                } else {
-                  return (
-                    <ChatMessage
-                      key={message.id}
-                      role={message.role}
-                      content={message.content}
-                    />
-                  );
-                }
-              })}
+      {/* 💬 CAPA 2: EL CONTENIDO */}
+      <div className="relative z-10 flex flex-col h-full">
+        {!sessionStarted ? (
+          <WelcomeScreen onStartSession={handleStartSession} isLoading={isLoading} />
+        ) : (
+          <div className="flex flex-col h-full w-full max-w-3xl mx-auto">
+            
+            {/* Header: Transparente para ver el fondo + Logo */}
+            <div className="flex justify-between items-center p-4 border-b border-black/5 bg-transparent backdrop-blur-sm">
               
-              {isLoading && <TypingIndicator />}
-              <div ref={messagesEndRef} />
+              {/* LOGO DE LA COMPAÑÍA */}
+              <div className="flex items-center">
+                <img 
+                  src="/logo2.png" 
+                  alt="CarBlau Logo" 
+                  className="h-10 w-auto object-contain" // Ajusta h-10 a h-12 si lo quieres más grande
+                />
+              </div>
+
+              {/* BOTÓN DE REINICIAR */}
+              {/* Lo hacemos blanco semitransparente para que contraste bien sobre el patrón */}
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={handleResetSession}
+                className="bg-white/60 hover:bg-white/90 text-slate-900 border-slate-200 shadow-sm transition-all"
+              >
+                <RotateCw className="mr-2 h-4 w-4" />
+                Reiniciar Conversación
+              </Button>
+            </div>
+
+            {/* Messages Area: FONDO TRANSPARENTE para ver tu imagen bonita */}
+            <div 
+              className="flex-1 overflow-y-auto overflow-x-hidden scroll-smooth"
+              ref={scrollAreaRef}
+            >
+              <div className="space-y-6 p-4 pb-20">
+                {messages.map((message) => {
+                  const carPayload = message.additional_kwargs?.payload;
+                  const isCarRecommendation = 
+                    message.role === 'agent' && 
+                    carPayload && 
+                    carPayload.type === 'car_recommendation';
+
+                  if (isCarRecommendation) {
+                    return (
+                      <CarResultsMessage 
+                        key={message.id} 
+                        data={carPayload} 
+                      />
+                    );
+                  } else {
+                    return (
+                      <ChatMessage
+                        key={message.id}
+                        role={message.role}
+                        content={message.content}
+                      />
+                    );
+                  }
+                })}
+                
+                {isLoading && <TypingIndicator />}
+                <div ref={messagesEndRef} />
+              </div>
+            </div>
+            
+            {/* Input Area: Fondo sólido/semitransparente para que sea funcional */}
+            <div className="sticky bottom-0 left-0 right-0 p-4 border-t border-white/20 space-y-3 bg-white/10 backdrop-blur-md z-10 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
+              
+              {showDistanceSlider && (
+                <DistanceSlider
+                  onSelect={handleQuickReplySelect}
+                  isLoading={isLoading}
+                />
+              )}
+
+              {showKmAnualesSlider && (
+                <KmAnualesSlider
+                  onSelect={handleQuickReplySelect}
+                  isLoading={isLoading}
+                />
+              )}
+
+              {showPasajerosSlider && (
+                <PasajerosSlider onSelect={handleQuickReplySelect} isLoading={isLoading} />
+              )}
+              {showPresupuestoSlider && (
+                <PresupuestoSlider onSelect={handleQuickReplySelect} isLoading={isLoading} />
+              )}
+
+              {showPresupuestoUnificado && (
+                <PresupuestoUnificado onSelect={handleQuickReplySelect} isLoading={isLoading} />
+              )}
+              
+              {currentQuickReplies && currentQuickReplies.length > 0 && (
+                <QuickReplies
+                  options={currentQuickReplies}
+                  onSelect={handleQuickReplySelect}
+                  isLoading={isLoading}
+                />
+              )}
+              
+              <ChatInput 
+                ref={chatInputRef} 
+                onSubmit={handleSendMessage} 
+                isLoading={isLoading} 
+              />
             </div>
           </div>
-          {/* Input Area */}
-          {/* Input Area - FIJO en la parte inferior */}
-          <div className="sticky bottom-0 left-0 right-0 p-4 border-t space-y-3 bg-background z-10 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)]">
-            {/* ✅ Distance Slider */}
-            {showDistanceSlider && (
-              <DistanceSlider
-                onSelect={handleQuickReplySelect}
-                isLoading={isLoading}
-              />
-            )}
-
-            {/* ✅ NUEVO: Km Anuales Slider */}
-            {showKmAnualesSlider && (
-              <KmAnualesSlider
-                onSelect={handleQuickReplySelect}
-                isLoading={isLoading}
-              />
-            )}
-
-            {/* ✅ NUEVO */}
-            {showPasajerosSlider && (
-              <PasajerosSlider onSelect={handleQuickReplySelect} isLoading={isLoading} />
-            )}
-            {showPresupuestoSlider && (
-              <PresupuestoSlider onSelect={handleQuickReplySelect} isLoading={isLoading} />
-            )}
-
-            {/* ✅ NUEVO: Presupuesto unificado */}
-            {showPresupuestoUnificado && (
-              <PresupuestoUnificado onSelect={handleQuickReplySelect} isLoading={isLoading} />
-            )}
-            
-            {/* ✅ Quick Replies (botones normales) */}
-            {currentQuickReplies && currentQuickReplies.length > 0 && (
-              <QuickReplies
-                options={currentQuickReplies}
-                onSelect={handleQuickReplySelect}
-                isLoading={isLoading}
-              />
-            )}
-            
-            {/* Input de texto */}
-            <ChatInput 
-              ref={chatInputRef} 
-              onSubmit={handleSendMessage} 
-              isLoading={isLoading} 
-            />
-          </div>
-        </div>
-      )}
+        )}
+      </div>
     </main>
-  );
-}
+  )};

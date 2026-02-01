@@ -195,26 +195,28 @@ export function PresupuestoUnificado({ onSelect, isLoading }: PresupuestoUnifica
       animate={{ opacity: 1, y: 0 }}
       className="space-y-4 mb-4"
     >
-      {/* Título */}
-      <div className="text-sm font-medium text-muted-foreground text-center">
-        ¿Cómo prefieres pagar el coche?
+      {/* Título Estilo Cápsula */}
+      <div className="flex justify-center">
+        <div className="text-sm font-semibold text-slate-800 text-center bg-white/80 backdrop-blur-sm py-1 px-4 rounded-full border border-white/20 shadow-sm">
+          ¿Cómo prefieres pagar el coche?
+        </div>
       </div>
 
       {/* Tabs de tipo de pago */}
-      <div className="flex gap-2 p-1 bg-muted/30 rounded-lg">
+      <div className="flex gap-2 p-1 bg-white/60 backdrop-blur-md rounded-lg border border-white/40 shadow-sm">
         <button
           onClick={() => {
             if (!isLoading) {
               setTipoSeleccionado("contado");
-              setRangoSeleccionado(null); // Reset selección
+              setRangoSeleccionado(null); 
             }
           }}
           disabled={isLoading}
           className={`
             flex-1 py-3 px-4 rounded-md font-semibold text-sm transition-all
             ${tipoSeleccionado === "contado"
-              ? "bg-background shadow-sm text-foreground"
-              : "text-muted-foreground hover:text-foreground"
+              ? "bg-[#082144] shadow-md text-white" // Activo: Azul Oscuro
+              : "text-slate-600 hover:text-slate-900 hover:bg-white/50" // Inactivo: Texto gris
             }
             disabled:opacity-50 disabled:cursor-not-allowed
           `}
@@ -229,15 +231,15 @@ export function PresupuestoUnificado({ onSelect, isLoading }: PresupuestoUnifica
           onClick={() => {
             if (!isLoading) {
               setTipoSeleccionado("financiado");
-              setRangoSeleccionado(null); // Reset selección
+              setRangoSeleccionado(null); 
             }
           }}
           disabled={isLoading}
           className={`
             flex-1 py-3 px-4 rounded-md font-semibold text-sm transition-all
             ${tipoSeleccionado === "financiado"
-              ? "bg-background shadow-sm text-foreground"
-              : "text-muted-foreground hover:text-foreground"
+              ? "bg-[#082144] shadow-md text-white"
+              : "text-slate-600 hover:text-slate-900 hover:bg-white/50"
             }
             disabled:opacity-50 disabled:cursor-not-allowed
           `}
@@ -256,12 +258,14 @@ export function PresupuestoUnificado({ onSelect, isLoading }: PresupuestoUnifica
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: 10 }}
-          className="text-xs text-muted-foreground text-center"
+          className="flex justify-center"
         >
-          {tipoSeleccionado === "contado"
-            ? "Selecciona el rango de tu presupuesto total"
-            : "Selecciona tu cuota mensual máxima"
-          }
+          <div className="text-xs text-slate-600 text-center bg-white/40 backdrop-blur-[1px] px-3 py-1 rounded-full">
+            {tipoSeleccionado === "contado"
+              ? "Selecciona el rango de tu presupuesto total"
+              : "Selecciona tu cuota mensual máxima"
+            }
+          </div>
         </motion.div>
       </AnimatePresence>
 
@@ -300,20 +304,20 @@ export function PresupuestoUnificado({ onSelect, isLoading }: PresupuestoUnifica
                   onMouseEnter={() => !isLoading && setHoveredIndex(index)}
                   onMouseLeave={() => setHoveredIndex(null)}
                   disabled={isLoading}
-                  className="relative flex flex-col items-center gap-2 p-2 rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+                  className="relative flex flex-col items-center gap-2 p-2 rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none"
                   whileHover={{ scale: isLoading ? 1 : 1.05 }}
                   whileTap={{ scale: isLoading ? 1 : 0.95 }}
                   initial={{ opacity: 0, scale: 0.8 }}
                   animate={{ opacity: 1, scale: 1 }}
                   transition={{ delay: index * 0.05 }}
                 >
-                  {/* Icono */}
+                  {/* Icono con fondo blanco */}
                   <motion.div
                     className={`
-                      w-12 h-12 rounded-full flex items-center justify-center border-2
-                      ${isActive ? rango.bgColor : "bg-gray-50"}
-                      ${isActive ? rango.borderColor : "border-gray-200"}
-                      ${isActive ? rango.color : "text-gray-400"}
+                      w-12 h-12 rounded-full flex items-center justify-center border-2 shadow-sm
+                      ${isActive ? rango.bgColor : "bg-white"}
+                      ${isActive ? rango.borderColor : "border-slate-200"}
+                      ${isActive ? rango.color : "text-slate-400"}
                       transition-all duration-200
                     `}
                     animate={{
@@ -328,17 +332,17 @@ export function PresupuestoUnificado({ onSelect, isLoading }: PresupuestoUnifica
                     <Icon className="w-6 h-6" strokeWidth={isActive ? 2.5 : 2} />
                   </motion.div>
 
-                  {/* Label */}
-                  <div className="text-center">
+                  {/* Label con fondo */}
+                  <div className="text-center bg-white/60 backdrop-blur-[2px] rounded-lg px-1 py-1">
                     <div
                       className={`
                         text-xs font-bold transition-colors
-                        ${isActive ? "text-foreground" : "text-muted-foreground"}
+                        ${isActive ? "text-[#082144]" : "text-slate-700"}
                       `}
                     >
                       {rango.label}
                     </div>
-                    <div className="text-[9px] text-muted-foreground leading-tight">
+                    <div className="text-[9px] text-slate-500 leading-tight">
                       {rango.description}
                     </div>
                   </div>
@@ -367,18 +371,18 @@ export function PresupuestoUnificado({ onSelect, isLoading }: PresupuestoUnifica
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
-            className="text-center p-3 bg-muted/50 rounded-lg"
+            className="text-center p-3 bg-white border border-slate-200 rounded-lg shadow-sm mx-4"
           >
             <div className="text-sm">
-              <span className="text-muted-foreground">Has seleccionado: </span>
-              <span className="font-semibold text-foreground">
+              <span className="text-slate-500">Has seleccionado: </span>
+              <span className="font-bold text-[#082144]">
                 {tipoSeleccionado === "contado" 
                   ? rangos.find(r => r.value === rangoSeleccionado)?.label + " €"
                   : rangos.find(r => r.value === rangoSeleccionado)?.label + "/mes"
                 }
               </span>
             </div>
-            <div className="text-xs text-muted-foreground mt-1">
+            <div className="text-xs text-slate-400 mt-1">
               {tipoSeleccionado === "contado" ? "Pago al contado" : "Cuota mensual"}
             </div>
           </motion.div>
@@ -391,10 +395,10 @@ export function PresupuestoUnificado({ onSelect, isLoading }: PresupuestoUnifica
           onClick={handleConfirmar}
           disabled={isLoading || rangoSeleccionado === null}
           className={`
-            px-6 py-3 rounded-lg font-semibold text-sm transition-all
+            px-6 py-3 rounded-lg font-semibold text-sm transition-all shadow-md
             ${rangoSeleccionado !== null && !isLoading
-              ? "bg-primary text-primary-foreground hover:bg-primary/90 shadow-md"
-              : "bg-muted text-muted-foreground cursor-not-allowed"
+              ? "bg-[#082144] text-white hover:bg-[#082144]/90"
+              : "bg-slate-200 text-slate-400 cursor-not-allowed"
             }
           `}
           whileHover={{ scale: rangoSeleccionado !== null && !isLoading ? 1.03 : 1 }}
@@ -409,7 +413,7 @@ export function PresupuestoUnificado({ onSelect, isLoading }: PresupuestoUnifica
         <motion.button
           onClick={() => onSelect("Prefiero indicar una cantidad específica")}
           disabled={isLoading}
-          className="px-4 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-muted/50 rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+          className="px-4 py-2 text-sm text-slate-600 bg-white border border-slate-200 shadow-sm hover:text-[#082144] hover:border-[#082144] hover:bg-slate-50 rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
           whileHover={{ scale: isLoading ? 1 : 1.03 }}
           whileTap={{ scale: isLoading ? 1 : 0.97 }}
         >

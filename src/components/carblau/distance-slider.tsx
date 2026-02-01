@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { Home, Building2, Route, MapPin } from "lucide-react";
-// O también puedes usar: Navigation, Route, Map
 
 interface DistanceSliderProps {
   onSelect: (distance: string) => void;
@@ -59,7 +58,6 @@ export function DistanceSlider({ onSelect, isLoading }: DistanceSliderProps) {
     setSelectedIndex(index);
     const option = DISTANCE_OPTIONS[index];
     
-    // Pequeño delay para que el usuario vea la selección antes de enviar
     setTimeout(() => {
       onSelect(option.value);
     }, 300);
@@ -71,17 +69,19 @@ export function DistanceSlider({ onSelect, isLoading }: DistanceSliderProps) {
       animate={{ opacity: 1, y: 0 }}
       className="space-y-4 mb-4"
     >
-      {/* Título */}
-      <div className="text-sm font-medium text-muted-foreground text-center">
-        Selecciona la distancia de tus trayectos habituales
+      {/* Título con fondo cápsula para leerse sobre el patrón */}
+      <div className="flex justify-center">
+        <div className="text-sm font-semibold text-slate-800 text-center bg-white/80 backdrop-blur-sm py-1 px-4 rounded-full border border-white/20 shadow-sm">
+          Selecciona la distancia de tus trayectos habituales
+        </div>
       </div>
 
       {/* Slider Container */}
       <div className="relative px-4 py-8">
-        {/* Línea de conexión - Gradiente */}
+        {/* Línea de conexión */}
         <div className="absolute top-1/2 left-8 right-8 h-1.5 bg-gradient-to-r from-green-300 via-blue-300 via-orange-300 to-purple-300 rounded-full -translate-y-1/2 opacity-40" />
 
-        {/* Línea de progreso (hasta la opción seleccionada) */}
+        {/* Línea de progreso */}
         {selectedIndex !== null && (
           <motion.div
             className="absolute top-1/2 left-8 h-1.5 bg-gradient-to-r from-green-500 via-blue-500 via-orange-500 to-purple-500 rounded-full -translate-y-1/2"
@@ -108,47 +108,43 @@ export function DistanceSlider({ onSelect, isLoading }: DistanceSliderProps) {
                 onMouseEnter={() => !isLoading && setHoveredIndex(index)}
                 onMouseLeave={() => setHoveredIndex(null)}
                 disabled={isLoading}
-                className="relative flex flex-col items-center gap-2 p-3 rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+                className="relative flex flex-col items-center gap-2 p-1 rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none"
                 whileHover={{ scale: isLoading ? 1 : 1.05 }}
                 whileTap={{ scale: isLoading ? 1 : 0.95 }}
               >
                 {/* Icono Container */}
                 <motion.div
                   className={`
-                    w-14 h-14 rounded-full flex items-center justify-center border-2
-                    ${isActive ? option.bgColor : "bg-gray-50"}
-                    ${isActive ? option.borderColor : "border-gray-200"}
-                    ${isActive ? option.color : "text-gray-400"}
+                    w-14 h-14 rounded-full flex items-center justify-center border-2 shadow-sm
+                    ${isActive ? option.bgColor : "bg-white"} // Inactivo: blanco sólido
+                    ${isActive ? option.borderColor : "border-slate-200"}
+                    ${isActive ? option.color : "text-slate-400"}
                     transition-all duration-200
                   `}
                   animate={{
                     scale: isActive ? 1.15 : 1,
                     rotate: isSelected ? [0, -10, 10, -10, 0] : 0,
                   }}
-                  transition={{
-                    scale: { duration: 0.2 },
-                    rotate: { duration: 0.5 },
-                  }}
                 >
                   <Icon className="w-7 h-7" strokeWidth={isActive ? 2.5 : 2} />
                 </motion.div>
 
                 {/* Label */}
-                <div className="text-center">
+                <div className="text-center bg-white/60 backdrop-blur-[2px] rounded-lg px-1 py-1">
                   <div
                     className={`
-                      text-xs font-semibold transition-colors
-                      ${isActive ? "text-foreground" : "text-muted-foreground"}
+                      text-xs font-bold transition-colors
+                      ${isActive ? "text-[#082144]" : "text-slate-600"}
                     `}
                   >
                     {option.label}
                   </div>
-                  <div className="text-[10px] text-muted-foreground leading-tight">
+                  <div className="text-[10px] text-slate-500 leading-tight">
                     {option.description}
                   </div>
                 </div>
 
-                {/* Indicador de selección (punto debajo) */}
+                {/* Indicador de selección */}
                 {isSelected && (
                   <motion.div
                     layoutId="selected-indicator"
@@ -169,11 +165,12 @@ export function DistanceSlider({ onSelect, isLoading }: DistanceSliderProps) {
         <motion.div
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="text-center p-3 bg-muted/50 rounded-lg"
+          // Fondo blanco sólido para tapar el patrón
+          className="text-center p-3 bg-white border border-slate-200 rounded-lg shadow-sm mx-4"
         >
           <div className="text-sm">
-            <span className="text-muted-foreground">Has seleccionado: </span>
-            <span className="font-semibold text-foreground">
+            <span className="text-slate-500">Has seleccionado: </span>
+            <span className="font-bold text-[#082144]">
               {DISTANCE_OPTIONS[selectedIndex].value}
             </span>
           </div>

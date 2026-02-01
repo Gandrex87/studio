@@ -34,7 +34,8 @@ export function WelcomeScreen({ onStartSession, isLoading }: WelcomeScreenProps)
       <div className="relative z-10 flex-grow flex flex-col items-center justify-center">
         <div className="w-2/3 max-w-xs md:max-w-sm mb-4">
           <img
-            src="/need.svg"
+            src="/logo2.png"
+            //src="/need.svg" // para NeedCarhelp
             alt="CarBlau AI Logo"
             width="576"
             height="476"
@@ -48,7 +49,8 @@ export function WelcomeScreen({ onStartSession, isLoading }: WelcomeScreenProps)
           size="lg" 
           onClick={onStartSession} 
           disabled={isLoading}
-          className="bg-[#fc7c04] hover:bg-[#0c1c3c] text-white transition-colors duration-300 shadow-lg shadow-orange-500/25 border-none text-lg font-bold px-5 py-3 h-auto"
+          //className="bg-[#fc7c04] hover:bg-[#0c1c3c] text-white transition-colors duration-300 shadow-lg shadow-orange-500/25 border-none text-lg font-bold px-5 py-3 h-auto" // Para nEEDcARHELP
+          className="bg-[#00aeef] hover:bg-[#0c1c3c] text-white transition-colors duration-300 shadow-lg shadow-[#00aeef]/25 border-none text-lg font-bold px-5 py-3 h-auto"
         >
           {isLoading && <Loader2 className="mr-2 h-5 w-5 animate-spin" />} {/* Ajusté un poco el icono también */}
           Inicia la conversación

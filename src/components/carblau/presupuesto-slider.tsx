@@ -105,13 +105,15 @@ export function PresupuestoSlider({ onSelect, isLoading }: PresupuestoSliderProp
       animate={{ opacity: 1, y: 0 }}
       className="space-y-4 mb-4"
     >
-      {/* Título */}
-      <div className="text-sm font-medium text-muted-foreground text-center">
-        Selecciona tu rango de presupuesto
+      {/* Título Estilo Cápsula */}
+      <div className="flex justify-center">
+        <div className="text-sm font-semibold text-slate-800 text-center bg-white/80 backdrop-blur-sm py-1 px-4 rounded-full border border-white/20 shadow-sm">
+          Selecciona tu rango de presupuesto
+        </div>
       </div>
 
-      {/* Slider Container - Ahora con scroll horizontal en mobile */}
-      <div className="relative px-4 py-8 overflow-x-auto">
+      {/* Slider Container */}
+      <div className="relative px-4 py-8 overflow-x-auto no-scrollbar">
         <div className="min-w-[800px] lg:min-w-0">
           {/* Línea de conexión */}
           <div className="absolute top-1/2 left-8 right-8 h-1.5 rounded-full -translate-y-1/2 opacity-40"
@@ -149,17 +151,17 @@ export function PresupuestoSlider({ onSelect, isLoading }: PresupuestoSliderProp
                   onMouseEnter={() => !isLoading && setHoveredIndex(index)}
                   onMouseLeave={() => setHoveredIndex(null)}
                   disabled={isLoading}
-                  className="relative flex flex-col items-center gap-2 p-2 rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+                  className="relative flex flex-col items-center gap-2 p-2 rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none"
                   whileHover={{ scale: isLoading ? 1 : 1.05 }}
                   whileTap={{ scale: isLoading ? 1 : 0.95 }}
                 >
-                  {/* Icono Container */}
+                  {/* Icono Container - Fondo blanco sólido */}
                   <motion.div
                     className={`
-                      w-12 h-12 rounded-full flex items-center justify-center border-2
-                      ${isActive ? option.bgColor : "bg-gray-50"}
-                      ${isActive ? option.borderColor : "border-gray-200"}
-                      ${isActive ? option.color : "text-gray-400"}
+                      w-12 h-12 rounded-full flex items-center justify-center border-2 shadow-sm
+                      ${isActive ? option.bgColor : "bg-white"} 
+                      ${isActive ? option.borderColor : "border-slate-200"}
+                      ${isActive ? option.color : "text-slate-400"}
                       transition-all duration-200
                     `}
                     animate={{
@@ -174,17 +176,17 @@ export function PresupuestoSlider({ onSelect, isLoading }: PresupuestoSliderProp
                     <Icon className="w-6 h-6" strokeWidth={isActive ? 2.5 : 2} />
                   </motion.div>
 
-                  {/* Label */}
-                  <div className="text-center">
+                  {/* Label con fondo para legibilidad */}
+                  <div className="text-center bg-white/60 backdrop-blur-[2px] rounded-lg px-1 py-1">
                     <div
                       className={`
                         text-xs font-bold transition-colors
-                        ${isActive ? "text-foreground" : "text-muted-foreground"}
+                        ${isActive ? "text-[#082144]" : "text-slate-700"}
                       `}
                     >
                       {option.label}
                     </div>
-                    <div className="text-[9px] text-muted-foreground leading-tight">
+                    <div className="text-[9px] text-slate-500 leading-tight">
                       {option.description}
                     </div>
                   </div>
@@ -211,7 +213,7 @@ export function PresupuestoSlider({ onSelect, isLoading }: PresupuestoSliderProp
         <motion.button
           onClick={() => onSelect("Prefiero indicar una cantidad específica")}
           disabled={isLoading}
-          className="px-4 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-muted/50 rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+          className="px-4 py-2 text-sm text-slate-600 bg-white border border-slate-200 shadow-sm hover:text-[#082144] hover:border-[#082144] hover:bg-slate-50 rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
           whileHover={{ scale: isLoading ? 1 : 1.03 }}
           whileTap={{ scale: isLoading ? 1 : 0.97 }}
         >
@@ -224,15 +226,15 @@ export function PresupuestoSlider({ onSelect, isLoading }: PresupuestoSliderProp
         <motion.div
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="text-center p-3 bg-muted/50 rounded-lg"
+          className="text-center p-3 bg-white border border-slate-200 rounded-lg shadow-sm mx-4"
         >
           <div className="text-sm">
-            <span className="text-muted-foreground">Has seleccionado: </span>
-            <span className="font-semibold text-foreground">
+            <span className="text-slate-500">Has seleccionado: </span>
+            <span className="font-bold text-[#082144]">
               {PRESUPUESTO_OPTIONS[selectedIndex].label} €
             </span>
           </div>
-          <div className="text-xs text-muted-foreground mt-1">
+          <div className="text-xs text-slate-400 mt-1">
             {PRESUPUESTO_OPTIONS[selectedIndex].subtitle}
           </div>
         </motion.div>
