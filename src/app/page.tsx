@@ -337,7 +337,7 @@ useEffect(() => {
       <div 
         className="absolute inset-0 z-0" 
         style={{
-          backgroundImage: "url('/fondo-pattern.png')",
+          backgroundImage: "url('/fondo-pattern.webp')",
           backgroundRepeat: "repeat", // Se repite como mosaico
           
           // 🔧 AQUÍ ESTÁ LA SOLUCIÓN DEL ZOOM:
