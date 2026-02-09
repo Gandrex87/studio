@@ -70,7 +70,7 @@ export const ChatInput = forwardRef<ChatInputHandle, ChatInputProps>(
                         fieldRef(e);
                         textareaRef.current = e;
                       }}
-                      placeholder="Cada detalle nos acerca tu coche ideal..."
+                      placeholder="Cada detalle nos acerca a tu coche ideal..."
                       rows={1}
                       // 🎨 ESTILOS NUEVOS:
                       // bg-white: Fondo blanco limpio.
