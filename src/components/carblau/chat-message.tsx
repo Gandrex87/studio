@@ -1,12 +1,14 @@
 "use client";
 
 import ReactMarkdown from 'react-markdown';
-import { User } from "lucide-react"; 
 import { cn } from "@/lib/utils";
+import { User, Loader2 } from "lucide-react"; // ✅ Añadir Loader2
+
 
 interface ChatMessageProps {
   role: "user" | "agent";
   content: string;
+  isStreaming?: boolean; 
 }
 
 // ═══════════════════════════════════════════════════════════════════
@@ -72,7 +74,8 @@ const CarCard = ({ markdownContent }: { markdownContent: string }) => {
 // ═══════════════════════════════════════════════════════════════════
 // COMPONENTE PRINCIPAL DEL MENSAJE
 // ═══════════════════════════════════════════════════════════════════
-export function ChatMessage({ role, content }: ChatMessageProps) {
+
+export function ChatMessage({ role, content, isStreaming = false }: ChatMessageProps) {
   const isAgent = role === "agent";
 
   const carCardRegex = /---\s*###([\s\S]*?)(?=\n---|\n*$)/g;
@@ -99,14 +102,13 @@ export function ChatMessage({ role, content }: ChatMessageProps) {
   return (
     <div className={cn("flex items-start gap-3", !isAgent && "justify-end")}>
       
-      {/* 🖼️ AVATAR DEL AGENTE (TU IMAGEN) */}
+      {/* 🖼️ AVATAR DEL AGENTE */}
       {isAgent && (
         <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white border border-gray-200 shadow-sm overflow-hidden">
-           {/* Aquí cargamos tu favicon */}
            <img 
              src="/favicon_cb.jpeg" 
              alt="CarBlau Agent" 
-             className="h-full w-full object-cover" // object-cover asegura que rellene el círculo sin deformarse
+             className="h-full w-full object-cover"
            />
         </div>
       )}
@@ -146,6 +148,14 @@ export function ChatMessage({ role, content }: ChatMessageProps) {
           )}>
             {outroText}
           </ReactMarkdown>
+        )}
+
+        {/* ✅ NUEVO: Indicador de streaming */}
+        {isStreaming && content.trim() === "" && (
+          <div className="flex items-center gap-2 text-slate-500">
+            <Loader2 className="w-4 h-4 animate-spin" />
+            <span className="text-sm">Escribiendo...</span>
+          </div>
         )}
       </div>
 
