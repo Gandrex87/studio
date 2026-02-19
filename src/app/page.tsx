@@ -319,8 +319,13 @@ const handleSendMessage = async (content: string) => {
       
 
       for (const line of lines) {
+        if (!line.trim()) continue;
+        
+        // Quitar prefijo SSE estándar
+        const data = line.startsWith('data: ') ? line.slice(6) : line;
+        
         try {
-          const event = JSON.parse(line);
+          const event = JSON.parse(data);
           console.log("📦 Evento recibido:", event.type);
       
           if (event.type === "progress") {
