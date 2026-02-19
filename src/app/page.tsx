@@ -328,17 +328,22 @@ const handleSendMessage = async (content: string) => {
             setCurrentProgressStatus(event.status); // ✅ NUEVO: Actualizar estado de progreso
           }
           else if (event.type === "complete") {
-            console.log("✅ Estado completo recibido:", event.messages.length, "mensajes");
+            console.log("✅ Mensajes nuevos recibidos:", event.messages.length);
             
-            setCurrentProgressStatus(null); // ✅ NUEVO: Limpiar progreso
+            setCurrentProgressStatus(null);
             
-            setMessages(event.messages.map((msg: any) => ({
-              id: msg.id,
-              role: msg.role,
-              content: msg.content,
-              additional_kwargs: msg.additional_kwargs,
-              isStreaming: false
-            })));
+            // Quitar placeholder vacío del agente y añadir mensajes reales
+            setMessages((prev) => {
+              const sinPlaceholder = prev.filter(m => m.id !== agentMessageId);
+              const nuevosMensajes = event.messages.map((msg: any) => ({
+                id: msg.id,
+                role: msg.role,
+                content: msg.content,
+                additional_kwargs: msg.additional_kwargs,
+                isStreaming: false
+              }));
+              return [...sinPlaceholder, ...nuevosMensajes];
+            });
           }
           else if (event.type === "done") {
             console.log("✅ Proceso completado");
