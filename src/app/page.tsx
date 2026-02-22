@@ -98,17 +98,18 @@ export default function Home() {
   // ═══════════════════════════════════════════════════════════════════
   
   const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ 
-      behavior: "smooth",
-      block: "end",
-      inline: "nearest"
-    });
-    
     if (scrollAreaRef.current) {
-      scrollAreaRef.current.scrollTop = scrollAreaRef.current.scrollHeight;
+      // requestAnimationFrame asegura que el DOM se haya actualizado con el nuevo texto
+      requestAnimationFrame(() => {
+        if (scrollAreaRef.current) {
+          scrollAreaRef.current.scrollTo({
+            top: scrollAreaRef.current.scrollHeight,
+            behavior: "auto" // "auto" evita que el streaming sature el móvil con animaciones
+          });
+        }
+      });
     }
   };
-
   useEffect(() => {
     scrollToBottom();
   }, [messages, isLoading]);
@@ -434,7 +435,7 @@ const handleSendMessage = async (content: string) => {
         style={{
           backgroundImage: "url('/fondo-pattern.webp')",
           backgroundRepeat: "repeat",
-          backgroundSize: "800px", 
+          backgroundSize: "1100px", 
           backgroundPosition: "top left",
           opacity: 1 
         }}
@@ -467,9 +468,9 @@ const handleSendMessage = async (content: string) => {
             </div>
 
             <div 
-              className="flex-1 overflow-y-auto overflow-x-hidden scroll-smooth"
-              ref={scrollAreaRef}
-            >
+                className="flex-1 overflow-y-auto overflow-x-hidden"
+                ref={scrollAreaRef}
+              >
               <div className="space-y-6 p-4 pb-20">
                 {messages.map((message) => {
                   const carPayload = message.additional_kwargs?.payload;
@@ -504,7 +505,7 @@ const handleSendMessage = async (content: string) => {
       {/* Avatar del agente */}
       <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white border border-gray-200 shadow-sm overflow-hidden">
         <img 
-          src="/favicon_cb.jpeg" 
+          src="/favicon_cb.webp" 
           alt="CarBlau Agent" 
           className="h-full w-full object-cover"
         />

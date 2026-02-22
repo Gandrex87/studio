@@ -273,7 +273,7 @@ export function CarResultsMessage({ data }: CarResultsMessageProps) {
       {/* 🖼️ AVATAR DEL AGENTE */}
       <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white border border-gray-200 shadow-sm overflow-hidden">
         <img 
-          src="/favicon_cb.jpeg" 
+          src="/favicon_cb.webp" 
           alt="CarBlau Agent" 
           className="h-full w-full object-cover" 
         />
