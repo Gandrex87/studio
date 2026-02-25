@@ -267,16 +267,6 @@ const handleSendMessage = async (content: string) => {
 
   // ✅ Crear mensaje vacío del agente para streaming
   const agentMessageId = `agent-${Date.now()}`;
-  const agentMessage: Message = {
-    id: agentMessageId,
-    role: "agent",
-    content: "",
-    isStreaming: true
-  };
-
-  // Agregar mensaje vacío del agente
-  setMessages((prev) => [...prev, agentMessage]);
-  setStreamingMessageId(agentMessageId);
 
   // Crear AbortController para poder cancelar
   abortControllerRef.current = new AbortController();
@@ -334,13 +324,9 @@ const handleSendMessage = async (content: string) => {
             setCurrentProgressStatus(event.status); // ✅ NUEVO: Actualizar estado de progreso
           }
           else if (event.type === "complete") {
-            console.log("✅ Mensajes nuevos recibidos:", event.messages.length);
-            
             setCurrentProgressStatus(null);
             
-            // Quitar placeholder vacío del agente y añadir mensajes reales
             setMessages((prev) => {
-              const sinPlaceholder = prev.filter(m => m.id !== agentMessageId);
               const nuevosMensajes = event.messages.map((msg: any) => ({
                 id: msg.id,
                 role: msg.role,
@@ -348,7 +334,7 @@ const handleSendMessage = async (content: string) => {
                 additional_kwargs: msg.additional_kwargs,
                 isStreaming: false
               }));
-              return [...sinPlaceholder, ...nuevosMensajes];
+              return [...prev, ...nuevosMensajes]; // Sin filtrar placeholder porque ya no existe
             });
           }
           else if (event.type === "done") {
@@ -492,7 +478,7 @@ const handleSendMessage = async (content: string) => {
                         key={message.id}
                         role={message.role}
                         content={message.content}
-                        isStreaming={message.isStreaming} // ✅ Pasar prop
+                        isStreaming={message.isStreaming && !currentProgressStatus} // ✅ Solo muestra "Escribiendo" si no hay progreso
                       />
                     );
                   }
