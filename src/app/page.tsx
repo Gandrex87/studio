@@ -294,7 +294,7 @@ const handleSendMessage = async (content: string) => {
     // ✅ Procesar el stream
     const reader = response.body.getReader();
     const decoder = new TextDecoder();
-    let accumulatedContent = "";
+    let buffer = ""; // ✅ CAMBIO: era "accumulatedContent", ahora es buffer acumulador
 
     while (true) {
       const { done, value } = await reader.read();
@@ -304,17 +304,19 @@ const handleSendMessage = async (content: string) => {
         break;
       }
 
-      // Decodificar el chunk
-      const chunk = decoder.decode(value, { stream: true });
-      const lines = chunk.split('\n').filter(line => line.trim() !== '');
-      
+      // ✅ CAMBIO: Acumular en buffer en lugar de procesar chunk directo
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split('\n');
+      buffer = lines.pop() || ""; // ✅ CAMBIO: guardar fragmento incompleto para el siguiente chunk
 
       for (const line of lines) {
         if (!line.trim()) continue;
         
         // Quitar prefijo SSE estándar
         const data = line.startsWith('data: ') ? line.slice(6) : line;
-        
+
+        // ✅ Ignorar líneas de keepalive (empiezan con ":")
+        if (data.startsWith(':')) continue;
         try {
           const event = JSON.parse(data);
           console.log("📦 Evento recibido:", event.type);
