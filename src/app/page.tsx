@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from "react";
 import { WelcomeScreen } from "@/components/carblau/welcome-screen";
 import { ChatMessage } from "@/components/carblau/chat-message";
 import { CarResultsMessage } from "@/components/carblau/car-results-message";
+import { CarComparisonTable } from "@/components/carblau/car-comparison-table";
 import { ChatInput, type ChatInputHandle } from "@/components/carblau/chat-input";
 import { QuickReplies } from "@/components/carblau/quick-replies";
 import { DistanceSlider } from "@/components/carblau/distance-slider";
@@ -32,6 +33,19 @@ interface Car {
   actionType?: string;
 }
 
+export interface CarComparisonData {
+  coches: { indice: number; nombre: string }[];
+  categorias: {
+    nombre: string;
+    icono: string;
+    filas: {
+      etiqueta: string;
+      valores: string[];
+      mejor_idx: number | null;
+    }[];
+  }[];
+}
+
 export interface CarRecommendationPayload {
   type: "car_recommendation";
   introText: string;
@@ -43,6 +57,8 @@ export interface QuickReplyConfig {
   type: "buttons" | "distance_slider" | "km_anuales_slider" | "pasajeros_slider" | "presupuesto_slider" | "presupuesto_unificado";
   options?: string[];
   field?: string;
+  multi_select?: boolean;
+  submit_label?: string;
 }
 
 export interface Message {
@@ -53,6 +69,7 @@ export interface Message {
     payload?: CarRecommendationPayload;
     quick_replies?: string[];
     quick_reply_config?: QuickReplyConfig;
+    car_comparison?: CarComparisonData;
   };
   isStreaming?: boolean; // ✅ NUEVO: Para indicador de "escribiendo..."
 }
@@ -415,6 +432,13 @@ const handleSendMessage = async (content: string) => {
   // RENDER (sin cambios significativos)
   // ═══════════════════════════════════════════════════════════════════
 
+  const lastAgentMessage =
+    messages.length > 0 && messages[messages.length - 1].role === "agent"
+      ? messages[messages.length - 1]
+      : null;
+  const lastQuickReplyConfig =
+    lastAgentMessage?.additional_kwargs?.quick_reply_config ?? null;
+
   return (
     <main className="flex flex-col h-screen relative overflow-hidden bg-background">
       
@@ -475,13 +499,18 @@ const handleSendMessage = async (content: string) => {
                       />
                     );
                   } else {
+                    const carComparison = message.additional_kwargs?.car_comparison;
                     return (
-                      <ChatMessage
-                        key={message.id}
-                        role={message.role}
-                        content={message.content}
-                        isStreaming={message.isStreaming && !currentProgressStatus} // ✅ Solo muestra "Escribiendo" si no hay progreso
-                      />
+                      <div key={message.id} className="flex flex-col gap-2">
+                        <ChatMessage
+                          role={message.role}
+                          content={message.content}
+                          isStreaming={message.isStreaming && !currentProgressStatus}
+                        />
+                        {carComparison && (
+                          <CarComparisonTable data={carComparison} />
+                        )}
+                      </div>
                     );
                   }
                 })}
@@ -546,9 +575,12 @@ const handleSendMessage = async (content: string) => {
               
               {currentQuickReplies && currentQuickReplies.length > 0 && (
                 <QuickReplies
+                  key={currentQuickReplies.join(",")}
                   options={currentQuickReplies}
                   onSelect={handleQuickReplySelect}
                   isLoading={isLoading}
+                  multiSelect={lastQuickReplyConfig?.multi_select}
+                  submitLabel={lastQuickReplyConfig?.submit_label}
                 />
               )}
               
