@@ -78,6 +78,7 @@ export const ChatInput = forwardRef<ChatInputHandle, ChatInputProps>(
                       }}
                       placeholder="Cada detalle nos acerca a tu coche..."
                       rows={1}
+                      enterKeyHint="send"
                       className="resize-none min-h-[50px] max-h-[120px] overflow-y-auto py-3 px-4 bg-white text-base text-slate-900 placeholder:text-slate-400 border-slate-200 shadow-sm rounded-2xl focus-visible:ring-[#082144] scrollbar-thin"
                       {...restOfField}
                       onChange={(e) => {

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { WelcomeScreen } from "@/components/carblau/welcome-screen";
 import { ChatMessage } from "@/components/carblau/chat-message";
 import { CarResultsMessage } from "@/components/carblau/car-results-message";
@@ -102,6 +103,7 @@ export default function Home() {
   const [streamingMessageId, setStreamingMessageId] = useState<string | null>(null);
   const [currentProgressStatus, setCurrentProgressStatus] = useState<string | null>(null);
   
+  const isMobile = useIsMobile();
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const chatInputRef = useRef<ChatInputHandle>(null);
@@ -132,10 +134,10 @@ export default function Home() {
   }, [messages, isLoading]);
 
   useEffect(() => {
-    if (messages.length > 0 && !isLoading && messages[messages.length - 1].role === 'agent') {
+    if (!isMobile && messages.length > 0 && !isLoading && messages[messages.length - 1].role === 'agent') {
       chatInputRef.current?.focus();
     }
-  }, [messages, isLoading]);
+  }, [messages, isLoading, isMobile]);
 
   useEffect(() => {
     if (messages.length > 0 && !isLoading) {
@@ -440,7 +442,7 @@ const handleSendMessage = async (content: string) => {
     lastAgentMessage?.additional_kwargs?.quick_reply_config ?? null;
 
   return (
-    <main className="flex flex-col h-screen relative overflow-hidden bg-background">
+    <main className="flex flex-col h-[100dvh] relative overflow-hidden bg-background">
       
       <div 
         className="absolute inset-0 z-0" 
@@ -479,8 +481,8 @@ const handleSendMessage = async (content: string) => {
               </Button>
             </div>
 
-            <div 
-                className="flex-1 overflow-y-auto overflow-x-hidden"
+            <div
+                className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden"
                 ref={scrollAreaRef}
               >
               <div className="space-y-6 p-4 pb-20">
@@ -545,7 +547,7 @@ const handleSendMessage = async (content: string) => {
               </div>
             </div>
             
-            <div className="sticky bottom-0 left-0 right-0 p-4 border-t border-white/20 space-y-3 bg-white/10 backdrop-blur-md z-10 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
+            <div className="shrink-0 p-4 pb-[max(1rem,env(safe-area-inset-bottom))] border-t border-white/20 space-y-3 bg-white/10 backdrop-blur-md z-10 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
               
               {showDistanceSlider && (
                 <DistanceSlider
