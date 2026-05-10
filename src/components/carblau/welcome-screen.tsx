@@ -1,4 +1,3 @@
-
 "use client";
 
 import { Button } from "@/components/ui/button";
@@ -11,31 +10,24 @@ interface WelcomeScreenProps {
 
 export function WelcomeScreen({ onStartSession, isLoading }: WelcomeScreenProps) {
   return (
-    // NOTA 1: Agregamos 'relative' y 'overflow-hidden' aquí
     <div className="relative overflow-hidden flex flex-col items-center justify-center h-full text-center p-4 bg-[#1C1714]">
       
-      {/* --- NUEVO FONDO: Orbes de luz difuminados --- */}
-      {/* Estos elementos son decorativos y están detrás del contenido (z-0) */}
-      
-      {/* Orbe Azul - Arriba a la derecha */}
+      {/* --- FONDO: Orbes de luz difuminados --- */}
       <div 
         className="absolute top-0 right-0 -mt-40 -mr-40 w-96 h-96 rounded-full bg-[#2aa8d8] opacity-60 filter blur-[96px] pointer-events-none z-0"
         aria-hidden="true"
       ></div>
       
-      {/* Orbe Naranja - Abajo a la izquierda (un poco más grande y sutil) */}
       <div 
         className="absolute bottom-0 left-0 -mb-60 -ml-40 w-[30rem] h-[30rem] rounded-full bg-[#fc7c04] opacity-40 filter blur-[96px] pointer-events-none z-0"
         aria-hidden="true"
       ></div>
 
       {/* --- CONTENIDO PRINCIPAL --- */}
-      {/* NOTA 2: Agregamos 'relative z-10' para asegurar que el contenido esté sobre el fondo */}
       <div className="relative z-10 flex-grow flex flex-col items-center justify-center">
         <div className="w-1/2 max-w-[200px] md:max-w-[240px] mb-4">
           <img
             src="/logo3.png"
-            //src="/need.svg" // para NeedCarhelp
             alt="CarBlau AI Logo"
             width="576"
             height="476"
@@ -52,25 +44,24 @@ export function WelcomeScreen({ onStartSession, isLoading }: WelcomeScreenProps)
           style={{ backgroundColor: "#ADD4D3" }}
           className="text-primary-foreground hover:opacity-90 text-md px-10 h-14 rounded-full transition-all shadow-xl shadow-primary/20 border-none font-semibold"
         >
-          {isLoading && <Loader2 className="mr-2 h-5 w-5 animate-spin" />} {/* Ajusté un poco el icono también */}
+          {isLoading && <Loader2 className="mr-2 h-5 w-5 animate-spin" />}
           Inicia la conversación
         </Button>
       </div>
 
       {/* --- FOOTER DE ICONOS --- */}
-      {/* NOTA 3: También agregamos 'relative z-10' aquí */}
-      <div className="relative z-10 w-full max-w-4xl mx-auto flex justify-center items-start gap-8 pb-8 pt-4">
-        <div className="flex flex-col items-center text-[#0c1c3c] max-w-xs group">
-          <Clock className="w-8 h-8 mb-2 transition-transform group-hover:scale-110 duration-300" />
-          <span className="font-semibold">Ahorra tiempo</span>
+      <div className="relative z-10 w-full max-w-4xl mx-auto flex justify-center items-start gap-6 pb-8 pt-2">
+        <div className="flex flex-col items-center text-[#F3EBDD] max-w-[100px] group">
+          <Clock className="w-7 h-7 mb-1.5 transition-transform group-hover:scale-110 duration-300" />
+          <span className="font-semibold text-[11px] leading-tight">Ahorra tiempo</span>
         </div>
-        <div className="flex flex-col items-center text-[#0c1c3c] max-w-xs group">
-          <Compass className="w-8 h-8 mb-2 transition-transform group-hover:scale-110 duration-300" />
-          <span className="font-semibold">Decide con independencia</span>
+        <div className="flex flex-col items-center text-[#F3EBDD] max-w-[100px] group">
+          <Compass className="w-7 h-7 mb-1.5 transition-transform group-hover:scale-110 duration-300" />
+          <span className="font-semibold text-[11px] leading-tight">Decide con independencia</span>
         </div>
-        <div className="flex flex-col items-center text-[#0c1c3c] max-w-xs group">
-          <Shield className="w-8 h-8 mb-2 transition-transform group-hover:scale-110 duration-300" />
-          <span className="font-semibold">Compra con seguridad</span>
+        <div className="flex flex-col items-center text-[#F3EBDD] max-w-[100px] group">
+          <Shield className="w-7 h-7 mb-1.5 transition-transform group-hover:scale-110 duration-300" />
+          <span className="font-semibold text-[11px] leading-tight">Compra con seguridad</span>
         </div>
       </div>
     </div>
