@@ -81,6 +81,26 @@ export interface Message {
 // ═══════════════════════════════════════════════════════════════════
 
 
+const CLAVE_THREAD = "carblau_thread_id";
+
+// sessionStorage puede no estar disponible (modo privado, bloqueado): nunca rompe la app
+function leerThreadGuardado(): string | null {
+  try {
+    return sessionStorage.getItem(CLAVE_THREAD);
+  } catch {
+    return null;
+  }
+}
+
+function guardarThread(threadId: string | null) {
+  try {
+    if (threadId) sessionStorage.setItem(CLAVE_THREAD, threadId);
+    else sessionStorage.removeItem(CLAVE_THREAD);
+  } catch {
+    /* sin persistencia: la conversación se pierde al recargar, como antes */
+  }
+}
+
 // ═══════════════════════════════════════════════════════════════════
 // COMPONENTE PRINCIPAL
 // ═══════════════════════════════════════════════════════════════════
@@ -111,6 +131,37 @@ export default function Home() {
 
   // ✅ NUEVO: Ref para abortar streaming
   const abortControllerRef = useRef<AbortController | null>(null);
+
+  // Mientras se intenta recuperar una conversación guardada (recarga de página)
+  const [restaurando, setRestaurando] = useState(true);
+
+  // ═══════════════════════════════════════════════════════════════════
+  // RECUPERAR CONVERSACIÓN AL RECARGAR
+  // El thread_id vive en sessionStorage: sobrevive a recargar la página,
+  // no a cerrar la pestaña. Si caducó en el backend (404), se empieza de cero.
+  // ═══════════════════════════════════════════════════════════════════
+  useEffect(() => {
+    const guardado = leerThreadGuardado();
+    if (!guardado) {
+      setRestaurando(false);
+      return;
+    }
+    (async () => {
+      try {
+        const response = await fetch(`${API_BASE_URL}/conversation/${guardado}/messages`);
+        if (!response.ok) throw new Error(`status ${response.status}`);
+        const data = await response.json();
+        setThreadId(data.thread_id);
+        setMessages(data.messages);
+        setSessionStarted(true);
+      } catch (error) {
+        console.log("ℹ️ No se pudo recuperar la conversación guardada:", error);
+        guardarThread(null);
+      } finally {
+        setRestaurando(false);
+      }
+    })();
+  }, []);
 
   // ═══════════════════════════════════════════════════════════════════
   // EFFECTS (sin cambios en estos)
@@ -246,6 +297,7 @@ export default function Home() {
       console.log("📥 Inicio de sesión - datos recibidos:", data);
       
       setThreadId(data.thread_id);
+      guardarThread(data.thread_id);
       setMessages(data.messages);
       setSessionStarted(true);
       
@@ -430,6 +482,7 @@ const handleSendMessage = async (content: string) => {
     
     setSessionStarted(false);
     setThreadId(null);
+    guardarThread(null);
     setMessages([]);
     setIsLoading(false);
     setStreamingMessageId(null);
@@ -468,7 +521,11 @@ const handleSendMessage = async (content: string) => {
       />
 
       <div className="relative z-10 flex flex-col h-full">
-        {!sessionStarted ? (
+        {restaurando ? (
+          <div className="flex h-full items-center justify-center">
+            <Loader2 className="h-8 w-8 animate-spin text-[#082144]" />
+          </div>
+        ) : !sessionStarted ? (
           <WelcomeScreen onStartSession={handleStartSession} isLoading={isLoading} />
         ) : (
           <div className="flex flex-col h-full w-full max-w-3xl mx-auto">
