@@ -16,6 +16,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import type { CarRecommendationPayload } from "@/app/page";
+import { API_BASE_URL } from "@/lib/config";
 
 // Actualiza el tipo para incluir los nuevos campos
 type CarData = CarRecommendationPayload['cars'][0] & {
@@ -28,7 +29,6 @@ interface CarResultsMessageProps {
   data: CarRecommendationPayload;
 }
 
-const API_BASE_URL = "https://carblau-agent-api-v4-1063747381969.europe-west1.run.app";
 
 const EMAIL_VALIDO = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 

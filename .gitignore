@@ -17,11 +17,8 @@
 /.next/
 /out/
 env
-Dockerfile
 firebase.json
 nginx.conf
-next.config.ts
-package-lock.json
 
 # production
 /build

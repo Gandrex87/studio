@@ -17,6 +17,7 @@ import { TypingIndicator } from "@/components/carblau/typing-indicator";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { RotateCw, Loader2 } from "lucide-react";
+import { API_BASE_URL } from "@/lib/config";
 
 // ═══════════════════════════════════════════════════════════════════
 // INTERFACES (sin cambios)
@@ -79,7 +80,6 @@ export interface Message {
 // CONFIGURACIÓN (sin cambios)
 // ═══════════════════════════════════════════════════════════════════
 
-const API_BASE_URL = "https://carblau-agent-api-v4-1063747381969.europe-west1.run.app";
 
 // ═══════════════════════════════════════════════════════════════════
 // COMPONENTE PRINCIPAL
