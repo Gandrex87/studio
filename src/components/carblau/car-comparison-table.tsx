@@ -68,21 +68,28 @@ export function CarComparisonTable({ data }: { data: CarComparisonData }) {
                     </td>
                     {fila.valores.map((valor, valorIdx) => {
                       const isWinner = fila.mejor_idx === valorIdx;
+                      const isLongText = valor.length > 40;
                       return (
                         <td
                           key={valorIdx}
-                          className={`px-4 py-3 text-center whitespace-nowrap border-t border-stone-100 ${
+                          className={`px-4 py-3 border-t border-stone-100 align-middle ${
+                            isLongText ? "text-left" : "text-center"
+                          } ${
                             isWinner
                               ? "bg-[#ADD4D3] text-slate-900 font-semibold"
                               : "text-slate-600"
                           }`}
                         >
-                          <span className="inline-flex items-center justify-center gap-1.5">
+                          <div
+                            className={`max-w-[200px] sm:max-w-[280px] ${
+                              isLongText ? "leading-snug" : "inline-block"
+                            }`}
+                          >
                             {valor}
                             {isWinner && (
-                              <Check className="h-3.5 w-3.5 stroke-[3] text-slate-900" />
+                              <Check className="inline-block h-3.5 w-3.5 stroke-[3] ml-1.5 -translate-y-px" />
                             )}
-                          </span>
+                          </div>
                         </td>
                       );
                     })}

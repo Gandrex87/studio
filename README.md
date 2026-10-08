@@ -45,6 +45,7 @@ gcloud run deploy my-frontend-app \
 
   https://my-frontend-app-1063747381969.europe-west1.run.app
   
+  
 
 ## Dominio Personalizado (Recomendado)
 bash# 1. Mapear dominio personalizado
