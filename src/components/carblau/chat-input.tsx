@@ -16,10 +16,11 @@ interface ChatInputProps {
 
 export interface ChatInputHandle {
   focus: () => void;
+  setText: (text: string) => void;
 }
 
 const formSchema = z.object({
-  message: z.string().min(1, "Message cannot be empty."),
+  message: z.string().trim().min(1, "Escribe un mensaje."),
 });
 
 type FormData = z.infer<typeof formSchema>;
@@ -37,6 +38,11 @@ export const ChatInput = forwardRef<ChatInputHandle, ChatInputProps>(
 
     useImperativeHandle(ref, () => ({
       focus: () => {
+        textareaRef.current?.focus();
+      },
+      // Devuelve un mensaje no enviado (error de red/backend) a la caja de texto
+      setText: (text: string) => {
+        form.setValue("message", text, { shouldValidate: true });
         textareaRef.current?.focus();
       },
     }));
@@ -106,7 +112,7 @@ export const ChatInput = forwardRef<ChatInputHandle, ChatInputProps>(
             className="h-[50px] w-[50px] rounded-full bg-[#082144] hover:bg-[#082144]/90 text-white shadow-md transition-all shrink-0"
           >
             <SendHorizonal className="h-5 w-5 ml-0.5" />
-            <span className="sr-only">Send</span>
+            <span className="sr-only">Enviar</span>
           </Button>
         </form>
       </Form>

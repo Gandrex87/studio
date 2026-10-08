@@ -160,6 +160,18 @@ const RANGOS_FINANCIADO: RangoPresupuesto[] = [
   },
 ];
 
+// Miles con punto siempre (toLocaleString("es-ES") no agrupa los de 4 cifras: 1000).
+// Mismo formato que texto_presupuesto() del backend.
+function formatearMiles(n: number): string {
+  return String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+}
+
+export function textoPresupuesto(tipo: TipoPago, importe: number): string {
+  return tipo === "contado"
+    ? `💰 Al contado · hasta ${formatearMiles(importe)} €`
+    : `💳 Financiado · hasta ${formatearMiles(importe)} €/mes`;
+}
+
 export function PresupuestoUnificado({ onSelect, isLoading }: PresupuestoUnificadoProps) {
   const [tipoSeleccionado, setTipoSeleccionado] = useState<TipoPago>("contado");
   const [rangoSeleccionado, setRangoSeleccionado] = useState<number | null>(null);
@@ -171,17 +183,9 @@ export function PresupuestoUnificado({ onSelect, isLoading }: PresupuestoUnifica
   const handleConfirmar = () => {
     if (isLoading || rangoSeleccionado === null) return;
 
-    // Construir objeto de datos
-    const data = {
-      tipo: tipoSeleccionado,
-      ...(tipoSeleccionado === "contado" 
-        ? { pago_contado: rangoSeleccionado } 
-        : { cuota_max: rangoSeleccionado }
-      )
-    };
-
-    // Enviar como JSON string
-    onSelect(JSON.stringify(data));
+    // Se envía (y se muestra en la burbuja del usuario) el texto legible.
+    // El backend lo interpreta de forma determinista (interpretar_presupuesto).
+    onSelect(textoPresupuesto(tipoSeleccionado, rangoSeleccionado));
   };
 
   const handleRangoSelect = (value: number) => {

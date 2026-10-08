@@ -30,6 +30,8 @@ interface CarResultsMessageProps {
 
 const API_BASE_URL = "https://carblau-agent-api-v4-1063747381969.europe-west1.run.app";
 
+const EMAIL_VALIDO = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+
 function cleanCarName(name: string) {
   return name.replace(/^\d+\.\s*/, "");
 }
@@ -79,43 +81,49 @@ const CarCard = ({ car }: { car: CarData }) => {
       });
       
     } catch (error) {
-      console.error("Error:", error);
-      setShowContactForm(true);
+      // Sin lead_id el formulario no podría guardar nada: avisar en vez de
+      // abrirlo (antes se abría, se "enviaba" y los datos se perdían).
+      console.error("Error capturando lead:", error);
+      toast({
+        variant: "destructive",
+        title: "No hemos podido registrar tu interés",
+        description: "Inténtalo de nuevo en unos segundos."
+      });
     }
   };
 
   const handleSubmitContact = async () => {
-    if (!contactData.email) {
+    const email = contactData.email.trim();
+    if (!EMAIL_VALIDO.test(email)) {
       toast({
         variant: "destructive",
-        title: "Email requerido",
-        description: "Por favor ingresa tu email para continuar."
+        title: "Revisa tu email",
+        description: "Introduce un email válido para que podamos contactarte."
       });
       return;
     }
+    if (!leadId) return;  // el formulario solo se abre con un lead registrado
 
     setIsSubmitting(true);
     
     try {
-      if (leadId) {
-        const response = await fetch(`${API_BASE_URL}/api/lead/contact`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            lead_id: leadId,
-            email: contactData.email,
-            nombre: contactData.nombre,
-            telefono: contactData.telefono
-          })
-        });
+      const response = await fetch(`${API_BASE_URL}/api/lead/contact`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          lead_id: leadId,
+          email,
+          nombre: contactData.nombre,
+          telefono: contactData.telefono
+        })
+      });
 
-        if (!response.ok) throw new Error("Error enviando contacto");
-        
-        toast({
-          title: "¡Datos enviados!",
-          description: "El concesionario se pondrá en contacto contigo pronto.",
-        });
-      }
+      if (!response.ok) throw new Error("Error enviando contacto");
+      
+      toast({
+        title: "¡Datos enviados!",
+        description: "El concesionario se pondrá en contacto contigo pronto.",
+      });
       
       setShowContactForm(false);
       setContactData({ email: "", nombre: "", telefono: "" });

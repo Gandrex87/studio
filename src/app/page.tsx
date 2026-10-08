@@ -253,8 +253,8 @@ export default function Home() {
       console.error("Error starting session:", error);
       toast({
         variant: "destructive",
-        title: "Error Starting Session",
-        description: "Could not start a new session. Please try again later."
+        title: "No hemos podido iniciar la conversación",
+        description: "Inténtalo de nuevo en unos segundos."
       });
     } finally {
       setIsLoading(false);
@@ -314,6 +314,8 @@ const handleSendMessage = async (content: string) => {
     const reader = response.body.getReader();
     const decoder = new TextDecoder();
     let buffer = ""; // ✅ CAMBIO: era "accumulatedContent", ahora es buffer acumulador
+    let recibioRespuesta = false;
+    let errorBackend = false;
 
     while (true) {
       const { done, value } = await reader.read();
@@ -336,39 +338,47 @@ const handleSendMessage = async (content: string) => {
 
         // ✅ Ignorar líneas de keepalive (empiezan con ":")
         if (data.startsWith(':')) continue;
+
+        // Solo el parseo va en try/catch: un evento "error" del backend NO
+        // debe tragarse aquí (antes acababa en este catch como un simple warn).
+        let event: any;
         try {
-          const event = JSON.parse(data);
-          console.log("📦 Evento recibido:", event.type);
-      
-          if (event.type === "progress") {
-            console.log(`🔄 ${event.status}`);
-            setCurrentProgressStatus(event.status); // ✅ NUEVO: Actualizar estado de progreso
-          }
-          else if (event.type === "complete") {
-            setCurrentProgressStatus(null);
-            
-            setMessages((prev) => {
-              const nuevosMensajes = event.messages.map((msg: any) => ({
-                id: msg.id,
-                role: msg.role,
-                content: msg.content,
-                additional_kwargs: msg.additional_kwargs,
-                isStreaming: false
-              }));
-              return [...prev, ...nuevosMensajes]; // Sin filtrar placeholder porque ya no existe
-            });
-          }
-          else if (event.type === "done") {
-            console.log("✅ Proceso completado");
-          }
-          else if (event.type === "error") {
-            throw new Error(event.message);
-          }
+          event = JSON.parse(data);
         } catch (parseError) {
           console.warn("⚠️ Error parseando línea:", line, parseError);
+          continue;
+        }
+        console.log("📦 Evento recibido:", event.type);
+
+        if (event.type === "progress") {
+          setCurrentProgressStatus(event.status);
+        }
+        else if (event.type === "complete") {
+          recibioRespuesta = true;
+          setCurrentProgressStatus(null);
+
+          setMessages((prev) => {
+            const nuevosMensajes = event.messages.map((msg: any) => ({
+              id: msg.id,
+              role: msg.role,
+              content: msg.content,
+              additional_kwargs: msg.additional_kwargs,
+              isStreaming: false
+            }));
+            return [...prev, ...nuevosMensajes];
+          });
+        }
+        else if (event.type === "error") {
+          console.error("❌ Error del backend:", event.message);
+          errorBackend = true;
         }
       }
     } // ✅ AQUÍ CIERRA EL WHILE
+
+    // Error del agente, o el stream se cortó sin traer respuesta
+    if (!recibioRespuesta) {
+      throw new Error(errorBackend ? "Error del agente" : "El stream terminó sin respuesta");
+    }
 
     // ✅ Marcar streaming como completado (DESPUÉS del while)
     setMessages((prev) =>
@@ -387,14 +397,16 @@ const handleSendMessage = async (content: string) => {
       
       toast({
         variant: "destructive",
-        title: "Error Sending Message",
-        description: "Could not send your message."
+        title: "No hemos podido responder",
+        description: "Ha habido un problema técnico. Tu mensaje sigue en la caja de texto: vuelve a enviarlo en unos segundos."
       });
       
-      // Revertir mensajes en caso de error
+      // Quitar el mensaje de la conversación y devolverlo a la caja de texto
+      // para que el usuario pueda reenviarlo sin reescribirlo
       setMessages(prev => 
         prev.filter(m => m.id !== userMessage.id && m.id !== agentMessageId)
       );
+      chatInputRef.current?.setText(content);
     }
   } finally {
     setIsLoading(false);
