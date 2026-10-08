@@ -5,7 +5,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { WelcomeScreen } from "@/components/carblau/welcome-screen";
 import { ChatMessage } from "@/components/carblau/chat-message";
 import { CarResultsMessage } from "@/components/carblau/car-results-message";
-import { CarComparisonTable } from "@/components/carblau/car-comparison-table";
+import { CarComparisonTable, type CarComparisonData } from "@/components/carblau/car-comparison-table";
 import { ChatInput, type ChatInputHandle } from "@/components/carblau/chat-input";
 import { QuickReplies } from "@/components/carblau/quick-replies";
 import { DistanceSlider } from "@/components/carblau/distance-slider";
@@ -35,19 +35,6 @@ interface Car {
   actionType?: string;
 }
 
-export interface CarComparisonData {
-  coches: { indice: number; nombre: string }[];
-  categorias: {
-    nombre: string;
-    icono: string;
-    filas: {
-      etiqueta: string;
-      valores: string[];
-      mejor_idx: number | null;
-    }[];
-  }[];
-}
-
 export interface CarRecommendationPayload {
   type: "car_recommendation";
   introText: string;
@@ -73,7 +60,6 @@ export interface Message {
     quick_reply_config?: QuickReplyConfig;
     car_comparison?: CarComparisonData;
   };
-  isStreaming?: boolean; // ✅ NUEVO: Para indicador de "escribiendo..."
 }
 
 // ═══════════════════════════════════════════════════════════════════
@@ -111,16 +97,7 @@ export default function Home() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   
-  // Estados para UI dinámica (sin cambios)
-  const [currentQuickReplies, setCurrentQuickReplies] = useState<string[] | null>(null);
-  const [showDistanceSlider, setShowDistanceSlider] = useState(false);
-  const [showKmAnualesSlider, setShowKmAnualesSlider] = useState(false);
-  const [showPasajerosSlider, setShowPasajerosSlider] = useState(false);
-  const [showPresupuestoSlider, setShowPresupuestoSlider] = useState(false);
-  const [showPresupuestoUnificado, setShowPresupuestoUnificado] = useState(false);
-  
-  // ✅ NUEVO: Estado para mensaje en streaming
-  const [streamingMessageId, setStreamingMessageId] = useState<string | null>(null);
+  // Texto de progreso que manda el backend mientras procesa ("Buscando coches...")
   const [currentProgressStatus, setCurrentProgressStatus] = useState<string | null>(null);
   
   const isMobile = useIsMobile();
@@ -190,91 +167,6 @@ export default function Home() {
     }
   }, [messages, isLoading, isMobile]);
 
-  useEffect(() => {
-    if (messages.length > 0 && !isLoading) {
-      const lastMessage = messages[messages.length - 1];
-      
-      if (lastMessage.role === 'agent') {
-        const quickReplyConfig = lastMessage.additional_kwargs?.quick_reply_config;
-        
-        if (quickReplyConfig) {
-          const uiType = quickReplyConfig.type;
-          
-          if (uiType === 'distance_slider') {
-            setShowDistanceSlider(true);
-            setShowKmAnualesSlider(false);
-            setShowPasajerosSlider(false);
-            setShowPresupuestoSlider(false);
-            setShowPresupuestoUnificado(false);
-            setCurrentQuickReplies(null);
-          } else if (uiType === 'km_anuales_slider') {
-            setShowDistanceSlider(false);
-            setShowKmAnualesSlider(true);
-            setShowPasajerosSlider(false);
-            setShowPresupuestoSlider(false);
-            setShowPresupuestoUnificado(false);
-            setCurrentQuickReplies(null);
-          } else if (uiType === 'pasajeros_slider') {
-            setShowDistanceSlider(false);
-            setShowKmAnualesSlider(false);
-            setShowPasajerosSlider(true);
-            setShowPresupuestoSlider(false);
-            setShowPresupuestoUnificado(false);
-            setCurrentQuickReplies(null);
-          } else if (uiType === 'presupuesto_slider') {
-            setShowDistanceSlider(false);
-            setShowKmAnualesSlider(false);
-            setShowPasajerosSlider(false);
-            setShowPresupuestoSlider(true);
-            setShowPresupuestoUnificado(false);
-            setCurrentQuickReplies(null);
-          } else if (uiType === 'presupuesto_unificado') {
-            setShowDistanceSlider(false);
-            setShowKmAnualesSlider(false);
-            setShowPasajerosSlider(false);
-            setShowPresupuestoSlider(false);
-            setShowPresupuestoUnificado(true);
-            setCurrentQuickReplies(null);
-          } else if (uiType === 'buttons' && quickReplyConfig.options) {
-            setShowDistanceSlider(false);
-            setShowKmAnualesSlider(false);
-            setShowPasajerosSlider(false);
-            setShowPresupuestoSlider(false);
-            setShowPresupuestoUnificado(false);
-            setCurrentQuickReplies(quickReplyConfig.options);
-          } else {
-            setShowDistanceSlider(false);
-            setShowKmAnualesSlider(false);
-            setShowPasajerosSlider(false);
-            setShowPresupuestoSlider(false);
-            setShowPresupuestoUnificado(false);
-            setCurrentQuickReplies(null);
-          }
-        } else {
-          setShowDistanceSlider(false);
-          setShowKmAnualesSlider(false);
-          setShowPasajerosSlider(false);
-          setShowPresupuestoSlider(false);
-          setShowPresupuestoUnificado(false);
-          setCurrentQuickReplies(null);
-        }
-      } else {
-        setShowDistanceSlider(false);
-        setShowKmAnualesSlider(false);
-        setShowPasajerosSlider(false);
-        setShowPresupuestoSlider(false);
-        setShowPresupuestoUnificado(false);
-        setCurrentQuickReplies(null);
-      }
-    } else {
-      setShowDistanceSlider(false);
-      setShowKmAnualesSlider(false);
-      setShowPasajerosSlider(false);
-      setShowPresupuestoSlider(false);
-      setShowPresupuestoUnificado(false);
-      setCurrentQuickReplies(null);
-    }
-  }, [messages, isLoading]);
 
   // ═══════════════════════════════════════════════════════════════════
   // HANDLERS
@@ -320,9 +212,6 @@ const handleSendMessage = async (content: string) => {
     return;
   }
 
-  // Limpiar quick replies inmediatamente
-  setCurrentQuickReplies(null);
-
   // Mensaje del usuario
   const userMessage: Message = {
     id: `user-${Date.now()}`,
@@ -335,9 +224,6 @@ const handleSendMessage = async (content: string) => {
   // Actualización optimista del mensaje del usuario
   setMessages((prev) => [...prev, userMessage]);
   setIsLoading(true);
-
-  // ✅ Crear mensaje vacío del agente para streaming
-  const agentMessageId = `agent-${Date.now()}`;
 
   // Crear AbortController para poder cancelar
   abortControllerRef.current = new AbortController();
@@ -415,7 +301,6 @@ const handleSendMessage = async (content: string) => {
               role: msg.role,
               content: msg.content,
               additional_kwargs: msg.additional_kwargs,
-              isStreaming: false
             }));
             return [...prev, ...nuevosMensajes];
           });
@@ -432,15 +317,6 @@ const handleSendMessage = async (content: string) => {
       throw new Error(errorBackend ? "Error del agente" : "El stream terminó sin respuesta");
     }
 
-    // ✅ Marcar streaming como completado (DESPUÉS del while)
-    setMessages((prev) =>
-      prev.map((msg) =>
-        msg.id === agentMessageId
-          ? { ...msg, isStreaming: false }
-          : msg
-      )
-    );
-
   } catch (error: any) {
     if (error.name === 'AbortError') {
       console.log("🛑 Streaming cancelado");
@@ -456,13 +332,12 @@ const handleSendMessage = async (content: string) => {
       // Quitar el mensaje de la conversación y devolverlo a la caja de texto
       // para que el usuario pueda reenviarlo sin reescribirlo
       setMessages(prev => 
-        prev.filter(m => m.id !== userMessage.id && m.id !== agentMessageId)
+        prev.filter(m => m.id !== userMessage.id)
       );
       chatInputRef.current?.setText(content);
     }
   } finally {
     setIsLoading(false);
-    setStreamingMessageId(null);
     setCurrentProgressStatus(null);
     abortControllerRef.current = null;
   }
@@ -485,14 +360,7 @@ const handleSendMessage = async (content: string) => {
     guardarThread(null);
     setMessages([]);
     setIsLoading(false);
-    setStreamingMessageId(null);
     setCurrentProgressStatus(null);
-    setCurrentQuickReplies(null);
-    setShowDistanceSlider(false);
-    setShowKmAnualesSlider(false);
-    setShowPasajerosSlider(false);
-    setShowPresupuestoSlider(false);
-    setShowPresupuestoUnificado(false);
   };
 
   // ═══════════════════════════════════════════════════════════════════
@@ -505,6 +373,11 @@ const handleSendMessage = async (content: string) => {
       : null;
   const lastQuickReplyConfig =
     lastAgentMessage?.additional_kwargs?.quick_reply_config ?? null;
+
+  // Widget de respuesta: se deriva del último mensaje del agente (antes, 5
+  // booleanos sincronizados a mano en un useEffect). Oculto mientras carga.
+  const widget = !isLoading && lastQuickReplyConfig ? lastQuickReplyConfig.type : null;
+  const opcionesBotones = widget === "buttons" ? lastQuickReplyConfig?.options ?? [] : [];
 
   return (
     <main className="flex flex-col h-[100dvh] relative overflow-hidden bg-background">
@@ -576,7 +449,6 @@ const handleSendMessage = async (content: string) => {
                         <ChatMessage
                           role={message.role}
                           content={message.content}
-                          isStreaming={message.isStreaming && !currentProgressStatus}
                         />
                         {carComparison && (
                           <CarComparisonTable data={carComparison} />
@@ -618,36 +490,36 @@ const handleSendMessage = async (content: string) => {
             
             <div className="shrink-0 p-4 pb-[max(1rem,env(safe-area-inset-bottom))] border-t border-white/20 space-y-3 bg-white/10 backdrop-blur-md z-10 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
               
-              {showDistanceSlider && (
+              {widget === "distance_slider" && (
                 <DistanceSlider
                   onSelect={handleQuickReplySelect}
                   isLoading={isLoading}
                 />
               )}
 
-              {showKmAnualesSlider && (
+              {widget === "km_anuales_slider" && (
                 <KmAnualesSlider
                   onSelect={handleQuickReplySelect}
                   isLoading={isLoading}
                 />
               )}
 
-              {showPasajerosSlider && (
+              {widget === "pasajeros_slider" && (
                 <PasajerosSlider onSelect={handleQuickReplySelect} isLoading={isLoading} />
               )}
               
-              {showPresupuestoSlider && (
+              {widget === "presupuesto_slider" && (
                 <PresupuestoSlider onSelect={handleQuickReplySelect} isLoading={isLoading} />
               )}
 
-              {showPresupuestoUnificado && (
+              {widget === "presupuesto_unificado" && (
                 <PresupuestoUnificado onSelect={handleQuickReplySelect} isLoading={isLoading} />
               )}
               
-              {currentQuickReplies && currentQuickReplies.length > 0 && (
+              {opcionesBotones.length > 0 && (
                 <QuickReplies
-                  key={currentQuickReplies.join(",")}
-                  options={currentQuickReplies}
+                  key={opcionesBotones.join(",")}
+                  options={opcionesBotones}
                   onSelect={handleQuickReplySelect}
                   isLoading={isLoading}
                   multiSelect={lastQuickReplyConfig?.multi_select}
