@@ -241,7 +241,14 @@ const handleSendMessage = async (content: string) => {
     });
 
     if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+      // 429 (límite de uso) / 413 (mensaje largo): el backend explica qué pasa
+      let detalle = "";
+      try {
+        detalle = (await response.json())?.detail ?? "";
+      } catch { /* sin cuerpo JSON */ }
+      const error: any = new Error(`HTTP ${response.status}`);
+      if (response.status === 429 || response.status === 413) error.detalleUsuario = detalle;
+      throw error;
     }
 
     if (!response.body) {
@@ -326,7 +333,8 @@ const handleSendMessage = async (content: string) => {
       toast({
         variant: "destructive",
         title: "No hemos podido responder",
-        description: "Ha habido un problema técnico. Tu mensaje sigue en la caja de texto: vuelve a enviarlo en unos segundos."
+        description: error.detalleUsuario
+          || "Ha habido un problema técnico. Tu mensaje sigue en la caja de texto: vuelve a enviarlo en unos segundos."
       });
       
       // Quitar el mensaje de la conversación y devolverlo a la caja de texto

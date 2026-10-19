@@ -46,3 +46,9 @@ next-env.d.ts
 # firebase
 firebase-debug.log
 firestore-debug.log
+# Secretos (refuerzo)
+*.env
+*.key
+*credentials*.json
+*service-account*.json
+!.env.example

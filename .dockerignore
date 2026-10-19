@@ -81,3 +81,12 @@ embedings/
 img/
 *.log
 logs/
+
+# ── Secretos: CUALQUIER variante de .env (" .env copy", .env.local, .env.bak…)
+# Una copia ".env copy" llegó a commitearse porque solo se ignoraba ".env".
+.env*
+!.env.example
+*.pem
+*.key
+*credentials*.json
+*service-account*.json
