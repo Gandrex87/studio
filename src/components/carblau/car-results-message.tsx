@@ -102,6 +102,20 @@ const FeedbackRecomendaciones = ({ threadId, mensajeId }: { threadId: string | n
 
 const EMAIL_VALIDO = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 
+// "25.990 €" → 25990, "25.990,50 €" → 25990.5, "25990.50" → 25990.5.
+// Formato español: "." separa miles y "," decimales; un "." solo es decimal
+// si no va seguido de grupos de 3 cifras. Sin número reconocible → null.
+function parsearPrecio(precio: string): number | null {
+  let limpio = precio.replace(/[^\d.,]/g, "");
+  if (limpio.includes(",")) {
+    limpio = limpio.replace(/\./g, "").replace(",", ".");
+  } else if (/^\d{1,3}(\.\d{3})+$/.test(limpio)) {
+    limpio = limpio.replace(/\./g, "");
+  }
+  const valor = parseFloat(limpio);
+  return Number.isFinite(valor) ? valor : null;
+}
+
 function cleanCarName(name: string) {
   return name.replace(/^\d+\.\s*/, "");
 }
@@ -134,7 +148,7 @@ const CarCard = ({ car }: { car: CarData }) => {
           car_id: car.carId,
           session_id: car.sessionId,
           car_nombre: car.name,
-          car_precio: parseFloat(car.price.replace(/[^\d]/g, "")),
+          car_precio: parsearPrecio(car.price),
           action: "view_details"
         })
       });
