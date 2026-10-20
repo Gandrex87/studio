@@ -1,7 +1,7 @@
 "use client";
 import ReactMarkdown from "react-markdown";
-import { useEffect, useState } from "react";
-import { ExternalLink, ThumbsUp, ThumbsDown } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { PhoneCall, ThumbsUp, ThumbsDown, Info } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
@@ -15,6 +15,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useToast } from "@/hooks/use-toast";
 import type { CarRecommendationPayload } from "@/app/page";
 import { API_BASE_URL, PRIVACY_URL } from "@/lib/config";
@@ -126,7 +127,9 @@ function cleanCarName(name: string) {
 // ═══════════════════════════════════════════════════════════════════
 const CarCard = ({ car }: { car: CarData }) => {
   const [showContactForm, setShowContactForm] = useState(false);
-  const [leadId, setLeadId] = useState<string | null>(null);
+  // Registro del interés (lead_id) en curso o ya hecho: se comparte entre
+  // el clic en el botón y el envío del formulario para no duplicar leads
+  const capturaRef = useRef<Promise<string | null> | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [contactData, setContactData] = useState({
     email: "",
@@ -138,10 +141,10 @@ const CarCard = ({ car }: { car: CarData }) => {
   const [consentimiento, setConsentimiento] = useState(false);
   const { toast } = useToast();
 
-  const handleCarClick = async () => {
+  const capturarLead = async (): Promise<string | null> => {
     if (!car.carId || !car.sessionId) {
       console.error("Faltan datos del coche para capturar lead");
-      return;
+      return null;
     }
 
     try {
@@ -160,24 +163,29 @@ const CarCard = ({ car }: { car: CarData }) => {
       if (!response.ok) throw new Error("Error capturando interés");
       
       const data = await response.json();
-      setLeadId(data.lead_id);
-      setShowContactForm(true); 
-      
-      toast({
-        title: "¡Excelente elección!",
-        description: `Te interesa el ${car.name}. Déjanos tus datos para contactarte.`,
-      });
-      
+      return data.lead_id ?? null;
     } catch (error) {
-      // Sin lead_id el formulario no podría guardar nada: avisar en vez de
-      // abrirlo (antes se abría, se "enviaba" y los datos se perdían).
       console.error("Error capturando lead:", error);
-      toast({
-        variant: "destructive",
-        title: "No hemos podido registrar tu interés",
-        description: "Inténtalo de nuevo en unos segundos."
+      return null;
+    }
+  };
+
+  // Una sola captura por coche; si falla, se reintenta en la siguiente llamada
+  const obtenerLeadId = () => {
+    if (!capturaRef.current) {
+      capturaRef.current = capturarLead().then((id) => {
+        if (!id) capturaRef.current = null;
+        return id;
       });
     }
+    return capturaRef.current;
+  };
+
+  // El formulario se abre al instante; el interés (métrica de clic) se
+  // registra en segundo plano y el envío espera a tener el lead_id
+  const handleCarClick = () => {
+    setShowContactForm(true);
+    obtenerLeadId();
   };
 
   const handleSubmitContact = async () => {
@@ -191,11 +199,13 @@ const CarCard = ({ car }: { car: CarData }) => {
       return;
     }
     if (!consentimiento) return;  // el botón ya está deshabilitado sin él
-    if (!leadId) return;  // el formulario solo se abre con un lead registrado
 
     setIsSubmitting(true);
-    
+
     try {
+      const leadId = await obtenerLeadId();
+      if (!leadId) throw new Error("Sin lead_id");
+
       const response = await fetch(`${API_BASE_URL}/api/lead/contact`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -234,7 +244,7 @@ const CarCard = ({ car }: { car: CarData }) => {
   return (
     <>
       <div 
-        className="bg-white rounded-xl p-4 shadow-sm border border-gray-200 text-center cursor-pointer hover:shadow-md hover:border-blue-200 transition-all duration-200 group"
+        className="bg-white rounded-xl p-4 shadow-sm border border-gray-200 text-center hover:shadow-md hover:border-blue-200 transition-all duration-200 group"
       >
         <h3 className="text-lg font-bold mt-0 mb-3 text-slate-900 group-hover:text-[#082144] transition-colors">
           {car.name}
@@ -271,7 +281,24 @@ const CarCard = ({ car }: { car: CarData }) => {
             </div>
             <div className="w-px h-8 bg-gray-200"></div>
             <div className="flex flex-col">
-                <span className="text-xs text-slate-500 uppercase tracking-wide">Puntuación</span>
+                {/* Popover (no Tooltip): se abre también con un toque en el móvil */}
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <button
+                      type="button"
+                      aria-label="Qué significa la puntuación"
+                      className="inline-flex items-center justify-center gap-1 text-xs text-slate-500 uppercase tracking-wide hover:text-[#082144]"
+                    >
+                      Puntuación
+                      <Info className="h-3 w-3" />
+                    </button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-64 bg-white text-slate-700 text-xs leading-relaxed border-slate-200">
+                    Indica cuánto encaja este coche con lo que nos has contado: tu uso,
+                    pasajeros, presupuesto y preferencias. Cuanto más alta, mejor encaje
+                    contigo.
+                  </PopoverContent>
+                </Popover>
                 <span className="font-bold text-[#082144]">{car.score}</span>
             </div>
         </div>
@@ -286,8 +313,8 @@ const CarCard = ({ car }: { car: CarData }) => {
           className="mt-4 w-full bg-[#082144] text-white hover:bg-[#082144]/90 border-transparent shadow-sm"
           onClick={handleCarClick}
         >
-          <ExternalLink className="w-4 h-4 mr-2" />
-          Ver detalles y solicitar info
+          <PhoneCall className="w-4 h-4 mr-2" />
+          Quiero que me contacten
         </Button>
       </div>
 
