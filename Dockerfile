@@ -58,6 +58,11 @@ ENV NEXT_TELEMETRY_DISABLED=1
 ARG NEXT_PUBLIC_API_URL
 ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
 
+# Política de privacidad enlazada en el formulario de contacto (opcional)
+#   --build-arg NEXT_PUBLIC_PRIVACY_URL=https://carblau.com/privacidad
+ARG NEXT_PUBLIC_PRIVACY_URL
+ENV NEXT_PUBLIC_PRIVACY_URL=$NEXT_PUBLIC_PRIVACY_URL
+
 # Construye la aplicación para producción.
 # Next.js detectará automáticamente la configuración 'output: standalone' en next.config.js
 RUN npm run build

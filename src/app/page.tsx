@@ -16,6 +16,17 @@ import { KmAnualesSlider } from "@/components/carblau/km-anuales-slider";
 import { TypingIndicator } from "@/components/carblau/typing-indicator";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { RotateCw, Loader2 } from "lucide-react";
 import { API_BASE_URL } from "@/lib/config";
 
@@ -144,22 +155,54 @@ export default function Home() {
   // EFFECTS (sin cambios en estos)
   // ═══════════════════════════════════════════════════════════════════
   
-  const scrollToBottom = () => {
-    if (scrollAreaRef.current) {
-      // requestAnimationFrame asegura que el DOM se haya actualizado con el nuevo texto
-      requestAnimationFrame(() => {
-        if (scrollAreaRef.current) {
-          scrollAreaRef.current.scrollTo({
-            top: scrollAreaRef.current.scrollHeight,
-            behavior: "auto" // "auto" evita que el streaming sature el móvil con animaciones
-          });
-        }
+  // Scroll: con mensajes del usuario y mientras el agente piensa, al fondo.
+  // Cuando llega respuesta del agente, al INICIO de esa respuesta: si es larga
+  // (fichas de coches, comparativa) se lee desde el principio y no desde el
+  // texto final. Si es corta, el navegador limita el scroll y queda igual que
+  // ir al fondo.
+  const mensajesPreviosRef = useRef(0);
+
+  const scrollTo = (top: number) => {
+    // requestAnimationFrame asegura que el DOM se haya actualizado con el nuevo texto
+    requestAnimationFrame(() => {
+      scrollAreaRef.current?.scrollTo({
+        top,
+        behavior: "auto" // "auto" evita que el streaming sature el móvil con animaciones
       });
-    }
+    });
   };
+
   useEffect(() => {
-    scrollToBottom();
-  }, [messages, isLoading]);
+    const previos = mensajesPreviosRef.current;
+    mensajesPreviosRef.current = messages.length;
+    const container = scrollAreaRef.current;
+    if (!container) return;
+
+    // previos === 0: conversación nueva o recuperada → al fondo
+    const primerNuevoAgente =
+      previos > 0 ? messages.slice(previos).find((m) => m.role === "agent") : undefined;
+
+    if (!primerNuevoAgente) {
+      scrollTo(container.scrollHeight);
+      return;
+    }
+    requestAnimationFrame(() => {
+      const el = container.querySelector<HTMLElement>(
+        `[data-msg-id="${CSS.escape(primerNuevoAgente.id)}"]`
+      );
+      if (!el) return scrollTo(container.scrollHeight);
+      const margen = 16;
+      scrollTo(
+        container.scrollTop + el.getBoundingClientRect().top - container.getBoundingClientRect().top - margen
+      );
+    });
+  }, [messages]);
+
+  // Al empezar a cargar aparece el indicador de "escribiendo": que se vea.
+  // Al terminar no se mueve, para no deshacer el scroll a la respuesta.
+  useEffect(() => {
+    if (isLoading && scrollAreaRef.current) scrollTo(scrollAreaRef.current.scrollHeight);
+  }, [isLoading]);
 
   useEffect(() => {
     if (!isMobile && messages.length > 0 && !isLoading && messages[messages.length - 1].role === 'agent') {
@@ -420,15 +463,38 @@ const handleSendMessage = async (content: string) => {
                 />
               </div>
 
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={handleResetSession}
-                className="bg-white/60 hover:bg-white/90 text-slate-900 border-slate-200 shadow-sm transition-all"
-              >
-                <RotateCw className="mr-2 h-4 w-4" />
-                Reiniciar Conversación
-              </Button>
+              {/* Reiniciar borra toda la conversación: se confirma antes */}
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="bg-white/60 hover:bg-white/90 text-slate-900 border-slate-200 shadow-sm transition-all"
+                  >
+                    <RotateCw className="mr-2 h-4 w-4" />
+                    Reiniciar Conversación
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent className="bg-white text-slate-900">
+                  <AlertDialogHeader>
+                    <AlertDialogTitle className="text-[#082144]">¿Empezar de cero?</AlertDialogTitle>
+                    <AlertDialogDescription className="text-slate-500">
+                      Se borrarán tus respuestas y las recomendaciones de esta conversación.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel className="border-slate-300 text-slate-700 bg-white hover:bg-slate-50">
+                      Seguir conversando
+                    </AlertDialogCancel>
+                    <AlertDialogAction
+                      onClick={handleResetSession}
+                      className="bg-[#082144] hover:bg-[#082144]/90 text-white"
+                    >
+                      Reiniciar
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
             </div>
 
             <div
@@ -445,17 +511,18 @@ const handleSendMessage = async (content: string) => {
 
                   if (isCarRecommendation) {
                     return (
-                      <CarResultsMessage 
-                        key={message.id} 
-                        data={carPayload} 
-                        threadId={threadId}
-                        mensajeId={message.id}
-                      />
+                      <div key={message.id} data-msg-id={message.id}>
+                        <CarResultsMessage
+                          data={carPayload}
+                          threadId={threadId}
+                          mensajeId={message.id}
+                        />
+                      </div>
                     );
                   } else {
                     const carComparison = message.additional_kwargs?.car_comparison;
                     return (
-                      <div key={message.id} className="flex flex-col gap-2">
+                      <div key={message.id} data-msg-id={message.id} className="flex flex-col gap-2">
                         <ChatMessage
                           role={message.role}
                           content={message.content}

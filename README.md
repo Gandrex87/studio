@@ -18,6 +18,8 @@ npm run typecheck
 
 La URL del backend está en [`src/lib/config.ts`](src/lib/config.ts). Al ser
 `NEXT_PUBLIC_*`, se incrusta en el bundle **al compilar**, no al arrancar.
+Lo mismo con `NEXT_PUBLIC_PRIVACY_URL`, el enlace a la política de privacidad
+del consentimiento en el formulario de contacto (sin ella, el texto va sin enlace).
 
 ## Estructura
 

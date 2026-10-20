@@ -14,9 +14,10 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import type { CarRecommendationPayload } from "@/app/page";
-import { API_BASE_URL } from "@/lib/config";
+import { API_BASE_URL, PRIVACY_URL } from "@/lib/config";
 
 // Actualiza el tipo para incluir los nuevos campos
 type CarData = CarRecommendationPayload['cars'][0] & {
@@ -132,6 +133,9 @@ const CarCard = ({ car }: { car: CarData }) => {
     nombre: "",
     telefono: ""
   });
+  // RGPD: los datos se ceden al concesionario, así que hace falta
+  // consentimiento explícito (casilla sin marcar por defecto)
+  const [consentimiento, setConsentimiento] = useState(false);
   const { toast } = useToast();
 
   const handleCarClick = async () => {
@@ -186,6 +190,7 @@ const CarCard = ({ car }: { car: CarData }) => {
       });
       return;
     }
+    if (!consentimiento) return;  // el botón ya está deshabilitado sin él
     if (!leadId) return;  // el formulario solo se abre con un lead registrado
 
     setIsSubmitting(true);
@@ -198,7 +203,8 @@ const CarCard = ({ car }: { car: CarData }) => {
           lead_id: leadId,
           email,
           nombre: contactData.nombre,
-          telefono: contactData.telefono
+          telefono: contactData.telefono,
+          consentimiento: true
         })
       });
 
@@ -211,7 +217,8 @@ const CarCard = ({ car }: { car: CarData }) => {
       
       setShowContactForm(false);
       setContactData({ email: "", nombre: "", telefono: "" });
-      
+      setConsentimiento(false);
+
     } catch (error) {
       console.error("Error:", error);
       toast({
@@ -235,10 +242,13 @@ const CarCard = ({ car }: { car: CarData }) => {
         
         {car.imageUrl && (
           <div className="flex justify-center my-3 relative overflow-hidden rounded-lg">
+            {/* Hueco reservado (aspect-ratio): al cargar la foto no se mueve el chat */}
             <img
               src={car.imageUrl}
               alt={`Foto de ${car.name}`}
-              className="rounded-lg border border-gray-100 shadow-sm max-w-full h-auto object-cover transform group-hover:scale-105 transition-transform duration-500"
+              loading="lazy"
+              decoding="async"
+              className="w-full aspect-[16/10] rounded-lg border border-gray-100 shadow-sm bg-white object-contain transform group-hover:scale-105 transition-transform duration-500"
             />
           </div>
         )}
@@ -330,6 +340,29 @@ const CarCard = ({ car }: { car: CarData }) => {
                 onChange={(e) => setContactData({...contactData, telefono: e.target.value})}
               />
             </div>
+
+            <div className="flex items-start gap-2 pt-1">
+              <Checkbox
+                id="consentimiento"
+                checked={consentimiento}
+                onCheckedChange={(v) => setConsentimiento(v === true)}
+                className="mt-0.5 border-slate-400 data-[state=checked]:bg-[#082144] data-[state=checked]:border-[#082144] data-[state=checked]:text-white"
+              />
+              <Label htmlFor="consentimiento" className="text-xs font-normal leading-snug text-slate-600">
+                Acepto que CarBlau comparta mis datos con el concesionario para que me contacte sobre este coche.{" "}
+                {PRIVACY_URL && (
+                  <a
+                    href={PRIVACY_URL}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="underline text-[#082144]"
+                  >
+                    Política de privacidad
+                  </a>
+                )}
+                <span className="text-red-500"> *</span>
+              </Label>
+            </div>
           </div>
           
           <DialogFooter>
@@ -343,7 +376,7 @@ const CarCard = ({ car }: { car: CarData }) => {
             </Button>
             <Button 
               onClick={handleSubmitContact}
-              disabled={isSubmitting}
+              disabled={isSubmitting || !consentimiento}
               className="bg-[#082144] hover:bg-[#082144]/90 text-white"
             >
               {isSubmitting ? "Enviando..." : "Enviar información"}
