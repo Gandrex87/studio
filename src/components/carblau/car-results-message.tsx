@@ -1,6 +1,6 @@
 "use client";
 import ReactMarkdown from "react-markdown";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ExternalLink, ThumbsUp, ThumbsDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -28,22 +28,52 @@ type CarData = CarRecommendationPayload['cars'][0] & {
 interface CarResultsMessageProps {
   data: CarRecommendationPayload;
   threadId: string | null;
+  mensajeId: string;   // id del mensaje de resultados: identifica la tanda valorada
+}
+
+type Voto = "up" | "down";
+
+// Votos ya emitidos, por conversación: al recargar la página no se vuelve a
+// pedir (ni a contar) el mismo voto. sessionStorage, como el thread_id.
+const claveVotos = (threadId: string) => `carblau_feedback_${threadId}`;
+
+function leerVoto(threadId: string, mensajeId: string): Voto | null {
+  try {
+    return JSON.parse(sessionStorage.getItem(claveVotos(threadId)) || "{}")[mensajeId] ?? null;
+  } catch {
+    return null;
+  }
+}
+
+function guardarVoto(threadId: string, mensajeId: string, voto: Voto) {
+  try {
+    const votos = JSON.parse(sessionStorage.getItem(claveVotos(threadId)) || "{}");
+    sessionStorage.setItem(claveVotos(threadId), JSON.stringify({ ...votos, [mensajeId]: voto }));
+  } catch {
+    /* sin persistencia: el voto se envía igual */
+  }
 }
 
 // ═══════════════════════════════════════════════════════════════════
 // 👍/👎 SOBRE LAS RECOMENDACIONES (métricas de satisfacción)
 // ═══════════════════════════════════════════════════════════════════
-const FeedbackRecomendaciones = ({ threadId }: { threadId: string | null }) => {
-  const [enviado, setEnviado] = useState<"up" | "down" | null>(null);
+const FeedbackRecomendaciones = ({ threadId, mensajeId }: { threadId: string | null; mensajeId: string }) => {
+  const [enviado, setEnviado] = useState<Voto | null>(null);
 
-  const enviar = (valor: "up" | "down") => {
+  // Tras recargar: si esta tanda ya se votó, mostrar el agradecimiento
+  useEffect(() => {
+    if (threadId) setEnviado(leerVoto(threadId, mensajeId));
+  }, [threadId, mensajeId]);
+
+  const enviar = (valor: Voto) => {
     if (enviado || !threadId) return;
     setEnviado(valor);
+    guardarVoto(threadId, mensajeId, valor);
     // Sin esperar respuesta: un fallo aquí no debe molestar al usuario
     fetch(`${API_BASE_URL}/api/feedback`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ thread_id: threadId, valor }),
+      body: JSON.stringify({ thread_id: threadId, mensaje_id: mensajeId, valor }),
     }).catch((e) => console.warn("No se pudo enviar el feedback:", e));
   };
 
@@ -314,7 +344,7 @@ const CarCard = ({ car }: { car: CarData }) => {
 // ═══════════════════════════════════════════════════════════════════
 // COMPONENTE PRINCIPAL
 // ═══════════════════════════════════════════════════════════════════
-export function CarResultsMessage({ data, threadId }: CarResultsMessageProps) {
+export function CarResultsMessage({ data, threadId, mensajeId }: CarResultsMessageProps) {
   return (
     <div className={cn("flex items-start gap-4")}>
       
@@ -365,7 +395,7 @@ export function CarResultsMessage({ data, threadId }: CarResultsMessageProps) {
           </div>
         )}
 
-        <FeedbackRecomendaciones threadId={threadId} />
+        <FeedbackRecomendaciones threadId={threadId} mensajeId={mensajeId} />
       </div>
     </div>
   );

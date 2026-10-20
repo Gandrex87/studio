@@ -449,6 +449,7 @@ const handleSendMessage = async (content: string) => {
                         key={message.id} 
                         data={carPayload} 
                         threadId={threadId}
+                        mensajeId={message.id}
                       />
                     );
                   } else {
