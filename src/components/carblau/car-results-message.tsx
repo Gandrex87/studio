@@ -1,7 +1,7 @@
 "use client";
 import ReactMarkdown from "react-markdown";
 import { useState } from "react";
-import { ExternalLink } from "lucide-react"; 
+import { ExternalLink, ThumbsUp, ThumbsDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
@@ -27,7 +27,47 @@ type CarData = CarRecommendationPayload['cars'][0] & {
 
 interface CarResultsMessageProps {
   data: CarRecommendationPayload;
+  threadId: string | null;
 }
+
+// ═══════════════════════════════════════════════════════════════════
+// 👍/👎 SOBRE LAS RECOMENDACIONES (métricas de satisfacción)
+// ═══════════════════════════════════════════════════════════════════
+const FeedbackRecomendaciones = ({ threadId }: { threadId: string | null }) => {
+  const [enviado, setEnviado] = useState<"up" | "down" | null>(null);
+
+  const enviar = (valor: "up" | "down") => {
+    if (enviado || !threadId) return;
+    setEnviado(valor);
+    // Sin esperar respuesta: un fallo aquí no debe molestar al usuario
+    fetch(`${API_BASE_URL}/api/feedback`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ thread_id: threadId, valor }),
+    }).catch((e) => console.warn("No se pudo enviar el feedback:", e));
+  };
+
+  if (enviado) {
+    return (
+      <p className="mt-4 text-center text-xs text-slate-500">
+        {enviado === "up" ? "¡Gracias! Nos alegra que te encajen." : "Gracias, nos ayuda a mejorar. Puedes afinar la búsqueda para ajustarlas."}
+      </p>
+    );
+  }
+  return (
+    <div className="mt-4 flex items-center justify-center gap-2 text-xs text-slate-600">
+      <span>¿Te encajan estas recomendaciones?</span>
+      <Button variant="outline" size="sm" aria-label="Sí, me encajan" onClick={() => enviar("up")}
+              className="h-8 w-8 p-0 bg-white border-slate-300 hover:bg-[#082144] hover:text-white">
+        <ThumbsUp className="h-4 w-4" />
+      </Button>
+      <Button variant="outline" size="sm" aria-label="No me encajan" onClick={() => enviar("down")}
+              className="h-8 w-8 p-0 bg-white border-slate-300 hover:bg-[#082144] hover:text-white">
+        <ThumbsDown className="h-4 w-4" />
+      </Button>
+    </div>
+  );
+};
 
 
 const EMAIL_VALIDO = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
@@ -274,7 +314,7 @@ const CarCard = ({ car }: { car: CarData }) => {
 // ═══════════════════════════════════════════════════════════════════
 // COMPONENTE PRINCIPAL
 // ═══════════════════════════════════════════════════════════════════
-export function CarResultsMessage({ data }: CarResultsMessageProps) {
+export function CarResultsMessage({ data, threadId }: CarResultsMessageProps) {
   return (
     <div className={cn("flex items-start gap-4")}>
       
@@ -324,6 +364,8 @@ export function CarResultsMessage({ data }: CarResultsMessageProps) {
             </ReactMarkdown>
           </div>
         )}
+
+        <FeedbackRecomendaciones threadId={threadId} />
       </div>
     </div>
   );
