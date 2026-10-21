@@ -103,7 +103,7 @@ export function PresupuestoSlider({ onSelect, isLoading }: PresupuestoSliderProp
     <motion.div
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      className="space-y-4 mb-4"
+      className="space-y-3"
     >
       {/* Título Estilo Cápsula */}
       <div className="flex justify-center">
@@ -113,7 +113,7 @@ export function PresupuestoSlider({ onSelect, isLoading }: PresupuestoSliderProp
       </div>
 
       {/* Slider Container */}
-      <div className="relative px-4 py-8 overflow-x-auto no-scrollbar">
+      <div className="relative px-4 py-5 overflow-x-auto no-scrollbar">
         <div className="min-w-[800px] lg:min-w-0">
           {/* Línea de conexión */}
           <div className="absolute top-1/2 left-8 right-8 h-1.5 rounded-full -translate-y-1/2 opacity-40"

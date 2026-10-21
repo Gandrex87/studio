@@ -67,7 +67,7 @@ export function DistanceSlider({ onSelect, isLoading }: DistanceSliderProps) {
     <motion.div
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      className="space-y-4 mb-4"
+      className="space-y-3"
     >
       {/* Título con fondo cápsula para leerse sobre el patrón */}
       <div className="flex justify-center">
@@ -77,7 +77,7 @@ export function DistanceSlider({ onSelect, isLoading }: DistanceSliderProps) {
       </div>
 
       {/* Slider Container */}
-      <div className="relative px-4 py-8">
+      <div className="relative px-4 py-5">
         {/* Línea de conexión */}
         <div className="absolute top-1/2 left-8 right-8 h-1.5 bg-gradient-to-r from-green-300 via-blue-300 via-orange-300 to-purple-300 rounded-full -translate-y-1/2 opacity-40" />
 

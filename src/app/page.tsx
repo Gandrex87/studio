@@ -198,6 +198,29 @@ export default function Home() {
     });
   }, [messages]);
 
+  // Al aparecer un widget (sliders, botones) el panel inferior crece y encoge
+  // el área de mensajes: la pregunta del agente quedaba tapada. Se vuelve a
+  // llevar al inicio de esa respuesta (o al fondo si es corta).
+  const widgetVisible = !isLoading && Boolean(
+    messages[messages.length - 1]?.role === "agent" &&
+    messages[messages.length - 1]?.additional_kwargs?.quick_reply_config
+  );
+  useEffect(() => {
+    const container = scrollAreaRef.current;
+    const ultimo = messages[messages.length - 1];
+    if (!widgetVisible || !container || !ultimo) return;
+    requestAnimationFrame(() => {
+      const el = container.querySelector<HTMLElement>(
+        `[data-msg-id="${CSS.escape(ultimo.id)}"]`
+      );
+      if (!el) return scrollTo(container.scrollHeight);
+      const margen = 16;
+      scrollTo(
+        container.scrollTop + el.getBoundingClientRect().top - container.getBoundingClientRect().top - margen
+      );
+    });
+  }, [widgetVisible]);
+
   // Al empezar a cargar aparece el indicador de "escribiendo": que se vea.
   // Al terminar no se mueve, para no deshacer el scroll a la respuesta.
   useEffect(() => {
@@ -454,7 +477,7 @@ const handleSendMessage = async (content: string) => {
         ) : (
           <div className="flex flex-col h-full w-full max-w-3xl mx-auto">
             
-            <div className="flex justify-between items-center p-4 border-b border-black/5 bg-transparent backdrop-blur-sm">
+            <div className="flex justify-between items-center px-4 py-3 border-b border-black/5 bg-transparent backdrop-blur-sm">
               <div className="flex items-center">
                 <img 
                   src="/logo2.png" 
@@ -567,43 +590,49 @@ const handleSendMessage = async (content: string) => {
             
             <div className="shrink-0 p-4 pb-[max(1rem,env(safe-area-inset-bottom))] border-t border-white/20 space-y-3 bg-white/10 backdrop-blur-md z-10 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
               
-              {widget === "distance_slider" && (
-                <DistanceSlider
-                  onSelect={handleQuickReplySelect}
-                  isLoading={isLoading}
-                />
+              {/* Con poco alto (iframe, móvil) los widgets hacen scroll propio en
+                  vez de comerse el área de mensajes */}
+              {(widget || opcionesBotones.length > 0) && (
+                <div className="max-h-[45dvh] overflow-y-auto overflow-x-hidden space-y-3">
+                  {widget === "distance_slider" && (
+                    <DistanceSlider
+                      onSelect={handleQuickReplySelect}
+                      isLoading={isLoading}
+                    />
+                  )}
+
+                  {widget === "km_anuales_slider" && (
+                    <KmAnualesSlider
+                      onSelect={handleQuickReplySelect}
+                      isLoading={isLoading}
+                    />
+                  )}
+
+                  {widget === "pasajeros_slider" && (
+                    <PasajerosSlider onSelect={handleQuickReplySelect} isLoading={isLoading} />
+                  )}
+              
+                  {widget === "presupuesto_slider" && (
+                    <PresupuestoSlider onSelect={handleQuickReplySelect} isLoading={isLoading} />
+                  )}
+
+                  {widget === "presupuesto_unificado" && (
+                    <PresupuestoUnificado onSelect={handleQuickReplySelect} isLoading={isLoading} />
+                  )}
+              
+                  {opcionesBotones.length > 0 && (
+                    <QuickReplies
+                      key={opcionesBotones.join(",")}
+                      options={opcionesBotones}
+                      onSelect={handleQuickReplySelect}
+                      isLoading={isLoading}
+                      multiSelect={lastQuickReplyConfig?.multi_select}
+                      submitLabel={lastQuickReplyConfig?.submit_label}
+                    />
+                  )}
+                </div>
               )}
 
-              {widget === "km_anuales_slider" && (
-                <KmAnualesSlider
-                  onSelect={handleQuickReplySelect}
-                  isLoading={isLoading}
-                />
-              )}
-
-              {widget === "pasajeros_slider" && (
-                <PasajerosSlider onSelect={handleQuickReplySelect} isLoading={isLoading} />
-              )}
-              
-              {widget === "presupuesto_slider" && (
-                <PresupuestoSlider onSelect={handleQuickReplySelect} isLoading={isLoading} />
-              )}
-
-              {widget === "presupuesto_unificado" && (
-                <PresupuestoUnificado onSelect={handleQuickReplySelect} isLoading={isLoading} />
-              )}
-              
-              {opcionesBotones.length > 0 && (
-                <QuickReplies
-                  key={opcionesBotones.join(",")}
-                  options={opcionesBotones}
-                  onSelect={handleQuickReplySelect}
-                  isLoading={isLoading}
-                  multiSelect={lastQuickReplyConfig?.multi_select}
-                  submitLabel={lastQuickReplyConfig?.submit_label}
-                />
-              )}
-              
               <ChatInput 
                 ref={chatInputRef} 
                 onSubmit={handleSendMessage} 
