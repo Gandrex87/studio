@@ -112,6 +112,11 @@ export default function Home() {
   const [currentProgressStatus, setCurrentProgressStatus] = useState<string | null>(null);
   
   const isMobile = useIsMobile();
+  // ?embed=1: dentro de carblau.com/asesor, que ya muestra el logo en su barra
+  const [embebido, setEmbebido] = useState(false);
+  useEffect(() => {
+    setEmbebido(new URLSearchParams(window.location.search).get("embed") === "1");
+  }, []);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const chatInputRef = useRef<ChatInputHandle>(null);
@@ -477,14 +482,20 @@ const handleSendMessage = async (content: string) => {
         ) : (
           <div className="flex flex-col h-full w-full max-w-3xl mx-auto">
             
-            <div className="flex justify-between items-center px-4 py-3 border-b border-black/5 bg-transparent backdrop-blur-sm">
-              <div className="flex items-center">
-                <img 
-                  src="/logo2.png" 
-                  alt="CarBlau Logo" 
-                  className="h-10 w-auto object-contain"
-                />
-              </div>
+            <div
+              className={`flex items-center border-b border-black/5 bg-transparent backdrop-blur-sm ${
+                embebido ? "justify-end px-4 py-2" : "justify-between px-4 py-3"
+              }`}
+            >
+              {!embebido && (
+                <div className="flex items-center">
+                  <img 
+                    src="/logo2.png" 
+                    alt="CarBlau Logo" 
+                    className="h-10 w-auto object-contain"
+                  />
+                </div>
+              )}
 
               {/* Reiniciar borra toda la conversación: se confirma antes */}
               <AlertDialog>
