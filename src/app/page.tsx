@@ -100,6 +100,11 @@ function guardarThread(threadId: string | null) {
   }
 }
 
+// ?autostart=1: se llega desde un botón que ya expresa "quiero empezar"
+// (carblau.com/asesor), así que la pantalla de bienvenida sobra
+const inicioAutomatico = () =>
+  new URLSearchParams(window.location.search).get("autostart") === "1";
+
 // ═══════════════════════════════════════════════════════════════════
 // COMPONENTE PRINCIPAL
 // ═══════════════════════════════════════════════════════════════════
@@ -135,26 +140,29 @@ export default function Home() {
   // El thread_id vive en sessionStorage: sobrevive a recargar la página,
   // no a cerrar la pestaña. Si caducó en el backend (404), se empieza de cero.
   // ═══════════════════════════════════════════════════════════════════
+  // Con ?autostart=1 (botón de carblau.com) si no hay nada que recuperar se
+  // empieza ya, sin pasar por la pantalla de bienvenida.
   useEffect(() => {
     const guardado = leerThreadGuardado();
-    if (!guardado) {
-      setRestaurando(false);
-      return;
-    }
     (async () => {
-      try {
-        const response = await fetch(`${API_BASE_URL}/conversation/${guardado}/messages`);
-        if (!response.ok) throw new Error(`status ${response.status}`);
-        const data = await response.json();
-        setThreadId(data.thread_id);
-        setMessages(data.messages);
-        setSessionStarted(true);
-      } catch (error) {
-        console.log("ℹ️ No se pudo recuperar la conversación guardada:", error);
-        guardarThread(null);
-      } finally {
-        setRestaurando(false);
+      if (guardado) {
+        try {
+          const response = await fetch(`${API_BASE_URL}/conversation/${guardado}/messages`);
+          if (!response.ok) throw new Error(`status ${response.status}`);
+          const data = await response.json();
+          setThreadId(data.thread_id);
+          setMessages(data.messages);
+          setSessionStarted(true);
+          setRestaurando(false);
+          return;
+        } catch (error) {
+          console.log("ℹ️ No se pudo recuperar la conversación guardada:", error);
+          guardarThread(null);
+        }
       }
+      // Si falla, handleStartSession avisa con un toast y queda la bienvenida
+      if (inicioAutomatico()) await handleStartSession();
+      setRestaurando(false);
     })();
   }, []);
 
@@ -442,6 +450,7 @@ const handleSendMessage = async (content: string) => {
     setMessages([]);
     setIsLoading(false);
     setCurrentProgressStatus(null);
+    if (inicioAutomatico()) handleStartSession();
   };
 
   // ═══════════════════════════════════════════════════════════════════
