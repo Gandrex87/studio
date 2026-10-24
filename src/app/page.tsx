@@ -14,6 +14,7 @@ import { PresupuestoUnificado } from "@/components/carblau/presupuesto-unificado
 import { PasajerosSlider } from "@/components/carblau/pasajeros-slider";
 import { KmAnualesSlider } from "@/components/carblau/km-anuales-slider";
 import { TypingIndicator } from "@/components/carblau/typing-indicator";
+import { ProgresoCuestionario, type Progreso } from "@/components/carblau/progreso-cuestionario";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import {
@@ -70,6 +71,7 @@ export interface Message {
     quick_replies?: string[];
     quick_reply_config?: QuickReplyConfig;
     car_comparison?: CarComparisonData;
+    progreso?: Progreso;
   };
 }
 
@@ -458,6 +460,20 @@ const handleSendMessage = async (content: string) => {
   const widget = !isLoading && lastQuickReplyConfig ? lastQuickReplyConfig.type : null;
   const opcionesBotones = widget === "buttons" ? lastQuickReplyConfig?.options ?? [] : [];
 
+  // Progreso: el de la última pregunta del agente que lo traiga. Se oculta en
+  // cuanto llegan recomendaciones (el cuestionario ha terminado) o si el
+  // backend no lo manda.
+  const progreso: Progreso | null = (() => {
+    for (let i = messages.length - 1; i >= 0; i--) {
+      const kwargs = messages[i].additional_kwargs;
+      if (messages[i].role !== "agent" || !kwargs) continue;
+      if (kwargs.payload?.type === "car_recommendation") return null;
+      const p = kwargs.progreso;
+      if (p && Number.isFinite(p.paso) && Number.isFinite(p.total) && p.total > 0) return p;
+    }
+    return null;
+  })();
+
   return (
     <main className="flex flex-col h-[100dvh] relative overflow-hidden bg-background">
       
@@ -530,6 +546,8 @@ const handleSendMessage = async (content: string) => {
                 </AlertDialogContent>
               </AlertDialog>
             </div>
+
+            {progreso && <ProgresoCuestionario progreso={progreso} />}
 
             <div
                 className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden"

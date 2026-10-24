@@ -49,6 +49,9 @@ Qué se pinta depende de `additional_kwargs` en cada mensaje del agente:
   `buttons` (con `multi_select` opcional), `distance_slider`,
   `km_anuales_slider`, `pasajeros_slider`, `presupuesto_slider` o
   `presupuesto_unificado`. Todos responden al agente como texto.
+- `progreso` (opcional) → barra "Paso X de Y" bajo la cabecera:
+  `{ "paso": 3, "total": 7, "etiqueta": "Presupuesto" }`. Se usa el de la
+  última pregunta que lo traiga y se oculta al llegar las recomendaciones.
 
 Errores: con 429 (límite de uso) y 413 (mensaje largo) se muestra el `detail`
 del backend. El mensaje máximo es de 1.000 caracteres en ambos lados.
