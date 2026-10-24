@@ -494,7 +494,7 @@ const handleSendMessage = async (content: string) => {
             <Loader2 className="h-8 w-8 animate-spin text-[#082144]" />
           </div>
         ) : !sessionStarted ? (
-          <WelcomeScreen onStartSession={handleStartSession} isLoading={isLoading} />
+          <WelcomeScreen onStartSession={handleStartSession} isLoading={isLoading} embebido={embebido} />
         ) : (
           <div className="flex flex-col h-full w-full max-w-3xl mx-auto">
             

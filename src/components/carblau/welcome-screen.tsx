@@ -6,9 +6,11 @@ import { Loader2, Clock, Compass, Shield } from "lucide-react";
 interface WelcomeScreenProps {
   onStartSession: () => void;
   isLoading: boolean;
+  /** Dentro de carblau.com/asesor: la barra de la landing ya muestra el logo */
+  embebido?: boolean;
 }
 
-export function WelcomeScreen({ onStartSession, isLoading }: WelcomeScreenProps) {
+export function WelcomeScreen({ onStartSession, isLoading, embebido = false }: WelcomeScreenProps) {
   return (
     <div className="relative overflow-hidden flex flex-col items-center justify-center h-full text-center p-4 bg-[#1C1714]">
       
@@ -25,15 +27,17 @@ export function WelcomeScreen({ onStartSession, isLoading }: WelcomeScreenProps)
 
       {/* --- CONTENIDO PRINCIPAL --- */}
       <div className="relative z-10 flex-grow flex flex-col items-center justify-center">
-        <div className="w-1/2 max-w-[200px] md:max-w-[240px] mb-4">
-          <img
-            src="/logo3.png"
-            alt="CarBlau AI Logo"
-            width="576"
-            height="476"
-            className="w-full h-auto"
-          />
-        </div>
+        {!embebido && (
+          <div className="w-1/2 max-w-[200px] md:max-w-[240px] mb-4">
+            <img
+              src="/logo3.png"
+              alt="CarBlau AI Logo"
+              width="576"
+              height="476"
+              className="w-full h-auto"
+            />
+          </div>
+        )}
         <p className="text-lg mb-8 max-w-md text-[#FFAD64]">
          <span className="font-bold text-[#FB8351]">Powered by CarBlau</span> <br /> Tu asistente inteligente para que encuentres el coche ideal.
         </p>
