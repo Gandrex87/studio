@@ -90,3 +90,6 @@ logs/
 *.key
 *credentials*.json
 *service-account*.json
+
+# Script de despliegue (se ejecuta en local, no en la imagen)
+deploy.sh

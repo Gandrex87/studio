@@ -58,28 +58,19 @@ del backend. El mensaje máximo es de 1.000 caracteres en ambos lados.
 
 ## Despliegue (Cloud Run, europe-west1)
 
-```bash
-# 1. Construir y subir la imagen (opcional: --build-arg NEXT_PUBLIC_API_URL=...)
-docker buildx build --platform linux/amd64 \
-  -t europe-west1-docker.pkg.dev/thecarmentor-mvp2/my-frontend-repo/my-app:v2-needcarhelp \
-  --push .
+Con [`deploy.sh`](deploy.sh), desde un árbol sin cambios pendientes:
 
-# 2. Desplegar
-gcloud run deploy my-frontend-app \
-  --image=europe-west1-docker.pkg.dev/thecarmentor-mvp2/my-frontend-repo/my-app:v2-needcarhelp \
-  --platform=managed \
-  --region=europe-west1 \
-  --allow-unauthenticated \
-  --port=3000 \
-  --cpu=1 \
-  --memory=1Gi \
-  --min-instances=0 \
-  --max-instances=5 \
-  --concurrency=80 \
-  --timeout=60s \
-  --execution-environment=gen2 \
-  --labels="environment=production,app=carblau-frontend"
+```bash
+./deploy.sh                      # etiqueta = commit actual
+./deploy.sh v3-ux                # etiqueta propia
+./deploy.sh --rollback 924fc70   # volver a una imagen ya publicada
+NEXT_PUBLIC_PRIVACY_URL=https://carblau.com/privacidad ./deploy.sh
 ```
+
+Comprueba tipos, construye la imagen `linux/amd64` con las variables
+`NEXT_PUBLIC_*`, la sube a Artifact Registry y despliega `my-frontend-app` con
+la configuración de producción. Pide confirmación antes (`--yes` para omitirla)
+y `./deploy.sh --help` muestra todas las opciones.
 
 URL actual: <https://my-frontend-app-1063747381969.europe-west1.run.app>
 

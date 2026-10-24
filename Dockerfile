@@ -38,14 +38,14 @@
 
 # --- Etapa 1: Builder ---
 # Usa la versión LTS actual de Node.js para un mejor rendimiento y seguridad.
-FROM node:20-alpine AS builder
+FROM node:22-alpine AS builder
 
 # Establece el directorio de trabajo
 WORKDIR /app
 
 # Copia los archivos de dependencias y las instala
 COPY package*.json ./
-RUN npm install
+RUN npm ci
 
 # Copia el resto del código de la aplicación
 COPY . .
@@ -63,13 +63,17 @@ ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
 ARG NEXT_PUBLIC_PRIVACY_URL
 ENV NEXT_PUBLIC_PRIVACY_URL=$NEXT_PUBLIC_PRIVACY_URL
 
+# Teléfono de contacto humano del aviso de IA (opcional; hay valor por defecto)
+ARG NEXT_PUBLIC_CONTACT_PHONE
+ENV NEXT_PUBLIC_CONTACT_PHONE=$NEXT_PUBLIC_CONTACT_PHONE
+
 # Construye la aplicación para producción.
 # Next.js detectará automáticamente la configuración 'output: standalone' en next.config.js
 RUN npm run build
 
 # --- Etapa 2: Runner ---
 # Usa la misma base ligera y actualizada
-FROM node:20-alpine AS runner
+FROM node:22-alpine AS runner
 WORKDIR /app
 
 # Crea un grupo y usuario no-root para ejecutar la aplicación por seguridad
