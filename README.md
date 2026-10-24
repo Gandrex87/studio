@@ -19,7 +19,8 @@ npm run typecheck
 La URL del backend está en [`src/lib/config.ts`](src/lib/config.ts). Al ser
 `NEXT_PUBLIC_*`, se incrusta en el bundle **al compilar**, no al arrancar.
 Lo mismo con `NEXT_PUBLIC_PRIVACY_URL`, el enlace a la política de privacidad
-del consentimiento en el formulario de contacto (sin ella, el texto va sin enlace).
+del consentimiento en el formulario de contacto (por defecto,
+https://carblau.com/politica-de-privacidad).
 
 ## Estructura
 
@@ -64,7 +65,7 @@ Con [`deploy.sh`](deploy.sh), desde un árbol sin cambios pendientes:
 ./deploy.sh                      # etiqueta = commit actual
 ./deploy.sh v3-ux                # etiqueta propia
 ./deploy.sh --rollback 924fc70   # volver a una imagen ya publicada
-NEXT_PUBLIC_PRIVACY_URL=https://carblau.com/privacidad ./deploy.sh
+NEXT_PUBLIC_API_URL=https://otro-backend ./deploy.sh   # cambiar una variable
 ```
 
 Comprueba tipos, construye la imagen `linux/amd64` con las variables

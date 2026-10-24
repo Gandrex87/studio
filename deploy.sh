@@ -9,7 +9,7 @@
 #
 # Variables del bundle (se fijan AL COMPILAR; vacías = valor por defecto del código):
 #   NEXT_PUBLIC_API_URL  NEXT_PUBLIC_PRIVACY_URL  NEXT_PUBLIC_CONTACT_PHONE
-#   NEXT_PUBLIC_PRIVACY_URL=https://carblau.com/privacidad ./deploy.sh
+#   NEXT_PUBLIC_API_URL=https://otro-backend ./deploy.sh
 #
 # Volver a una versión anterior: ./deploy.sh --rollback <etiqueta>
 # ═══════════════════════════════════════════════════════════════════
@@ -109,9 +109,6 @@ if [[ "$(git rev-parse --abbrev-ref HEAD)" == "master" ]] && \
   aviso "master tiene commits sin subir a GitHub (git push)."
 fi
 
-[[ -n "${NEXT_PUBLIC_PRIVACY_URL:-}" ]] || \
-  aviso "NEXT_PUBLIC_PRIVACY_URL vacía: el consentimiento RGPD saldrá sin enlace a la política de privacidad."
-
 # ── Resumen ─────────────────────────────────────────────────────────
 cat <<EOF
 
@@ -119,7 +116,7 @@ cat <<EOF
   Imagen   : ${IMAGE}:${TAG}
   Commit   : $COMMIT  $(git log -1 --format=%s)
   API      : ${NEXT_PUBLIC_API_URL:-(por defecto en src/lib/config.ts)}
-  Privacidad: ${NEXT_PUBLIC_PRIVACY_URL:-(sin enlace)}
+  Privacidad: ${NEXT_PUBLIC_PRIVACY_URL:-(por defecto en src/lib/config.ts)}
   Teléfono : ${NEXT_PUBLIC_CONTACT_PHONE:-(por defecto en src/lib/config.ts)}
 EOF
 confirmar "¿Desplegar a producción?"

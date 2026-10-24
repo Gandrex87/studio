@@ -58,8 +58,8 @@ ENV NEXT_TELEMETRY_DISABLED=1
 ARG NEXT_PUBLIC_API_URL
 ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
 
-# Política de privacidad enlazada en el formulario de contacto (opcional)
-#   --build-arg NEXT_PUBLIC_PRIVACY_URL=https://carblau.com/privacidad
+# Política de privacidad enlazada en el formulario de contacto
+# (opcional; por defecto https://carblau.com/politica-de-privacidad)
 ARG NEXT_PUBLIC_PRIVACY_URL
 ENV NEXT_PUBLIC_PRIVACY_URL=$NEXT_PUBLIC_PRIVACY_URL
 
