@@ -14,6 +14,7 @@ import { PresupuestoUnificado } from "@/components/carblau/presupuesto-unificado
 import { PasajerosSlider } from "@/components/carblau/pasajeros-slider";
 import { KmAnualesSlider } from "@/components/carblau/km-anuales-slider";
 import { TypingIndicator } from "@/components/carblau/typing-indicator";
+import { AiDisclosure } from "@/components/carblau/ai-disclosure";
 import { ProgresoCuestionario, type Progreso } from "@/components/carblau/progreso-cuestionario";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
@@ -676,6 +677,8 @@ const handleSendMessage = async (content: string) => {
                 onSubmit={handleSendMessage} 
                 isLoading={isLoading} 
               />
+
+              <AiDisclosure />
             </div>
           </div>
         )}

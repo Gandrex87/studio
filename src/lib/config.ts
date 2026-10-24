@@ -8,3 +8,6 @@ export const API_BASE_URL =
 // Política de privacidad enlazada en el consentimiento del formulario de
 // contacto. Sin ella, el texto del consentimiento se muestra sin enlace.
 export const PRIVACY_URL = process.env.NEXT_PUBLIC_PRIVACY_URL || "";
+
+// Contacto humano que ofrece el aviso de IA del chat (mismo que carblau.com)
+export const CONTACT_PHONE = process.env.NEXT_PUBLIC_CONTACT_PHONE || "647530888";
