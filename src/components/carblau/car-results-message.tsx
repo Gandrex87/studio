@@ -123,6 +123,55 @@ function cleanCarName(name: string) {
 }
 
 // ═══════════════════════════════════════════════════════════════════
+// SUB-COMPONENTE: FOTO DEL COCHE (con placeholder)
+// ═══════════════════════════════════════════════════════════════════
+// Un ~14 % de los coches no tiene foto (imageUrl null) y algunas URL fallan.
+// En ambos casos se dibuja una silueta genérica, sin logos de marcas, en el
+// mismo hueco 16/10 que una foto: todas las tarjetas miden lo mismo.
+const FotoCoche = ({ car }: { car: CarData }) => {
+  const [fallida, setFallida] = useState(false);
+  const imgRef = useRef<HTMLImageElement>(null);
+  const nombre = cleanCarName(car.name);
+
+  // Si la imagen ya había fallado antes de que React se enganchara a la página
+  // (historial restaurado, carga rápida), el evento onError se pierde: se comprueba aquí.
+  useEffect(() => {
+    const img = imgRef.current;
+    if (img && img.complete && img.naturalWidth === 0) setFallida(true);
+  }, [car.imageUrl]);
+  const hayFoto = Boolean(car.imageUrl) && car.hasImage !== false && !fallida;
+
+  return (
+    <div className="flex justify-center my-3 relative overflow-hidden rounded-lg">
+      {hayFoto ? (
+        <img
+          ref={imgRef}
+          src={car.imageUrl as string}
+          alt={`Foto de ${nombre}`}
+          loading="lazy"
+          decoding="async"
+          onError={() => setFallida(true)}
+          className="w-full aspect-[16/10] rounded-lg border border-gray-100 shadow-sm bg-white object-contain transform group-hover:scale-105 transition-transform duration-500"
+        />
+      ) : (
+        <div
+          role="img"
+          aria-label={`${nombre}, sin foto disponible`}
+          className="w-full aspect-[16/10] rounded-lg border border-slate-200 bg-slate-50 flex flex-col items-center justify-center gap-2"
+        >
+          <svg viewBox="0 0 120 48" className="w-2/5 text-[#082144]/25" fill="currentColor" aria-hidden="true">
+            <path d="M8 34c-2.2 0-4-1.8-4-4v-5c0-2.4 1.7-4.5 4.1-4.9l15.300-2.600 9.800-9.100C35.200 6.500 37.900 5.500 40.700 5.500h28.600c3.300 0 6.400 1.400 8.600 3.800l8.500 9.200 21.100 3.300c4.900.8 8.500 5 8.500 9.900 0 1.300-1 2.300-2.300 2.300H104a11 11 0 0 0-22 0H42a11 11 0 0 0-22 0H8zm31.500-17h20V10H41.200c-1.400 0-2.800.5-3.800 1.500L32.500 16c-.4.400-.1 1 .4 1h6.600zm25 0h17.300c.6 0 .9-.7.5-1.100l-4.100-4.400c-1.100-1.200-2.700-1.900-4.400-1.900h-9.300v7.400z" />
+            <circle cx="31" cy="34" r="8" />
+            <circle cx="93" cy="34" r="8" />
+          </svg>
+          <span className="text-[11px] text-slate-400">Sin foto disponible</span>
+        </div>
+      )}
+    </div>
+  );
+};
+
+// ═══════════════════════════════════════════════════════════════════
 // SUB-COMPONENTE: FICHA DE COCHE MEJORADA (Card)
 // ═══════════════════════════════════════════════════════════════════
 const CarCard = ({ car }: { car: CarData }) => {
@@ -136,8 +185,8 @@ const CarCard = ({ car }: { car: CarData }) => {
     nombre: "",
     telefono: ""
   });
-  // RGPD: los datos se ceden al concesionario, así que hace falta
-  // consentimiento explícito (casilla sin marcar por defecto)
+  // RGPD: CarBlau usa los datos para contactar al usuario sobre la búsqueda del
+  // coche (sin cesión a terceros); consentimiento explícito, casilla sin marcar
   const [consentimiento, setConsentimiento] = useState(false);
   const { toast } = useToast();
 
@@ -155,7 +204,8 @@ const CarCard = ({ car }: { car: CarData }) => {
           car_id: car.carId,
           session_id: car.sessionId,
           car_nombre: car.name,
-          car_precio: parsearPrecio(car.price),
+          // Precio típico que envía el backend; `price` es ahora un rango y no se puede parsear
+          car_precio: car.priceValue ?? parsearPrecio(car.price),
           action: "view_details"
         })
       });
@@ -222,7 +272,7 @@ const CarCard = ({ car }: { car: CarData }) => {
       
       toast({
         title: "¡Datos enviados!",
-        description: "El concesionario se pondrá en contacto contigo pronto.",
+        description: "Nos ponemos a buscarlo y te contactaremos cuando tengamos opciones.",
       });
       
       setShowContactForm(false);
@@ -250,18 +300,8 @@ const CarCard = ({ car }: { car: CarData }) => {
           {car.name}
         </h3>
         
-        {car.imageUrl && (
-          <div className="flex justify-center my-3 relative overflow-hidden rounded-lg">
-            {/* Hueco reservado (aspect-ratio): al cargar la foto no se mueve el chat */}
-            <img
-              src={car.imageUrl}
-              alt={`Foto de ${car.name}`}
-              loading="lazy"
-              decoding="async"
-              className="w-full aspect-[16/10] rounded-lg border border-gray-100 shadow-sm bg-white object-contain transform group-hover:scale-105 transition-transform duration-500"
-            />
-          </div>
-        )}
+        {/* Hueco reservado (aspect-ratio): con foto, sin ella o si falla, la tarjeta mide lo mismo */}
+        <FotoCoche car={car} />
 
         <div className="flex justify-center gap-2 my-3 flex-wrap">
           {car.specs.map((spec: string, i: number) => (
@@ -276,7 +316,24 @@ const CarCard = ({ car }: { car: CarData }) => {
 
         <div className="flex justify-center items-center gap-4 my-3 text-sm border-t border-b border-gray-100 py-2">
             <div className="flex flex-col">
-                <span className="text-xs text-slate-500 uppercase tracking-wide">Precio</span>
+                {/* El precio es el rango típico del modelo y año, no el de un anuncio */}
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <button
+                      type="button"
+                      aria-label="Qué significa este precio"
+                      className="inline-flex items-center justify-center gap-1 text-xs text-slate-500 uppercase tracking-wide hover:text-[#082144]"
+                    >
+                      {car.priceLabel ?? "Precio"}
+                      <Info className="h-3 w-3" />
+                    </button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-64 bg-white text-slate-700 text-xs leading-relaxed border-slate-200">
+                    {car.priceRange
+                      ? "Es el rango en el que suele anunciarse este modelo y año con un kilometraje normal. No es el precio de un anuncio concreto: CarBlau busca una unidad para ti dentro de tu presupuesto."
+                      : "Precio aproximado, con pocos datos de mercado para este modelo y año. Tómalo como una orientación."}
+                  </PopoverContent>
+                </Popover>
                 <span className="font-bold text-slate-900">{car.price}</span>
             </div>
             <div className="w-px h-8 bg-gray-200"></div>
@@ -325,7 +382,7 @@ const CarCard = ({ car }: { car: CarData }) => {
               Solicitar información sobre {cleanCarName(car.name)}
             </DialogTitle>
             <DialogDescription className="text-slate-500">
-              Déjanos tus datos y el concesionario se pondrá en contacto contigo pronto.
+              Déjanos tus datos: CarBlau buscará este coche para ti y te contactará.
             </DialogDescription>
           </DialogHeader>
           
@@ -376,7 +433,7 @@ const CarCard = ({ car }: { car: CarData }) => {
                 className="mt-0.5 border-slate-400 data-[state=checked]:bg-[#082144] data-[state=checked]:border-[#082144] data-[state=checked]:text-white"
               />
               <Label htmlFor="consentimiento" className="text-xs font-normal leading-snug text-slate-600">
-                Acepto que CarBlau comparta mis datos con el concesionario para que me contacte sobre este coche.{" "}
+                Acepto que CarBlau me contacte sobre la búsqueda de este coche. Mis datos no se ceden a terceros.{" "}
                 {PRIVACY_URL && (
                   <a
                     href={PRIVACY_URL}

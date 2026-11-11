@@ -39,8 +39,17 @@ import { API_BASE_URL } from "@/lib/config";
 interface Car {
   name: string;
   specs: string[];
-  imageUrl?: string;
+  // null si el coche no tiene foto (se dibuja un placeholder); nunca cadena vacía
+  imageUrl?: string | null;
+  hasImage?: boolean;
+  // Rango típico de mercado de la versión y año ("6.250–7.500 €"); sin referencia
+  // fiable, "≈ 8.500 €". CarBlau recomienda un modelo, no un anuncio concreto.
   price: string;
+  priceLabel?: string | null;          // "Rango típico" | "Precio orientativo"
+  priceValue?: number | null;          // precio típico, como número (para el lead)
+  priceRange?: { min: number; max: number } | null;
+  priceIsApprox?: boolean;
+  priceConfidence?: "alta" | "media" | "baja" | "muy_baja" | "sin_datos";
   score: string;
   analysis: string;
   carId?: string;
