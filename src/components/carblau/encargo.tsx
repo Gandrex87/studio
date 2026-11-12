@@ -1,62 +1,107 @@
 "use client";
 
-import { respuestasEncargo, type ItemEncargo } from "@/lib/encargo";
+import { Pencil } from "lucide-react";
+import { itemsEncargo, type Encargo } from "@/lib/encargo";
 
 // "Tu encargo": lo que el usuario ya ha contado. En móvil, una fila de chips
-// bajo la cabecera; en escritorio, el panel lateral. Solo lectura: para
-// cambiar algo se le dice al asesor (el backend acepta correcciones en texto).
+// bajo la cabecera; en escritorio, el panel lateral. Con el backend de la
+// fase 2 cada dato se puede cambiar: se envía `Quiero cambiar: <etiqueta>`.
 
-export function EncargoChips({ items }: { items: ItemEncargo[] }) {
-  const respuestas = respuestasEncargo(items);
-  if (respuestas.length === 0) return null;
+interface EncargoProps {
+  encargo: Encargo;
+  onCambiar: (etiqueta: string) => void;
+  disabled?: boolean;
+}
+
+const CHIP =
+  "inline-flex h-7 shrink-0 items-center gap-1 whitespace-nowrap rounded-full border border-cb-crema/20 bg-cb-crema/[0.06] px-2.5 text-xs font-medium text-cb-crema";
+
+export function EncargoChips({ encargo, onCambiar, disabled = false }: EncargoProps) {
+  const items = itemsEncargo(encargo);
+  if (items.length === 0) return null;
   return (
     <div className="flex items-center gap-1.5 overflow-x-auto px-4 py-2 cb-scroll-x" aria-label="Tu encargo">
       <span className="shrink-0 text-[11px] font-bold uppercase tracking-[0.08em] text-cb-crema-tenue">
         Tu encargo
       </span>
-      {respuestas.map((r, i) => (
-        <span
-          key={`${r.tema}-${i}`}
-          title={r.tema}
-          className="inline-flex h-7 shrink-0 items-center whitespace-nowrap rounded-full border border-cb-crema/20 bg-cb-crema/[0.06] px-2.5 text-xs font-medium text-cb-crema"
-        >
-          {r.respuesta}
-        </span>
-      ))}
+      {items.map((item, i) =>
+        item.cambiable ? (
+          <button
+            key={`${item.etiqueta}-${i}`}
+            type="button"
+            onClick={() => onCambiar(item.etiqueta)}
+            disabled={disabled}
+            title={`Cambiar ${item.etiqueta.toLowerCase()}`}
+            aria-label={`${item.etiqueta}: ${item.texto}. Cambiar`}
+            className={`${CHIP} transition-colors hover:border-cb-crema/50 hover:bg-cb-crema/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cb-blau disabled:opacity-50`}
+          >
+            {item.texto}
+            <Pencil className="h-3 w-3 opacity-60" aria-hidden="true" />
+          </button>
+        ) : (
+          <span key={`${item.etiqueta}-${i}`} title={item.etiqueta} className={CHIP}>
+            {item.texto}
+          </span>
+        )
+      )}
     </div>
   );
 }
 
-export function EncargoPanel({ items, completo }: { items: ItemEncargo[]; completo: boolean }) {
+export function EncargoPanel({ encargo, onCambiar, disabled = false }: EncargoProps) {
+  const estado = encargo.completo ? "Completo" : encargo.temas.length > 0 ? "En curso" : "";
   return (
     <aside aria-label="Tu encargo" className="flex flex-col gap-4">
       <div className="flex items-baseline justify-between">
         <h2 className="font-headline text-xl font-semibold text-cb-crema">Tu encargo</h2>
-        <span className="text-xs font-bold uppercase tracking-[0.08em] text-cb-agua">
-          {completo ? "Completo" : items.length > 0 ? "En curso" : ""}
-        </span>
+        <span className="text-xs font-bold uppercase tracking-[0.08em] text-cb-agua">{estado}</span>
       </div>
 
-      {items.length === 0 ? (
+      {encargo.temas.length === 0 ? (
         <p className="rounded-[14px] border border-cb-crema/[0.14] p-4 text-sm leading-relaxed text-cb-crema-suave">
           Aquí irá apareciendo lo que nos cuentes: uso, pasajeros, kilómetros, presupuesto…
         </p>
       ) : (
-        <dl className="overflow-hidden rounded-[14px] border border-cb-crema/[0.14]">
-          {items.map((item) => (
-            <div
-              key={item.tema}
-              className="flex flex-col gap-0.5 px-3.5 py-2.5 [&+&]:border-t [&+&]:border-cb-crema/10"
+        <div className="overflow-hidden rounded-[14px] border border-cb-crema/[0.14]">
+          {encargo.temas.map((tema) => (
+            <section
+              key={tema.tema}
+              aria-label={tema.tema}
+              className="flex flex-col gap-1.5 px-3.5 py-2.5 [&+&]:border-t [&+&]:border-cb-crema/10"
             >
-              <dt className="text-[11px] font-bold uppercase tracking-[0.08em] text-cb-crema-tenue">{item.tema}</dt>
-              <dd className="text-[15px] leading-snug text-cb-crema">{item.respuestas.join(" · ")}</dd>
-            </div>
+              <h3 className="text-[11px] font-bold uppercase tracking-[0.08em] text-cb-crema-tenue">{tema.tema}</h3>
+              <ul className="flex flex-col gap-1">
+                {tema.items.map((item, i) => (
+                  <li key={`${item.etiqueta}-${i}`} className="flex items-center justify-between gap-2">
+                    <span className="min-w-0 text-[15px] leading-snug text-cb-crema">
+                      {item.texto}
+                      {encargo.delBackend && (
+                        <span className="ml-1.5 text-xs text-cb-crema-tenue">{item.etiqueta}</span>
+                      )}
+                    </span>
+                    {item.cambiable && (
+                      <button
+                        type="button"
+                        onClick={() => onCambiar(item.etiqueta)}
+                        disabled={disabled}
+                        aria-label={`Cambiar ${item.etiqueta.toLowerCase()}`}
+                        className="inline-flex h-7 shrink-0 items-center rounded-full border border-cb-crema/20 px-2.5 text-xs font-semibold text-cb-crema-suave transition-colors hover:border-cb-crema/50 hover:text-cb-crema focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cb-blau disabled:opacity-50"
+                      >
+                        Cambiar
+                      </button>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            </section>
           ))}
-        </dl>
+        </div>
       )}
 
       <p className="text-xs leading-relaxed text-cb-crema-tenue">
-        ¿Algo no es correcto? Díselo al asesor en el chat y lo corregirá.
+        {encargo.delBackend
+          ? "Pulsa «Cambiar» en cualquier dato y el asesor te lo vuelve a preguntar."
+          : "¿Algo no es correcto? Díselo al asesor en el chat y lo corregirá."}
       </p>
 
       <div className="flex flex-col gap-2 rounded-[14px] bg-cb-crema/[0.06] p-4">

@@ -70,13 +70,25 @@ Qué se pinta depende de `additional_kwargs` en cada mensaje del agente:
   `distance_slider`, `km_anuales_slider`, `pasajeros_slider`,
   `presupuesto_slider` o `presupuesto_unificado`. Todos responden al agente
   como texto; las opciones se enseñan sin su emoji y se envían tal cual.
-- `progreso.etiqueta` de cada pregunta + la respuesta del usuario → chips
-  «Tu encargo» (panel lateral en escritorio). Es una lectura de la
-  conversación, no del perfil interno del agente.
-- Fichas: `score` se enseña como «Encaje N»; «Comparar» en dos o más fichas
-  envía al agente `Compara el 1 y el 2` (ruta `consulta_coches_mostrados`).
+- `encargo` (fase 2, en cada mensaje del agente) → chips «Tu encargo» y panel
+  lateral en escritorio. Cada dato se puede cambiar: el front envía
+  `Quiero cambiar: <etiqueta>` y el agente vuelve a preguntarlo. Sin `encargo`
+  (backend anterior) se deduce de `progreso.etiqueta` + la respuesta del
+  usuario, sin poder cambiarlo.
+- Fichas: `encaje` (0–99) como «Encaje N» (sin él, la puntuación redondeada),
+  `razones` como «Por qué encaja contigo», `aviso` como «Ten en cuenta» y
+  `datos` como línea de características (sin ellos, `specs`). «Comparar» en
+  dos o más fichas envía al agente `Compara el 1 y el 2`.
+- `car_comparison`: `veredicto` destacado sobre la tabla, `narrativa` como
+  texto del mensaje (si no llega, `content`) y «Me interesa» por coche cuando
+  traen `carId`.
 - «Me interesa» abre la hoja de contacto: un asesor de CarBlau contacta al
-  usuario (`/api/lead/capture` al abrir, `/api/lead/contact` al enviar).
+  usuario (`/api/lead/capture` al abrir, `/api/lead/contact` al enviar con
+  `canal` whatsapp | llamada | email y `franja` manana | tarde | cualquiera;
+  WhatsApp y llamada exigen teléfono, email exige email). La respuesta trae
+  `contacto_previsto`, que se enseña en la confirmación.
+- Stream: cada evento `progress` se enseña como un paso; el backend emite uno
+  por nodo y sub-pasos dentro de la búsqueda.
 - `progreso` (opcional) → barra "Paso X de Y" bajo la cabecera:
   `{ "paso": 3, "total": 7, "etiqueta": "Presupuesto" }`. Se usa el de la
   última pregunta que lo traiga y se oculta al llegar las recomendaciones.

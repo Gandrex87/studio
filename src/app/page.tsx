@@ -13,8 +13,9 @@ import { BuscandoEstado } from "@/components/carblau/buscando-estado";
 import { AiDisclosure } from "@/components/carblau/ai-disclosure";
 import { ProgresoCuestionario } from "@/components/carblau/progreso-cuestionario";
 import { EncargoChips, EncargoPanel } from "@/components/carblau/encargo";
-import { derivarEncargo } from "@/lib/encargo";
-import type { Message, Progreso } from "@/lib/tipos";
+import { ContactoSheet } from "@/components/carblau/contacto-sheet";
+import { leerEncargo, textoCambio } from "@/lib/encargo";
+import type { Car, Message, Progreso } from "@/lib/tipos";
 import { useToast } from "@/hooks/use-toast";
 import {
   AlertDialog,
@@ -90,6 +91,9 @@ export default function Home() {
 
   // Fichas marcadas para comparar (números de la última tanda de resultados)
   const [comparar, setComparar] = useState<number[]>([]);
+
+  // «Me interesa» desde la comparativa: coche para la hoja de contacto
+  const [contactoCar, setContactoCar] = useState<Car | null>(null);
 
   const [confirmarReinicio, setConfirmarReinicio] = useState(false);
 
@@ -423,7 +427,24 @@ export default function Home() {
     setIsLoading(false);
     setPasosTurno([]);
     setComparar([]);
+    setContactoCar(null);
     if (inicioAutomatico()) handleStartSession();
+  };
+
+  // "Tu encargo": pulsar un dato pide al agente volver a preguntarlo
+  // («Quiero cambiar: Presupuesto», ruta corregir_tema del backend)
+  const cambiarDato = (etiqueta: string) => {
+    if (isLoading) return;
+    handleSendMessage(textoCambio(etiqueta));
+  };
+
+  // Coche de una tanda de resultados por su carId (para la comparativa)
+  const buscarCoche = (carId: string): Car | undefined => {
+    for (let i = messages.length - 1; i >= 0; i--) {
+      const coche = messages[i].additional_kwargs?.payload?.cars?.find((c) => c.carId === carId);
+      if (coche) return coche;
+    }
+    return undefined;
   };
 
   // ═══════════════════════════════════════════════════════════════════
@@ -444,9 +465,8 @@ export default function Home() {
     return null;
   })();
 
-  // "Tu encargo": lo que el usuario ya ha respondido, leído de la conversación
-  const encargo = useMemo(() => derivarEncargo(messages), [messages]);
-  const hayResultados = messages.some(esRecomendacion);
+  // "Tu encargo": del backend (fase 2) o, si no llega, leído de la conversación
+  const encargo = useMemo(() => leerEncargo(messages), [messages]);
 
   // Solo la última tanda de resultados se puede comparar (el backend numera
   // los coches de la tanda actual)
@@ -471,17 +491,17 @@ export default function Home() {
         <div className="mx-auto flex h-full min-h-0 w-full max-w-[1280px]">
           {/* Escritorio: panel lateral con el encargo */}
           <div className="hidden lg:flex lg:w-[320px] lg:shrink-0 lg:flex-col lg:overflow-y-auto lg:border-r lg:border-cb-crema/10 lg:p-6 cb-scroll">
-            <EncargoPanel items={encargo} completo={hayResultados} />
+            <EncargoPanel encargo={encargo} onCambiar={cambiarDato} disabled={isLoading} />
           </div>
 
           <section className="flex h-full min-w-0 flex-1 flex-col" aria-label="Conversación">
             <ChatHeader embebido={embebido} onReiniciar={() => setConfirmarReinicio(true)} />
 
-            {(progreso || encargo.length > 0) && (
+            {(progreso || encargo.temas.length > 0) && (
               <div className="border-b border-cb-crema/10">
                 {progreso && <ProgresoCuestionario progreso={progreso} />}
                 <div className="lg:hidden">
-                  <EncargoChips items={encargo} />
+                  <EncargoChips encargo={encargo} onCambiar={cambiarDato} disabled={isLoading} />
                 </div>
               </div>
             )}
@@ -521,10 +541,21 @@ export default function Home() {
                   }
 
                   const comparacion = message.additional_kwargs?.car_comparison;
+                  // Con comparativa, `content` repite el veredicto que ya pinta la tabla
+                  const contenido = comparacion?.narrativa ?? message.content;
                   return (
                     <div key={message.id} data-msg-id={message.id}>
-                      <ChatMessage role={message.role} content={message.content}>
-                        {comparacion && <CarComparisonTable data={comparacion} />}
+                      <ChatMessage role={message.role} content={contenido}>
+                        {comparacion && (
+                          <CarComparisonTable
+                            data={comparacion}
+                            disabled={isLoading}
+                            onInteresa={(carId) => {
+                              const coche = buscarCoche(carId);
+                              if (coche) setContactoCar(coche);
+                            }}
+                          />
+                        )}
                         {config && (
                           <div className={comparacion ? "mt-4" : undefined}>
                             <InlineWidget config={config} onSelect={handleQuickReplySelect} isLoading={isLoading} />
@@ -558,6 +589,18 @@ export default function Home() {
             </div>
           </section>
         </div>
+      )}
+
+      {/* «Me interesa» desde la comparativa (las fichas llevan su propia hoja) */}
+      {contactoCar && (
+        <ContactoSheet
+          key={contactoCar.carId}
+          car={contactoCar}
+          abierto
+          onOpenChange={(abierto) => {
+            if (!abierto) setContactoCar(null);
+          }}
+        />
       )}
 
       {/* Reiniciar borra toda la conversación: se confirma antes */}

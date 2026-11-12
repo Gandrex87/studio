@@ -7,25 +7,49 @@ import { nombreLimpio, numeroFicha, sinEmoji } from "@/lib/texto";
 
 export type { CarComparisonData };
 
+interface CarComparisonTableProps {
+  data: CarComparisonData;
+  /** Fase 2: «Me interesa» desde la comparativa (los coches traen carId) */
+  onInteresa?: (carId: string) => void;
+  disabled?: boolean;
+}
+
 // Comparativa de 2–3 coches dentro de la tarjeta del asesor. Cada fila lleva
 // su etiqueta encima y los valores en columnas; el mejor (mejor_idx) va en
 // aguamarina con una marca. Pensada para 390 px: sin scroll horizontal.
-export function CarComparisonTable({ data }: { data: CarComparisonData }) {
+export function CarComparisonTable({ data, onInteresa, disabled = false }: CarComparisonTableProps) {
   const { coches, categorias } = data;
   if (coches.length === 0) return null;
   const columnas = { gridTemplateColumns: `repeat(${coches.length}, minmax(0, 1fr))` };
 
   return (
     <section aria-label="Tabla comparativa" className="flex flex-col font-body">
+      {data.veredicto && (
+        <div className="mb-3 flex flex-col gap-1 rounded-xl bg-cb-agua/40 px-3.5 py-3">
+          <span className="text-[11px] font-bold uppercase tracking-[0.1em] text-cb-tinta">Nuestro criterio</span>
+          <p className="font-headline text-[16px] leading-[1.45] text-cb-espresso">{data.veredicto}</p>
+        </div>
+      )}
+
       <div className="grid gap-2 border-b border-cb-espresso/10 pb-2.5" style={columnas}>
         {coches.map((coche) => {
           const n = numeroFicha(coche.nombre) ?? coche.indice;
           return (
-            <div key={coche.indice} className="flex min-w-0 flex-col gap-0.5">
+            <div key={coche.indice} className="flex min-w-0 flex-col gap-1">
               <span className="text-[11px] font-bold uppercase tracking-[0.08em] text-cb-tinta">Coche {n}</span>
               <span className="font-headline text-[15px] font-semibold leading-tight">
                 {nombreLimpio(coche.nombre)}
               </span>
+              {onInteresa && coche.carId && (
+                <button
+                  type="button"
+                  onClick={() => onInteresa(coche.carId as string)}
+                  disabled={disabled}
+                  className="mt-1 inline-flex h-9 items-center justify-center self-start rounded-full bg-cb-blau px-3.5 text-[13px] font-bold text-cb-espresso transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cb-espresso disabled:opacity-50"
+                >
+                  Me interesa
+                </button>
+              )}
             </div>
           );
         })}

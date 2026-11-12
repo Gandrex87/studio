@@ -2,7 +2,7 @@
 
 import { useEffect, useState, type ReactNode } from "react";
 import ReactMarkdown from "react-markdown";
-import { Check, Info, ThumbsDown, ThumbsUp } from "lucide-react";
+import { AlertTriangle, Check, Info, ThumbsDown, ThumbsUp } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { AgentFrame } from "@/components/carblau/agent-frame";
 import { ContactoSheet } from "@/components/carblau/contacto-sheet";
@@ -124,11 +124,31 @@ interface CarCardProps {
   onToggleComparar?: () => void;
 }
 
+// "Híbrido · 2019 · Berlina · 5 plazas · Automático · Tracción delantera"
+function lineaDatos(car: Car): string {
+  const d = car.datos;
+  if (d && Object.keys(d).length > 0) {
+    return [
+      d.combustible,
+      d.anio,
+      d.carroceria,
+      d.plazas ? `${d.plazas} plazas` : null,
+      d.cambio,
+      d.traccion ? `Tracción ${d.traccion.toLowerCase()}` : null,
+    ]
+      .filter(Boolean)
+      .join(" · ");
+  }
+  return car.specs.filter(Boolean).join(" · ");
+}
+
 const CarCard = ({ car, posicion, total, comparando, onToggleComparar }: CarCardProps) => {
   const [contactoAbierto, setContactoAbierto] = useState(false);
   const nombre = nombreLimpio(car.name);
-  const encaje = puntuacionEntera(car.score);
-  const specs = car.specs.filter(Boolean).join(" · ");
+  // Fase 2: `encaje` (0–99) del backend; si no llega, la puntuación redondeada
+  const encaje = car.encaje != null && Number.isFinite(car.encaje) ? String(car.encaje) : puntuacionEntera(car.score);
+  const specs = lineaDatos(car);
+  const razones = (car.razones ?? []).filter(Boolean);
 
   return (
     <article
@@ -151,8 +171,8 @@ const CarCard = ({ car, posicion, total, comparando, onToggleComparar }: CarCard
               </button>
             </PopoverTrigger>
             <PopoverContent className="w-64 border-cb-espresso/10 bg-cb-crema-2 text-xs leading-relaxed text-cb-espresso">
-              Mide cuánto encaja este coche con lo que nos has contado: uso, pasajeros, presupuesto y
-              prioridades. Cuanto más alto, mejor encaje contigo.
+              De 0 a 99: mide cuánto encaja este coche con lo que nos has contado (uso, pasajeros,
+              presupuesto y prioridades). Un mismo coche tiene el mismo encaje en cualquier búsqueda.
             </PopoverContent>
           </Popover>
         )}
@@ -189,12 +209,45 @@ const CarCard = ({ car, posicion, total, comparando, onToggleComparar }: CarCard
           </Popover>
         </div>
 
-        {car.analysis && (
-          <div className="flex flex-col gap-1">
-            <span className="text-xs font-bold uppercase tracking-[0.08em] text-cb-tinta">Nuestro criterio</span>
-            <p className="text-sm leading-relaxed">{car.analysis}</p>
+        {razones.length > 0 && (
+          <div className="flex flex-col gap-1.5">
+            <span className="text-xs font-bold uppercase tracking-[0.08em] text-cb-tinta">Por qué encaja contigo</span>
+            <ul className="flex flex-col gap-1.5">
+              {razones.map((razon) => (
+                <li key={razon} className="flex gap-2 text-sm leading-relaxed">
+                  <Check className="mt-[3px] h-4 w-4 shrink-0" strokeWidth={2.4} aria-hidden="true" />
+                  <span>{razon}</span>
+                </li>
+              ))}
+            </ul>
           </div>
         )}
+
+        {car.aviso && (
+          <div className="flex gap-2 rounded-xl bg-cb-melocoton/[0.22] px-3 py-2.5 text-sm leading-relaxed">
+            <AlertTriangle className="mt-[3px] h-4 w-4 shrink-0" strokeWidth={2.2} aria-hidden="true" />
+            <span>
+              <strong className="font-bold">Ten en cuenta:</strong> {car.aviso}
+            </span>
+          </div>
+        )}
+
+        {car.analysis &&
+          (razones.length > 0 ? (
+            <details className="group">
+              <summary className="cursor-pointer list-none text-xs font-bold uppercase tracking-[0.08em] text-cb-tinta hover:text-cb-espresso [&::-webkit-details-marker]:hidden">
+                Nuestro criterio{" "}
+                <span className="font-normal normal-case tracking-normal group-open:hidden">· ver más</span>
+                <span className="hidden font-normal normal-case tracking-normal group-open:inline">· ver menos</span>
+              </summary>
+              <p className="pt-1.5 text-sm leading-relaxed">{car.analysis}</p>
+            </details>
+          ) : (
+            <div className="flex flex-col gap-1">
+              <span className="text-xs font-bold uppercase tracking-[0.08em] text-cb-tinta">Nuestro criterio</span>
+              <p className="text-sm leading-relaxed">{car.analysis}</p>
+            </div>
+          ))}
 
         <div className={`grid gap-2 ${onToggleComparar ? "grid-cols-[1fr_auto]" : "grid-cols-1"}`}>
           <button
