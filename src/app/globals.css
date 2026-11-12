@@ -2,157 +2,98 @@
 @tailwind components;
 @tailwind utilities;
 
-body {
-  font-family: Arial, Helvetica, sans-serif;
-}
-
+/*
+  Un solo tema, el de carblau.com: fondo espresso, papel crema, Blau para la
+  acción. Las variables son las que esperan los componentes de shadcn/ui; los
+  colores de marca con nombre están en tailwind.config.ts (cb-*).
+*/
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 0 0% 3.9%;
-    --card: 0 0% 100%;
-    --card-foreground: 0 0% 3.9%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 3.9%;
-    --primary: 182 100% 74%;
-    --primary-foreground: 232 15% 10%;
-    --secondary: 0 0% 96.1%;
-    --secondary-foreground: 0 0% 9%;
-    --muted: 0 0% 96.1%;
-    --muted-foreground: 0 0% 45.1%;
-    --accent: 180 100% 50%;
-    --accent-foreground: 232 15% 10%;
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 0 0% 89.8%;
-    --input: 0 0% 89.8%;
-    --ring: 182 100% 74%;
-    --chart-1: 12 76% 61%;
-    --chart-2: 173 58% 39%;
-    --chart-3: 197 37% 24%;
-    --chart-4: 43 74% 66%;
-    --chart-5: 27 87% 67%;
-    --radius: 0.5rem;
-    --sidebar-background: 0 0% 98%;
-    --sidebar-foreground: 240 5.3% 26.1%;
-    --sidebar-primary: 240 5.9% 10%;
-    --sidebar-primary-foreground: 0 0% 98%;
-    --sidebar-accent: 240 4.8% 95.9%;
-    --sidebar-accent-foreground: 240 5.9% 10%;
-    --sidebar-border: 220 13% 91%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --background: 22 17% 9%;          /* espresso #1C1714 */
+    --foreground: 38 48% 91%;         /* crema #F3EBDD */
+    --card: 38 48% 91%;               /* papel crema */
+    --card-foreground: 22 17% 9%;
+    --popover: 40 100% 99%;           /* #FFFDF9 */
+    --popover-foreground: 22 17% 9%;
+    --primary: 197 100% 47%;          /* blau #00ADEF */
+    --primary-foreground: 22 17% 9%;
+    --secondary: 178 31% 75%;         /* aguamarina #ADD4D3 */
+    --secondary-foreground: 22 17% 9%;
+    --muted: 28 18% 14%;              /* espresso-2 #2A231D */
+    --muted-foreground: 37 19% 74%;   /* crema suave #C9BFAF */
+    --accent: 28 100% 70%;            /* melocotón #FFAD64 */
+    --accent-foreground: 22 17% 9%;
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 38 48% 91%;
+    --border: 28 15% 20%;
+    --input: 28 15% 20%;
+    --ring: 197 100% 47%;
+    --chart-1: 197 100% 47%;
+    --chart-2: 178 31% 75%;
+    --chart-3: 28 100% 70%;
+    --chart-4: 216 79% 15%;
+    --chart-5: 37 19% 74%;
+    --radius: 1rem;
+    --sidebar-background: 22 17% 9%;
+    --sidebar-foreground: 38 48% 91%;
+    --sidebar-primary: 197 100% 47%;
+    --sidebar-primary-foreground: 22 17% 9%;
+    --sidebar-accent: 28 18% 14%;
+    --sidebar-accent-foreground: 38 48% 91%;
+    --sidebar-border: 28 15% 20%;
+    --sidebar-ring: 197 100% 47%;
   }
-  .dark {
-    /*--background: 202 96% 14%;*/
-    --background: 202 96% 14%;
-    --foreground: 0 0% 98%;
-    --card: 202 50% 18%;
-    --card-foreground: 0 0% 98%;
-    --popover: 202 96% 14%;
-    --popover-foreground: 0 0% 98%;
-    --primary: 180 96% 73%;
-    --primary-foreground: 202 96% 10%;
-    --secondary: 202 40% 22%;
-    --secondary-foreground: 0 0% 98%;
-    --muted: 202 30% 25%;
-    --muted-foreground: 0 0% 98%;
-    --accent: 180 96% 73%;
-    --accent-foreground: 202 96% 10%;
-    --destructive: 0 63% 31%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 202 30% 25%;
-    --input: 202 30% 25%;
-    --ring: 180 96% 73%;
-    --chart-1: 220 70% 50%;
-    --chart-2: 160 60% 45%;
-    --chart-3: 30 80% 55%;
-    --chart-4: 280 65% 60%;
-    --chart-5: 340 75% 55%;
-    --sidebar-background: 202 96% 14%;
-    --sidebar-foreground: 0 0% 98%;
-    --sidebar-primary: 180 96% 73%;
-    --sidebar-primary-foreground: 202 96% 10%;
-    --sidebar-accent: 202 50% 18%;
-    --sidebar-accent-foreground: 0 0% 98%;
-    --sidebar-border: 202 30% 25%;
-    --sidebar-ring: 180 96% 73%;
-  }
-}
 
-@layer base {
   * {
     @apply border-border;
   }
+  html {
+    color-scheme: dark;
+  }
   body {
     @apply bg-background text-foreground;
+    -webkit-font-smoothing: antialiased;
   }
 }
 
-
-@layer utilities {
-  .typing-dot {
-    animation: typing-blink 1.4s infinite both;
-  }
-  .typing-dot:nth-child(2) {
-    animation-delay: 0.2s;
-  }
-  .typing-dot:nth-child(3) {
-    animation-delay: 0.4s;
-  }
+/* Estado de búsqueda: punto que respira */
+@keyframes cb-pulse {
+  0%, 100% { opacity: 0.35; }
+  50% { opacity: 1; }
+}
+.cb-pulse {
+  animation: cb-pulse 1.4s ease-in-out infinite;
 }
 
-@keyframes typing-blink {
-  0% {
-    opacity: 0.2;
-  }
-  20% {
-    opacity: 1;
-  }
-  100% {
-    opacity: 0.2;
-  }
+/* Barras de scroll discretas sobre fondo oscuro */
+.cb-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(243, 235, 221, 0.25) transparent;
+}
+.cb-scroll-x {
+  scrollbar-width: none;
+}
+.cb-scroll-x::-webkit-scrollbar {
+  display: none;
 }
 
-/* ============================================
-   OPCIÓN 4: GLASSMORPHISM BURBUJAS
-   ============================================ */
-  @layer base {
-    body {
-      background-color: hsl(202 96% 14%);
-      background-attachment: fixed;
-      position: relative;
-    }
-    
-    body::before,
-    body::after {
-      content: '';
-      position: fixed;
-      border-radius: 50%;
-      filter: blur(80px);
-      opacity: 0.3;
-      z-index: -1;
-    }
-    
-    body::before {
-      width: 500px;
-      height: 500px;
-      background: hsl(180 100% 50% / 0.4);
-      top: -10%;
-      left: -5%;
-      animation: float 20s ease-in-out infinite;
-    }
-    
-    body::after {
-      width: 400px;
-      height: 400px;
-      background: hsl(190 100% 40% / 0.3);
-      bottom: -10%;
-      right: -5%;
-      animation: float 25s ease-in-out infinite reverse;
-    }
-  }
-  
-  @keyframes float {
-    0%, 100% { transform: translate(0, 0); }
-    50% { transform: translate(50px, 50px); }
-  } 
+/*
+  Markdown del asesor (react-markdown) dentro de las tarjetas crema.
+  El proyecto no usa @tailwindcss/typography: estas reglas son todo el estilo.
+*/
+.cb-md > :first-child { margin-top: 0; }
+.cb-md > :last-child { margin-bottom: 0; }
+.cb-md p { margin: 0 0 0.75em; }
+.cb-md strong { font-weight: 600; }
+.cb-md em { font-style: italic; }
+.cb-md ul, .cb-md ol { margin: 0 0 0.75em; padding-left: 1.25em; }
+.cb-md li { margin: 0.2em 0; }
+.cb-md ul { list-style: disc; }
+.cb-md ol { list-style: decimal; }
+.cb-md a { text-decoration: underline; text-underline-offset: 2px; }
+.cb-md hr { border: 0; border-top: 1px solid rgba(28, 23, 20, 0.12); margin: 0.75em 0; }
+.cb-md h1, .cb-md h2, .cb-md h3 { font-weight: 600; margin: 0.5em 0 0.4em; line-height: 1.25; }
+.cb-md code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.9em; }
+
+/* Sobre navy (burbuja del usuario) */
+.cb-md-claro hr { border-top-color: rgba(243, 235, 221, 0.2); }

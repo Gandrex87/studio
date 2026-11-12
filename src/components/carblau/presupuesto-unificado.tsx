@@ -1,429 +1,141 @@
 "use client";
 
 import { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { Wallet, CreditCard, Banknote, CircleDollarSign, TrendingUp, Gem, Crown } from "lucide-react";
+import { BOTON_PRIMARIO, CHIP_ACTIVO, CHIP_NORMAL, ENLACE_SECUNDARIO } from "@/components/carblau/quick-replies";
+import { miles } from "@/lib/texto";
 
 interface PresupuestoUnificadoProps {
   onSelect: (presupuestoText: string) => void;
   isLoading: boolean;
 }
 
-// Tipos de pago
 type TipoPago = "contado" | "financiado";
 
-// Interfaz para los rangos
-interface RangoPresupuesto {
-  value: number;
-  min: number;
-  max: number;
-  icon: any;
-  label: string;
-  description: string;
-  color: string;
-  bgColor: string;
-  borderColor: string;
+interface Rango {
+  valor: number;
+  etiqueta: string;
 }
 
-// ═══════════════════════════════════════════════════════════════════
-// RANGOS PARA CONTADO (montos totales)
-// ═══════════════════════════════════════════════════════════════════
-
-const RANGOS_CONTADO: RangoPresupuesto[] = [
-  {
-    value: 10000,
-    min: 5000,
-    max: 10000,
-    icon: Wallet,
-    label: "5-10k",
-    description: "Básico",
-    color: "text-blue-600",
-    bgColor: "bg-blue-50",
-    borderColor: "border-blue-300",
-  },
-  {
-    value: 20000,
-    min: 10000,
-    max: 20000,
-    icon: Banknote,
-    label: "10-20k",
-    description: "Medio",
-    color: "text-green-600",
-    bgColor: "bg-green-50",
-    borderColor: "border-green-300",
-  },
-  {
-    value: 30000,
-    min: 20000,
-    max: 30000,
-    icon: CircleDollarSign,
-    label: "20-30k",
-    description: "Alto",
-    color: "text-orange-600",
-    bgColor: "bg-orange-50",
-    borderColor: "border-orange-300",
-  },
-  {
-    value: 40000,
-    min: 30000,
-    max: 40000,
-    icon: TrendingUp,
-    label: "30-40k",
-    description: "Premium",
-    color: "text-purple-600",
-    bgColor: "bg-purple-50",
-    borderColor: "border-purple-300",
-  },
-  {
-    value: 60000,
-    min: 40000,
-    max: 60000,
-    icon: Gem,
-    label: "40-60k",
-    description: "Lujo",
-    color: "text-pink-600",
-    bgColor: "bg-pink-50",
-    borderColor: "border-pink-300",
-  },
-  {
-    value: 100000,
-    min: 60000,
-    max: 150000,
-    icon: Crown,
-    label: "60k+",
-    description: "Exclusivo",
-    color: "text-amber-600",
-    bgColor: "bg-amber-50",
-    borderColor: "border-amber-300",
-  },
+// Importes: los mismos que entiende el backend (interpretar_presupuesto) y que
+// ofrecen los canales de mensajería (canales/opciones.py del agente)
+const CONTADO: Rango[] = [
+  { valor: 10000, etiqueta: "5–10 mil €" },
+  { valor: 20000, etiqueta: "10–20 mil €" },
+  { valor: 30000, etiqueta: "20–30 mil €" },
+  { valor: 40000, etiqueta: "30–40 mil €" },
+  { valor: 60000, etiqueta: "40–60 mil €" },
+  { valor: 100000, etiqueta: "Más de 60 mil €" },
 ];
 
-// ═══════════════════════════════════════════════════════════════════
-// RANGOS PARA FINANCIADO (cuotas mensuales)
-// ═══════════════════════════════════════════════════════════════════
-
-const RANGOS_FINANCIADO: RangoPresupuesto[] = [
-  {
-    value: 300,
-    min: 200,
-    max: 300,
-    icon: Wallet,
-    label: "200-300€",
-    description: "Básico",
-    color: "text-blue-600",
-    bgColor: "bg-blue-50",
-    borderColor: "border-blue-300",
-  },
-  {
-    value: 400,
-    min: 300,
-    max: 400,
-    icon: Banknote,
-    label: "300-400€",
-    description: "Medio",
-    color: "text-green-600",
-    bgColor: "bg-green-50",
-    borderColor: "border-green-300",
-  },
-  {
-    value: 500,
-    min: 400,
-    max: 500,
-    icon: CircleDollarSign,
-    label: "400-500€",
-    description: "Alto",
-    color: "text-orange-600",
-    bgColor: "bg-orange-50",
-    borderColor: "border-orange-300",
-  },
-  {
-    value: 700,
-    min: 500,
-    max: 700,
-    icon: TrendingUp,
-    label: "500-700€",
-    description: "Premium",
-    color: "text-purple-600",
-    bgColor: "bg-purple-50",
-    borderColor: "border-purple-300",
-  },
-  {
-    value: 1000,
-    min: 700,
-    max: 1500,
-    icon: Gem,
-    label: "700€+",
-    description: "Lujo",
-    color: "text-pink-600",
-    bgColor: "bg-pink-50",
-    borderColor: "border-pink-300",
-  },
+const FINANCIADO: Rango[] = [
+  { valor: 300, etiqueta: "200–300 €/mes" },
+  { valor: 400, etiqueta: "300–400 €/mes" },
+  { valor: 500, etiqueta: "400–500 €/mes" },
+  { valor: 700, etiqueta: "500–700 €/mes" },
+  { valor: 1000, etiqueta: "700–1.000 €/mes" },
 ];
 
-// Miles con punto siempre (toLocaleString("es-ES") no agrupa los de 4 cifras: 1000).
-// Mismo formato que texto_presupuesto() del backend.
-function formatearMiles(n: number): string {
-  return String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g, ".");
-}
-
+// Texto que se envía (y que ve el usuario en su burbuja). El backend lo
+// interpreta de forma determinista: mismo formato que texto_presupuesto().
 export function textoPresupuesto(tipo: TipoPago, importe: number): string {
   return tipo === "contado"
-    ? `💰 Al contado · hasta ${formatearMiles(importe)} €`
-    : `💳 Financiado · hasta ${formatearMiles(importe)} €/mes`;
+    ? `💰 Al contado · hasta ${miles(importe)} €`
+    : `💳 Financiado · hasta ${miles(importe)} €/mes`;
 }
 
+const SEGMENTO =
+  "h-10 rounded-[9px] text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cb-blau disabled:opacity-50";
+
 export function PresupuestoUnificado({ onSelect, isLoading }: PresupuestoUnificadoProps) {
-  const [tipoSeleccionado, setTipoSeleccionado] = useState<TipoPago>("contado");
-  const [rangoSeleccionado, setRangoSeleccionado] = useState<number | null>(null);
-  const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
+  const [tipo, setTipo] = useState<TipoPago>("contado");
+  const [seleccion, setSeleccion] = useState<number | null>(null);
 
-  // Rangos dinámicos según el tipo de pago
-  const rangos = tipoSeleccionado === "contado" ? RANGOS_CONTADO : RANGOS_FINANCIADO;
+  const rangos = tipo === "contado" ? CONTADO : FINANCIADO;
+  const elegido = rangos.find((r) => r.valor === seleccion) ?? null;
 
-  const handleConfirmar = () => {
-    if (isLoading || rangoSeleccionado === null) return;
-
-    // Se envía (y se muestra en la burbuja del usuario) el texto legible.
-    // El backend lo interpreta de forma determinista (interpretar_presupuesto).
-    onSelect(textoPresupuesto(tipoSeleccionado, rangoSeleccionado));
+  const cambiarTipo = (nuevo: TipoPago) => {
+    if (isLoading || nuevo === tipo) return;
+    setTipo(nuevo);
+    setSeleccion(null);
   };
 
-  const handleRangoSelect = (value: number) => {
-    if (isLoading) return;
-    setRangoSeleccionado(value);
+  const confirmar = () => {
+    if (isLoading || seleccion === null) return;
+    onSelect(textoPresupuesto(tipo, seleccion));
   };
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      className="space-y-3"
-    >
-      {/* Título Estilo Cápsula */}
-      <div className="flex justify-center">
-        <div className="text-sm font-semibold text-slate-800 text-center bg-white/80 backdrop-blur-sm py-1 px-4 rounded-full border border-white/20 shadow-sm">
-          ¿Cómo prefieres pagar el coche?
+    <div className="flex flex-col gap-3.5">
+      <div
+        role="group"
+        aria-label="Forma de pago"
+        className="grid grid-cols-2 gap-1 rounded-xl bg-cb-espresso/[0.08] p-1"
+      >
+        <button
+          type="button"
+          aria-pressed={tipo === "contado"}
+          onClick={() => cambiarTipo("contado")}
+          disabled={isLoading}
+          className={`${SEGMENTO} ${tipo === "contado" ? "bg-cb-espresso text-cb-crema" : "text-cb-espresso hover:bg-cb-espresso/10"}`}
+        >
+          Al contado
+        </button>
+        <button
+          type="button"
+          aria-pressed={tipo === "financiado"}
+          onClick={() => cambiarTipo("financiado")}
+          disabled={isLoading}
+          className={`${SEGMENTO} ${tipo === "financiado" ? "bg-cb-espresso text-cb-crema" : "text-cb-espresso hover:bg-cb-espresso/10"}`}
+        >
+          Financiado
+        </button>
+      </div>
+
+      <div className="flex flex-col gap-2">
+        <p className="text-xs font-semibold uppercase tracking-[0.06em] text-cb-tinta">
+          {tipo === "contado" ? "Presupuesto total" : "Cuota mensual máxima"}
+        </p>
+        <div className="grid grid-cols-3 gap-2">
+          {rangos.map((rango) => {
+            const activo = rango.valor === seleccion;
+            return (
+              <button
+                key={`${tipo}-${rango.valor}`}
+                type="button"
+                aria-pressed={activo}
+                onClick={() => !isLoading && setSeleccion(rango.valor)}
+                disabled={isLoading}
+                className={`${activo ? CHIP_ACTIVO : CHIP_NORMAL} px-2`}
+              >
+                {rango.etiqueta}
+              </button>
+            );
+          })}
         </div>
       </div>
 
-      {/* Tabs de tipo de pago */}
-      <div className="flex gap-2 p-1 bg-white/60 backdrop-blur-md rounded-lg border border-white/40 shadow-sm">
+      <div className="flex flex-col items-stretch gap-1">
         <button
-          onClick={() => {
-            if (!isLoading) {
-              setTipoSeleccionado("contado");
-              setRangoSeleccionado(null); 
-            }
-          }}
-          disabled={isLoading}
-          className={`
-            flex-1 py-3 px-4 rounded-md font-semibold text-sm transition-all
-            ${tipoSeleccionado === "contado"
-              ? "bg-[#082144] shadow-md text-white" // Activo: Azul Oscuro
-              : "text-slate-600 hover:text-slate-900 hover:bg-white/50" // Inactivo: Texto gris
-            }
-            disabled:opacity-50 disabled:cursor-not-allowed
-          `}
+          type="button"
+          onClick={confirmar}
+          disabled={isLoading || seleccion === null}
+          className={BOTON_PRIMARIO}
         >
-          <div className="flex items-center justify-center gap-2">
-            <Wallet className="w-4 h-4" />
-            <span>Al contado</span>
-          </div>
+          {isLoading
+            ? "Enviando…"
+            : elegido
+              ? `Confirmar: hasta ${miles(elegido.valor)} €${tipo === "financiado" ? "/mes" : ""}`
+              : "Elige un rango"}
         </button>
-
         <button
-          onClick={() => {
-            if (!isLoading) {
-              setTipoSeleccionado("financiado");
-              setRangoSeleccionado(null); 
-            }
-          }}
-          disabled={isLoading}
-          className={`
-            flex-1 py-3 px-4 rounded-md font-semibold text-sm transition-all
-            ${tipoSeleccionado === "financiado"
-              ? "bg-[#082144] shadow-md text-white"
-              : "text-slate-600 hover:text-slate-900 hover:bg-white/50"
-            }
-            disabled:opacity-50 disabled:cursor-not-allowed
-          `}
-        >
-          <div className="flex items-center justify-center gap-2">
-            <CreditCard className="w-4 h-4" />
-            <span>Financiado</span>
-          </div>
-        </button>
-      </div>
-
-      {/* Subtítulo dinámico */}
-      <AnimatePresence mode="wait">
-        <motion.div
-          key={tipoSeleccionado}
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: 10 }}
-          className="flex justify-center"
-        >
-          <div className="text-xs text-slate-600 text-center bg-white/40 backdrop-blur-[1px] px-3 py-1 rounded-full">
-            {tipoSeleccionado === "contado"
-              ? "Selecciona el rango de tu presupuesto total"
-              : "Selecciona tu cuota mensual máxima"
-            }
-          </div>
-        </motion.div>
-      </AnimatePresence>
-
-      {/* Slider de rangos */}
-      <AnimatePresence mode="wait">
-        <motion.div
-          key={tipoSeleccionado}
-          initial={{ opacity: 0, x: tipoSeleccionado === "contado" ? -20 : 20 }}
-          animate={{ opacity: 1, x: 0 }}
-          exit={{ opacity: 0, x: tipoSeleccionado === "contado" ? 20 : -20 }}
-          transition={{ duration: 0.3 }}
-          className="relative px-4 py-6"
-        >
-          {/* Línea de conexión */}
-          <div className="absolute top-1/2 left-8 right-8 h-1.5 rounded-full -translate-y-1/2 opacity-40"
-               style={{
-                 background: tipoSeleccionado === "contado"
-                   ? 'linear-gradient(to right, #93c5fd, #86efac, #fdba74, #c084fc, #f9a8d4, #fcd34d)'
-                   : 'linear-gradient(to right, #93c5fd, #86efac, #fdba74, #c084fc, #f9a8d4)'
-               }} />
-
-          {/* Grid de opciones */}
-          <div className={`relative grid gap-2 ${
-            tipoSeleccionado === "contado" ? "grid-cols-6" : "grid-cols-5"
-          }`}>
-            {rangos.map((rango, index) => {
-              const Icon = rango.icon;
-              const isSelected = rangoSeleccionado === rango.value;
-              const isHovered = hoveredIndex === index;
-              const isActive = isSelected || isHovered;
-
-              return (
-                <motion.button
-                  key={`${tipoSeleccionado}-${index}`}
-                  onClick={() => handleRangoSelect(rango.value)}
-                  onMouseEnter={() => !isLoading && setHoveredIndex(index)}
-                  onMouseLeave={() => setHoveredIndex(null)}
-                  disabled={isLoading}
-                  className="relative flex flex-col items-center gap-2 p-2 rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none"
-                  whileHover={{ scale: isLoading ? 1 : 1.05 }}
-                  whileTap={{ scale: isLoading ? 1 : 0.95 }}
-                  initial={{ opacity: 0, scale: 0.8 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ delay: index * 0.05 }}
-                >
-                  {/* Icono con fondo blanco */}
-                  <motion.div
-                    className={`
-                      w-12 h-12 rounded-full flex items-center justify-center border-2 shadow-sm
-                      ${isActive ? rango.bgColor : "bg-white"}
-                      ${isActive ? rango.borderColor : "border-slate-200"}
-                      ${isActive ? rango.color : "text-slate-400"}
-                      transition-all duration-200
-                    `}
-                    animate={{
-                      scale: isActive ? 1.15 : 1,
-                      rotate: isSelected ? [0, -10, 10, -10, 0] : 0,
-                    }}
-                    transition={{
-                      scale: { duration: 0.2 },
-                      rotate: { duration: 0.5 },
-                    }}
-                  >
-                    <Icon className="w-6 h-6" strokeWidth={isActive ? 2.5 : 2} />
-                  </motion.div>
-
-                  {/* Label con fondo */}
-                  <div className="text-center bg-white/60 backdrop-blur-[2px] rounded-lg px-1 py-1">
-                    <div
-                      className={`
-                        text-xs font-bold transition-colors
-                        ${isActive ? "text-[#082144]" : "text-slate-700"}
-                      `}
-                    >
-                      {rango.label}
-                    </div>
-                    <div className="text-[9px] text-slate-500 leading-tight">
-                      {rango.description}
-                    </div>
-                  </div>
-
-                  {/* Indicador de selección */}
-                  {isSelected && (
-                    <motion.div
-                      layoutId="presupuesto-unificado-selected"
-                      className={`absolute -bottom-2 w-2 h-2 rounded-full ${rango.color.replace('text-', 'bg-')}`}
-                      initial={{ scale: 0 }}
-                      animate={{ scale: 1 }}
-                      transition={{ type: "spring", stiffness: 300, damping: 20 }}
-                    />
-                  )}
-                </motion.button>
-              );
-            })}
-          </div>
-        </motion.div>
-      </AnimatePresence>
-
-      {/* Feedback de selección */}
-      <AnimatePresence>
-        {rangoSeleccionado !== null && (
-          <motion.div
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            className="text-center p-3 bg-white border border-slate-200 rounded-lg shadow-sm mx-4"
-          >
-            <div className="text-sm">
-              <span className="text-slate-500">Has seleccionado: </span>
-              <span className="font-bold text-[#082144]">
-                {tipoSeleccionado === "contado" 
-                  ? rangos.find(r => r.value === rangoSeleccionado)?.label + " €"
-                  : rangos.find(r => r.value === rangoSeleccionado)?.label + "/mes"
-                }
-              </span>
-            </div>
-            <div className="text-xs text-slate-400 mt-1">
-              {tipoSeleccionado === "contado" ? "Pago al contado" : "Cuota mensual"}
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Botón de confirmar */}
-      <div className="flex justify-center pt-2">
-        <motion.button
-          onClick={handleConfirmar}
-          disabled={isLoading || rangoSeleccionado === null}
-          className={`
-            px-6 py-3 rounded-lg font-semibold text-sm transition-all shadow-md
-            ${rangoSeleccionado !== null && !isLoading
-              ? "bg-[#082144] text-white hover:bg-[#082144]/90"
-              : "bg-slate-200 text-slate-400 cursor-not-allowed"
-            }
-          `}
-          whileHover={{ scale: rangoSeleccionado !== null && !isLoading ? 1.03 : 1 }}
-          whileTap={{ scale: rangoSeleccionado !== null && !isLoading ? 0.97 : 1 }}
-        >
-          {isLoading ? "Procesando..." : "Confirmar selección"}
-        </motion.button>
-      </div>
-
-      {/* Opción de cantidad específica */}
-      <div className="flex justify-center pt-2">
-        <motion.button
+          type="button"
           onClick={() => onSelect("Prefiero indicar una cantidad específica")}
           disabled={isLoading}
-          className="px-4 py-2 text-sm text-slate-600 bg-white border border-slate-200 shadow-sm hover:text-[#082144] hover:border-[#082144] hover:bg-slate-50 rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-          whileHover={{ scale: isLoading ? 1 : 1.03 }}
-          whileTap={{ scale: isLoading ? 1 : 0.97 }}
+          className={ENLACE_SECUNDARIO}
         >
-          💬 Prefiero indicar una cantidad específica
-        </motion.button>
+          Prefiero escribir una cantidad
+        </button>
       </div>
-    </motion.div>
+    </div>
   );
 }

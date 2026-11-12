@@ -1,5 +1,22 @@
 import type {Config} from 'tailwindcss';
 
+// Paleta de marca: la de carblau.com (fondo espresso, papel crema, Blau para
+// la acción, aguamarina para lo que encaja, melocotón para los avisos).
+// Ver 08 · Fundamentos en el lienzo de diseño v2.
+const marca = {
+  espresso: '#1C1714',
+  'espresso-2': '#2A231D',
+  crema: '#F3EBDD',
+  'crema-2': '#FFFDF9',
+  blau: '#00ADEF',
+  navy: '#082144',
+  agua: '#ADD4D3',
+  melocoton: '#FFAD64',
+  tinta: '#6B6158',       // texto secundario sobre crema (4,5:1)
+  'crema-suave': '#C9BFAF', // texto secundario sobre espresso
+  'crema-tenue': '#9A8F80', // etiquetas pequeñas sobre espresso (5,6:1)
+};
+
 export default {
   darkMode: ['class'],
   content: [
@@ -10,11 +27,14 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        body: ['"Source Serif 4"', 'Georgia', 'serif'],
+        // Source Serif 4: titulares y voz del asesor (la fuente de carblau.com).
+        // Source Sans 3: interfaz, datos y botones.
+        body: ['"Source Sans 3"', 'system-ui', 'sans-serif'],
         headline: ['"Source Serif 4"', 'Georgia', 'serif'],
         code: ['monospace'],
       },
       colors: {
+        cb: marca,
         background: 'hsl(var(--background))',
         foreground: 'hsl(var(--foreground))',
         card: {

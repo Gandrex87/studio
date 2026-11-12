@@ -1,26 +1,23 @@
 "use client";
 
-// Progreso del cuestionario: lo manda el backend en
-// additional_kwargs.progreso de cada pregunta del agente.
-export interface Progreso {
-  paso: number;       // pregunta actual, empezando en 1
-  total: number;      // total estimado (puede cambiar si el flujo se ramifica)
-  etiqueta?: string;  // tema de la pregunta, p. ej. "Presupuesto"
-}
+import type { Progreso } from "@/lib/tipos";
 
+export type { Progreso };
+
+// Progreso del cuestionario inicial: un segmento por tema (el backend manda
+// `progreso` en cada pregunta; los pasos son temas, no preguntas).
 export function ProgresoCuestionario({ progreso }: { progreso: Progreso }) {
   const total = Math.max(1, Math.round(progreso.total));
   const paso = Math.min(Math.max(1, Math.round(progreso.paso)), total);
-  const porcentaje = (paso / total) * 100;
 
   return (
-    <div className="px-4 pt-2 pb-2.5 border-b border-black/5 bg-white/40 backdrop-blur-sm">
-      <div className="flex items-baseline justify-between text-xs mb-1.5">
-        <span className="font-semibold text-[#082144]">
+    <div className="flex flex-col gap-2 px-4 pb-2.5 pt-2.5">
+      <div className="flex items-baseline justify-between">
+        <span className="text-xs font-bold uppercase tracking-[0.08em] text-cb-agua">
           Paso {paso} de {total}
         </span>
         {progreso.etiqueta && (
-          <span className="text-slate-600 truncate ml-3">{progreso.etiqueta}</span>
+          <span className="ml-3 truncate text-[13px] text-cb-crema-suave">{progreso.etiqueta}</span>
         )}
       </div>
       <div
@@ -29,12 +26,17 @@ export function ProgresoCuestionario({ progreso }: { progreso: Progreso }) {
         aria-valuemax={total}
         aria-valuenow={paso}
         aria-label={`Paso ${paso} de ${total}${progreso.etiqueta ? `: ${progreso.etiqueta}` : ""}`}
-        className="h-1.5 w-full rounded-full bg-slate-200/80 overflow-hidden"
+        className="grid gap-1"
+        style={{ gridTemplateColumns: `repeat(${total}, minmax(0, 1fr))` }}
       >
-        <div
-          className="h-full rounded-full bg-[#082144] transition-[width] duration-500 ease-out"
-          style={{ width: `${porcentaje}%` }}
-        />
+        {Array.from({ length: total }, (_, i) => (
+          <span
+            key={i}
+            className={`h-1 rounded-sm transition-colors duration-500 ${
+              i < paso ? "bg-cb-blau" : "bg-cb-crema/20"
+            }`}
+          />
+        ))}
       </div>
     </div>
   );

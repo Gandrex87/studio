@@ -2,104 +2,71 @@
 
 import { Fragment } from "react";
 import { Check } from "lucide-react";
+import type { CarComparisonData } from "@/lib/tipos";
+import { nombreLimpio, numeroFicha, sinEmoji } from "@/lib/texto";
 
-interface Coche {
-  indice: number;
-  nombre: string;
-}
+export type { CarComparisonData };
 
-interface Fila {
-  etiqueta: string;
-  valores: string[];
-  mejor_idx: number | null;
-}
-
-interface Categoria {
-  nombre: string;
-  icono: string;
-  filas: Fila[];
-}
-
-export interface CarComparisonData {
-  coches: Coche[];
-  categorias: Categoria[];
-}
-
+// Comparativa de 2–3 coches dentro de la tarjeta del asesor. Cada fila lleva
+// su etiqueta encima y los valores en columnas; el mejor (mejor_idx) va en
+// aguamarina con una marca. Pensada para 390 px: sin scroll horizontal.
 export function CarComparisonTable({ data }: { data: CarComparisonData }) {
   const { coches, categorias } = data;
+  if (coches.length === 0) return null;
+  const columnas = { gridTemplateColumns: `repeat(${coches.length}, minmax(0, 1fr))` };
 
   return (
-    <div className="w-full overflow-x-auto rounded-xl border border-stone-200 shadow-md mt-2 bg-white">
-      <table className="text-sm w-full border-separate border-spacing-0">
-        <thead>
-          <tr>
-            <th className="sticky left-0 z-10 bg-[#1C1714] text-white px-4 py-3.5 text-left font-semibold min-w-[130px] border-b border-[#1C1714]">
-              Característica
-            </th>
-            {coches.map((coche) => (
-              <th
-                key={coche.indice}
-                className="bg-[#1C1714] text-white px-4 py-3.5 text-center font-semibold min-w-[140px] whitespace-nowrap border-b border-[#1C1714]"
-              >
-                {coche.nombre}
-              </th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {categorias.map((cat, catIdx) => (
-            <Fragment key={catIdx}>
-              <tr>
-                <td
-                  colSpan={1 + coches.length}
-                  className="bg-[#F3EBDD] px-4 py-2.5 font-semibold text-stone-700 text-xs uppercase tracking-wider border-t-2 border-stone-300"
-                >
-                  {cat.icono} {cat.nombre}
-                </td>
-              </tr>
-              {cat.filas.map((fila, filaIdx) => {
-                const rowBg = filaIdx % 2 === 0 ? "bg-white" : "bg-stone-50";
-                return (
-                  <tr key={filaIdx}>
-                    <td
-                      className={`sticky left-0 ${rowBg} px-4 py-3 text-slate-700 font-medium border-t border-stone-100`}
+    <section aria-label="Tabla comparativa" className="flex flex-col font-body">
+      <div className="grid gap-2 border-b border-cb-espresso/10 pb-2.5" style={columnas}>
+        {coches.map((coche) => {
+          const n = numeroFicha(coche.nombre) ?? coche.indice;
+          return (
+            <div key={coche.indice} className="flex min-w-0 flex-col gap-0.5">
+              <span className="text-[11px] font-bold uppercase tracking-[0.08em] text-cb-tinta">Coche {n}</span>
+              <span className="font-headline text-[15px] font-semibold leading-tight">
+                {nombreLimpio(coche.nombre)}
+              </span>
+            </div>
+          );
+        })}
+      </div>
+
+      {categorias.map((cat, catIdx) => (
+        <Fragment key={`${cat.nombre}-${catIdx}`}>
+          <h4
+            className={`pb-1 pt-3 text-xs font-bold uppercase tracking-[0.08em] text-cb-tinta ${
+              catIdx > 0 ? "mt-1 border-t-2 border-cb-espresso/[0.14]" : ""
+            }`}
+          >
+            {sinEmoji(cat.nombre)}
+          </h4>
+          {cat.filas.map((fila, filaIdx) => (
+            <div
+              key={`${fila.etiqueta}-${filaIdx}`}
+              className="flex flex-col gap-1 border-t border-cb-espresso/[0.08] py-2"
+            >
+              <span className="text-[13px] text-cb-tinta">{fila.etiqueta}</span>
+              <div className="grid gap-2" style={columnas}>
+                {coches.map((_, i) => {
+                  const valor = fila.valores[i] ?? "—";
+                  const gana = fila.mejor_idx === i;
+                  return (
+                    <div
+                      key={i}
+                      className={`flex min-h-[36px] items-center gap-1.5 rounded-[10px] px-2.5 py-1.5 text-[13px] leading-snug ${
+                        gana ? "bg-cb-agua font-bold text-cb-espresso" : "text-cb-espresso"
+                      }`}
                     >
-                      {fila.etiqueta}
-                    </td>
-                    {fila.valores.map((valor, valorIdx) => {
-                      const isWinner = fila.mejor_idx === valorIdx;
-                      const isLongText = valor.length > 40;
-                      return (
-                        <td
-                          key={valorIdx}
-                          className={`px-4 py-3 border-t border-stone-100 align-middle ${
-                            isLongText ? "text-left" : "text-center"
-                          } ${
-                            isWinner
-                              ? "bg-[#ADD4D3] text-slate-900 font-semibold"
-                              : "text-slate-600"
-                          }`}
-                        >
-                          <div
-                            className={`max-w-[200px] sm:max-w-[280px] ${
-                              isLongText ? "leading-snug" : "inline-block"
-                            }`}
-                          >
-                            {valor}
-                            {isWinner && (
-                              <Check className="inline-block h-3.5 w-3.5 stroke-[3] ml-1.5 -translate-y-px" />
-                            )}
-                          </div>
-                        </td>
-                      );
-                    })}
-                  </tr>
-                );
-              })}
-            </Fragment>
+                      {gana && <Check className="h-3.5 w-3.5 shrink-0" strokeWidth={3} aria-label="Mejor" />}
+                      <span className="min-w-0 break-words">{valor}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
           ))}
-        </tbody>
-      </table>
-    </div>
+        </Fragment>
+      ))}
+    </section>
   );
 }

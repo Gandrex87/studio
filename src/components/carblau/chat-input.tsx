@@ -4,10 +4,9 @@ import { forwardRef, useImperativeHandle, useRef } from "react";
 import { useForm, SubmitHandler } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Form, FormControl, FormField, FormItem } from "@/components/ui/form";
-import { SendHorizonal } from "lucide-react";
+import { ArrowUp } from "lucide-react";
 
 interface ChatInputProps {
   onSubmit: (message: string) => void;
@@ -50,15 +49,15 @@ export const ChatInput = forwardRef<ChatInputHandle, ChatInputProps>(
     const handleFormSubmit: SubmitHandler<FormData> = (data) => {
       onSubmit(data.message);
       form.reset();
-      
+
       // Restauramos la altura a su tamaño original tras enviar el mensaje
       if (textareaRef.current) {
         textareaRef.current.style.height = "auto";
       }
     };
-    
+
     const handleKeyDown = (event: React.KeyboardEvent<HTMLTextAreaElement>) => {
-      if (event.key === 'Enter' && !event.shiftKey && !isLoading) {
+      if (event.key === "Enter" && !event.shiftKey && !isLoading) {
         event.preventDefault();
         form.handleSubmit(handleFormSubmit)();
       }
@@ -66,7 +65,7 @@ export const ChatInput = forwardRef<ChatInputHandle, ChatInputProps>(
 
     return (
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(handleFormSubmit)} className="flex items-end gap-3 w-full">
+        <form onSubmit={form.handleSubmit(handleFormSubmit)} className="flex w-full items-end gap-2">
           <FormField
             control={form.control}
             name="message"
@@ -75,23 +74,24 @@ export const ChatInput = forwardRef<ChatInputHandle, ChatInputProps>(
               const { ref: fieldRef, onChange, ...restOfField } = field;
 
               return (
-                <FormItem className="flex-1">
+                <FormItem className="flex-1 space-y-0">
                   <FormControl>
                     <Textarea
                       ref={(e) => {
                         fieldRef(e);
                         textareaRef.current = e;
                       }}
-                      placeholder="Cada detalle nos acerca a tu coche..."
+                      aria-label="Tu mensaje"
+                      placeholder="Escribe tu respuesta…"
                       rows={1}
                       maxLength={1000}  // mismo límite que el backend (MAX_CARACTERES_MENSAJE)
                       enterKeyHint="send"
-                      className="resize-none min-h-[50px] max-h-[120px] overflow-y-auto py-3 px-4 bg-white text-base text-slate-900 placeholder:text-slate-400 border-slate-200 shadow-sm rounded-2xl focus-visible:ring-[#082144] scrollbar-thin"
+                      className="min-h-[48px] max-h-[120px] resize-none overflow-y-auto rounded-[24px] border-cb-crema/20 bg-cb-crema/[0.06] px-[18px] py-3 text-base text-cb-crema placeholder:text-cb-crema-tenue focus-visible:ring-2 focus-visible:ring-cb-blau focus-visible:ring-offset-0 cb-scroll"
                       {...restOfField}
                       onChange={(e) => {
                         // 1. Actualizamos el estado del formulario de React Hook Form
                         onChange(e);
-                        
+
                         // 2. Ajustamos la altura dinámicamente
                         const target = e.target;
                         target.style.height = "auto"; // Reseteamos primero
@@ -105,20 +105,19 @@ export const ChatInput = forwardRef<ChatInputHandle, ChatInputProps>(
               );
             }}
           />
-          
-          <Button 
-            type="submit" 
-            size="icon" 
+
+          <button
+            type="submit"
             disabled={isLoading || !form.formState.isValid}
-            className="h-[50px] w-[50px] rounded-full bg-[#082144] hover:bg-[#082144]/90 text-white shadow-md transition-all shrink-0"
+            aria-label="Enviar"
+            className="inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-cb-blau text-cb-espresso transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cb-crema disabled:opacity-40"
           >
-            <SendHorizonal className="h-5 w-5 ml-0.5" />
-            <span className="sr-only">Enviar</span>
-          </Button>
+            <ArrowUp className="h-5 w-5" strokeWidth={2.5} />
+          </button>
         </form>
       </Form>
     );
   }
 );
 
-ChatInput.displayName = 'ChatInput';
+ChatInput.displayName = "ChatInput";

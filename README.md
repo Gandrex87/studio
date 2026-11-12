@@ -16,6 +16,18 @@ NEXT_PUBLIC_API_URL=http://localhost:8000 npm run dev  # backend local
 npm run typecheck
 ```
 
+Sin backend (ni créditos de OpenAI): `scripts/mock-api.mjs` imita el contrato
+con una conversación guionizada que pasa por todos los controles, las fichas,
+la comparativa y los leads. En dos terminales:
+
+```bash
+npm run mock-api   # http://localhost:8000
+npm run dev:mock   # Next.js apuntando al mock
+```
+
+`?thread=<id>` abre una conversación concreta (QA, soporte); `?embed=1` oculta
+el logo (dentro de carblau.com/asesor) y `?autostart=1` salta la bienvenida.
+
 La URL del backend está en [`src/lib/config.ts`](src/lib/config.ts). Al ser
 `NEXT_PUBLIC_*`, se incrusta en el bundle **al compilar**, no al arrancar.
 Lo mismo con `NEXT_PUBLIC_PRIVACY_URL`, el enlace a la política de privacidad
@@ -26,10 +38,17 @@ https://carblau.com/politica-de-privacidad).
 
 | Ruta | Qué hay |
 | --- | --- |
-| `src/app/page.tsx` | Estado del chat, llamadas al backend y streaming |
-| `src/components/carblau/` | Componentes del chat: mensajes, fichas de coches, tabla comparativa, sliders y botones de respuesta |
+| `src/app/page.tsx` | Estado del chat, llamadas al backend y streaming; layout móvil y de escritorio |
+| `src/app/globals.css`, `tailwind.config.ts` | Tema de marca (el de carblau.com): colores `cb-*`, Source Serif 4 + Source Sans 3 |
+| `src/lib/tipos.ts` | Contrato con el backend (tipos de los mensajes) |
+| `src/lib/encargo.ts`, `texto.ts` | «Tu encargo» deducido de la conversación; limpieza de emojis y nombres |
+| `src/components/carblau/` | Componentes del chat: cabecera, mensajes, controles de respuesta en línea (`inline-widget`, `opciones-rango`, `presupuesto-unificado`, `quick-replies`), fichas (`car-results-message`, `foto-coche`, `contacto-sheet`), comparativa, estado de búsqueda y bienvenida |
 | `src/components/ui/` | Componentes shadcn/ui (no tocar salvo para regenerarlos) |
 | `src/lib/config.ts` | URL del backend |
+| `scripts/mock-api.mjs` | Backend de mentira para desarrollar sin el agente |
+
+Diseño de referencia (lienzo con las pantallas y los fundamentos de marca):
+<https://claude.ai/artifact/WSgBeNDTtL38wyCzfbPs6H>.
 
 ## Contrato con el backend
 
@@ -46,10 +65,18 @@ Qué se pinta depende de `additional_kwargs` en cada mensaje del agente:
 
 - `payload` con `type: "car_recommendation"` → fichas de coches.
 - `car_comparison` → tabla comparativa.
-- `quick_reply_config` (solo el último mensaje) → control de respuesta:
-  `buttons` (con `multi_select` opcional), `distance_slider`,
-  `km_anuales_slider`, `pasajeros_slider`, `presupuesto_slider` o
-  `presupuesto_unificado`. Todos responden al agente como texto.
+- `quick_reply_config` (solo el último mensaje) → control de respuesta, dentro
+  del propio mensaje del agente: `buttons` (con `multi_select` opcional),
+  `distance_slider`, `km_anuales_slider`, `pasajeros_slider`,
+  `presupuesto_slider` o `presupuesto_unificado`. Todos responden al agente
+  como texto; las opciones se enseñan sin su emoji y se envían tal cual.
+- `progreso.etiqueta` de cada pregunta + la respuesta del usuario → chips
+  «Tu encargo» (panel lateral en escritorio). Es una lectura de la
+  conversación, no del perfil interno del agente.
+- Fichas: `score` se enseña como «Encaje N»; «Comparar» en dos o más fichas
+  envía al agente `Compara el 1 y el 2` (ruta `consulta_coches_mostrados`).
+- «Me interesa» abre la hoja de contacto: un asesor de CarBlau contacta al
+  usuario (`/api/lead/capture` al abrir, `/api/lead/contact` al enviar).
 - `progreso` (opcional) → barra "Paso X de Y" bajo la cabecera:
   `{ "paso": 3, "total": 7, "etiqueta": "Presupuesto" }`. Se usa el de la
   última pregunta que lo traiga y se oculta al llegar las recomendaciones.

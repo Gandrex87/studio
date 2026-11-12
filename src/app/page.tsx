@@ -1,23 +1,21 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { WelcomeScreen } from "@/components/carblau/welcome-screen";
+import { ChatHeader } from "@/components/carblau/chat-header";
 import { ChatMessage } from "@/components/carblau/chat-message";
 import { CarResultsMessage } from "@/components/carblau/car-results-message";
-import { CarComparisonTable, type CarComparisonData } from "@/components/carblau/car-comparison-table";
+import { CarComparisonTable } from "@/components/carblau/car-comparison-table";
 import { ChatInput, type ChatInputHandle } from "@/components/carblau/chat-input";
-import { QuickReplies } from "@/components/carblau/quick-replies";
-import { DistanceSlider } from "@/components/carblau/distance-slider";
-import { PresupuestoSlider } from "@/components/carblau/presupuesto-slider";
-import { PresupuestoUnificado } from "@/components/carblau/presupuesto-unificado";
-import { PasajerosSlider } from "@/components/carblau/pasajeros-slider";
-import { KmAnualesSlider } from "@/components/carblau/km-anuales-slider";
-import { TypingIndicator } from "@/components/carblau/typing-indicator";
+import { InlineWidget } from "@/components/carblau/inline-widget";
+import { BuscandoEstado } from "@/components/carblau/buscando-estado";
 import { AiDisclosure } from "@/components/carblau/ai-disclosure";
-import { ProgresoCuestionario, type Progreso } from "@/components/carblau/progreso-cuestionario";
+import { ProgresoCuestionario } from "@/components/carblau/progreso-cuestionario";
+import { EncargoChips, EncargoPanel } from "@/components/carblau/encargo";
+import { derivarEncargo } from "@/lib/encargo";
+import type { Message, Progreso } from "@/lib/tipos";
 import { useToast } from "@/hooks/use-toast";
-import { Button } from "@/components/ui/button";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -27,73 +25,24 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { RotateCw, Loader2 } from "lucide-react";
+import { Columns2, Loader2 } from "lucide-react";
 import { API_BASE_URL } from "@/lib/config";
 
-// ═══════════════════════════════════════════════════════════════════
-// INTERFACES (sin cambios)
-// ═══════════════════════════════════════════════════════════════════
-
-interface Car {
-  name: string;
-  specs: string[];
-  // null si el coche no tiene foto (se dibuja un placeholder); nunca cadena vacía
-  imageUrl?: string | null;
-  hasImage?: boolean;
-  // Rango típico de mercado de la versión y año ("6.250–7.500 €"); sin referencia
-  // fiable, "≈ 8.500 €". CarBlau recomienda un modelo, no un anuncio concreto.
-  price: string;
-  priceLabel?: string | null;          // "Rango típico" | "Precio orientativo"
-  priceValue?: number | null;          // precio típico, como número (para el lead)
-  priceRange?: { min: number; max: number } | null;
-  priceIsApprox?: boolean;
-  priceConfidence?: "alta" | "media" | "baja" | "muy_baja" | "sin_datos";
-  score: string;
-  analysis: string;
-  carId?: string;
-  sessionId?: string;
-  actionType?: string;
-}
-
-export interface CarRecommendationPayload {
-  type: "car_recommendation";
-  introText: string;
-  cars: Car[];
-  outroText?: string;
-}
-
-export interface QuickReplyConfig {
-  type: "buttons" | "distance_slider" | "km_anuales_slider" | "pasajeros_slider" | "presupuesto_slider" | "presupuesto_unificado";
-  options?: string[];
-  field?: string;
-  multi_select?: boolean;
-  submit_label?: string;
-}
-
-export interface Message {
-  id: string;
-  role: "user" | "agent";
-  content: string;
-  additional_kwargs?: {
-    payload?: CarRecommendationPayload;
-    quick_replies?: string[];
-    quick_reply_config?: QuickReplyConfig;
-    car_comparison?: CarComparisonData;
-    progreso?: Progreso;
-  };
-}
+// Los tipos del contrato viven en src/lib/tipos.ts
+export type { Message, CarRecommendationPayload, QuickReplyConfig } from "@/lib/tipos";
 
 // ═══════════════════════════════════════════════════════════════════
-// CONFIGURACIÓN (sin cambios)
+// CONFIGURACIÓN
 // ═══════════════════════════════════════════════════════════════════
-
 
 const CLAVE_THREAD = "carblau_thread_id";
 
-// sessionStorage puede no estar disponible (modo privado, bloqueado): nunca rompe la app
+// sessionStorage puede no estar disponible (modo privado, bloqueado): nunca rompe la app.
+// ?thread=<id> abre una conversación concreta (QA, soporte): manda sobre la guardada.
 function leerThreadGuardado(): string | null {
+  const deLaUrl = new URLSearchParams(window.location.search).get("thread");
+  if (deLaUrl) return deLaUrl;
   try {
     return sessionStorage.getItem(CLAVE_THREAD);
   } catch {
@@ -115,6 +64,16 @@ function guardarThread(threadId: string | null) {
 const inicioAutomatico = () =>
   new URLSearchParams(window.location.search).get("autostart") === "1";
 
+const esRecomendacion = (m: Message) =>
+  m.role === "agent" && m.additional_kwargs?.payload?.type === "car_recommendation";
+
+// "Compara el 1 y el 3": la ruta consulta_coches_mostrados del backend lo entiende
+function textoComparacion(numeros: number[]): string {
+  const n = [...numeros].sort((a, b) => a - b);
+  if (n.length === 2) return `Compara el ${n[0]} y el ${n[1]}`;
+  return `Compara el ${n.slice(0, -1).join(", el ")} y el ${n[n.length - 1]}`;
+}
+
 // ═══════════════════════════════════════════════════════════════════
 // COMPONENTE PRINCIPAL
 // ═══════════════════════════════════════════════════════════════════
@@ -124,10 +83,16 @@ export default function Home() {
   const [threadId, setThreadId] = useState<string | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  
-  // Texto de progreso que manda el backend mientras procesa ("Buscando coches...")
-  const [currentProgressStatus, setCurrentProgressStatus] = useState<string | null>(null);
-  
+
+  // Pasos que el backend va anunciando mientras procesa (eventos `status` y
+  // `progress`): "Analizando tu respuesta", "Buscando vehículos…"
+  const [pasosTurno, setPasosTurno] = useState<string[]>([]);
+
+  // Fichas marcadas para comparar (números de la última tanda de resultados)
+  const [comparar, setComparar] = useState<number[]>([]);
+
+  const [confirmarReinicio, setConfirmarReinicio] = useState(false);
+
   const isMobile = useIsMobile();
   // ?embed=1: dentro de carblau.com/asesor, que ya muestra el logo en su barra
   const [embebido, setEmbebido] = useState(false);
@@ -139,7 +104,7 @@ export default function Home() {
   const chatInputRef = useRef<ChatInputHandle>(null);
   const { toast } = useToast();
 
-  // ✅ NUEVO: Ref para abortar streaming
+  // Ref para abortar streaming
   const abortControllerRef = useRef<AbortController | null>(null);
 
   // Mientras se intenta recuperar una conversación guardada (recarga de página)
@@ -161,6 +126,7 @@ export default function Home() {
           if (!response.ok) throw new Error(`status ${response.status}`);
           const data = await response.json();
           setThreadId(data.thread_id);
+          guardarThread(data.thread_id);
           setMessages(data.messages);
           setSessionStarted(true);
           setRestaurando(false);
@@ -174,17 +140,18 @@ export default function Home() {
       if (inicioAutomatico()) await handleStartSession();
       setRestaurando(false);
     })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // ═══════════════════════════════════════════════════════════════════
-  // EFFECTS (sin cambios en estos)
-  // ═══════════════════════════════════════════════════════════════════
-  
-  // Scroll: con mensajes del usuario y mientras el agente piensa, al fondo.
+  // SCROLL
+  // Con mensajes del usuario y mientras el agente piensa, al fondo.
   // Cuando llega respuesta del agente, al INICIO de esa respuesta: si es larga
   // (fichas de coches, comparativa) se lee desde el principio y no desde el
   // texto final. Si es corta, el navegador limita el scroll y queda igual que
-  // ir al fondo.
+  // ir al fondo. El control de respuesta va dentro del mensaje, así que no
+  // hace falta recolocar nada cuando aparece.
+  // ═══════════════════════════════════════════════════════════════════
   const mensajesPreviosRef = useRef(0);
 
   const scrollTo = (top: number) => {
@@ -192,7 +159,7 @@ export default function Home() {
     requestAnimationFrame(() => {
       scrollAreaRef.current?.scrollTo({
         top,
-        behavior: "auto" // "auto" evita que el streaming sature el móvil con animaciones
+        behavior: "auto", // "auto" evita que el streaming sature el móvil con animaciones
       });
     });
   };
@@ -221,43 +188,20 @@ export default function Home() {
         container.scrollTop + el.getBoundingClientRect().top - container.getBoundingClientRect().top - margen
       );
     });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [messages]);
 
-  // Al aparecer un widget (sliders, botones) el panel inferior crece y encoge
-  // el área de mensajes: la pregunta del agente quedaba tapada. Se vuelve a
-  // llevar al inicio de esa respuesta (o al fondo si es corta).
-  const widgetVisible = !isLoading && Boolean(
-    messages[messages.length - 1]?.role === "agent" &&
-    messages[messages.length - 1]?.additional_kwargs?.quick_reply_config
-  );
-  useEffect(() => {
-    const container = scrollAreaRef.current;
-    const ultimo = messages[messages.length - 1];
-    if (!widgetVisible || !container || !ultimo) return;
-    requestAnimationFrame(() => {
-      const el = container.querySelector<HTMLElement>(
-        `[data-msg-id="${CSS.escape(ultimo.id)}"]`
-      );
-      if (!el) return scrollTo(container.scrollHeight);
-      const margen = 16;
-      scrollTo(
-        container.scrollTop + el.getBoundingClientRect().top - container.getBoundingClientRect().top - margen
-      );
-    });
-  }, [widgetVisible]);
-
-  // Al empezar a cargar aparece el indicador de "escribiendo": que se vea.
+  // Al empezar a cargar aparece el estado de búsqueda: que se vea.
   // Al terminar no se mueve, para no deshacer el scroll a la respuesta.
   useEffect(() => {
     if (isLoading && scrollAreaRef.current) scrollTo(scrollAreaRef.current.scrollHeight);
   }, [isLoading]);
 
   useEffect(() => {
-    if (!isMobile && messages.length > 0 && !isLoading && messages[messages.length - 1].role === 'agent') {
+    if (!isMobile && messages.length > 0 && !isLoading && messages[messages.length - 1].role === "agent") {
       chatInputRef.current?.focus();
     }
   }, [messages, isLoading, isMobile]);
-
 
   // ═══════════════════════════════════════════════════════════════════
   // HANDLERS
@@ -265,10 +209,10 @@ export default function Home() {
 
   const handleStartSession = async () => {
     setIsLoading(true);
-    
+
     try {
       const response = await fetch(`${API_BASE_URL}/start`, {
-        method: "POST"
+        method: "POST",
       });
 
       if (!response.ok) {
@@ -276,208 +220,215 @@ export default function Home() {
       }
 
       const data = await response.json();
-      
+
       console.log("📥 Inicio de sesión - datos recibidos:", data);
-      
+
       setThreadId(data.thread_id);
       guardarThread(data.thread_id);
       setMessages(data.messages);
       setSessionStarted(true);
-      
     } catch (error) {
       console.error("Error starting session:", error);
       toast({
         variant: "destructive",
         title: "No hemos podido iniciar la conversación",
-        description: "Inténtalo de nuevo en unos segundos."
+        description: "Inténtalo de nuevo en unos segundos.",
       });
     } finally {
       setIsLoading(false);
     }
   };
 
-  // ✅ MODIFICADO: handleSendMessage con STREAMING
-const handleSendMessage = async (content: string) => {
-  if (isLoading || !threadId) {
-    console.warn("⚠️ No se puede enviar: isLoading o threadId faltante");
-    return;
-  }
-
-  // Mensaje del usuario
-  const userMessage: Message = {
-    id: `user-${Date.now()}`,
-    role: "user",
-    content
+  const anotarPaso = (texto: string) => {
+    if (!texto) return;
+    setPasosTurno((prev) => (prev[prev.length - 1] === texto ? prev : [...prev, texto]));
   };
 
-  console.log("📤 Enviando mensaje:", content);
-
-  // Actualización optimista del mensaje del usuario
-  setMessages((prev) => [...prev, userMessage]);
-  setIsLoading(true);
-
-  // Crear AbortController para poder cancelar
-  abortControllerRef.current = new AbortController();
-
-  try {
-    const response = await fetch(`${API_BASE_URL}/conversation/${threadId}/message`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        messages: [{ role: 'user', content: content }]
-      }),
-      signal: abortControllerRef.current.signal
-    });
-
-    if (!response.ok) {
-      // 429 (límite de uso) / 413 (mensaje largo): el backend explica qué pasa
-      let detalle = "";
-      try {
-        detalle = (await response.json())?.detail ?? "";
-      } catch { /* sin cuerpo JSON */ }
-      const error: any = new Error(`HTTP ${response.status}`);
-      if (response.status === 429 || response.status === 413) error.detalleUsuario = detalle;
-      throw error;
+  // Envío con STREAMING (SSE): progress → complete | error
+  const handleSendMessage = async (content: string) => {
+    if (isLoading || !threadId) {
+      console.warn("⚠️ No se puede enviar: isLoading o threadId faltante");
+      return;
     }
 
-    if (!response.body) {
-      throw new Error("No response body");
-    }
+    // Mensaje del usuario
+    const userMessage: Message = {
+      id: `user-${Date.now()}`,
+      role: "user",
+      content,
+    };
 
-    // ✅ Procesar el stream
-    const reader = response.body.getReader();
-    const decoder = new TextDecoder();
-    let buffer = ""; // ✅ CAMBIO: era "accumulatedContent", ahora es buffer acumulador
-    let recibioRespuesta = false;
-    let errorBackend = false;
+    console.log("📤 Enviando mensaje:", content);
 
-    while (true) {
-      const { done, value } = await reader.read();
-      
-      if (done) {
-        console.log("✅ Streaming completado");
-        break;
+    // Actualización optimista del mensaje del usuario
+    setMessages((prev) => [...prev, userMessage]);
+    setIsLoading(true);
+    setPasosTurno([]);
+
+    // Crear AbortController para poder cancelar
+    abortControllerRef.current = new AbortController();
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/conversation/${threadId}/message`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          messages: [{ role: "user", content: content }],
+        }),
+        signal: abortControllerRef.current.signal,
+      });
+
+      if (!response.ok) {
+        // 429 (límite de uso) / 413 (mensaje largo): el backend explica qué pasa
+        let detalle = "";
+        try {
+          detalle = (await response.json())?.detail ?? "";
+        } catch {
+          /* sin cuerpo JSON */
+        }
+        const error: any = new Error(`HTTP ${response.status}`);
+        if (response.status === 429 || response.status === 413) error.detalleUsuario = detalle;
+        throw error;
       }
 
-      // ✅ CAMBIO: Acumular en buffer en lugar de procesar chunk directo
-      buffer += decoder.decode(value, { stream: true });
-      const lines = buffer.split('\n');
-      buffer = lines.pop() || ""; // ✅ CAMBIO: guardar fragmento incompleto para el siguiente chunk
+      if (!response.body) {
+        throw new Error("No response body");
+      }
 
-      for (const line of lines) {
-        if (!line.trim()) continue;
-        
-        // Quitar prefijo SSE estándar
-        const data = line.startsWith('data: ') ? line.slice(6) : line;
+      // Procesar el stream línea a línea (una línea `data: {json}` por evento)
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
+      let recibioRespuesta = false;
+      let errorBackend = false;
 
-        // ✅ Ignorar líneas de keepalive (empiezan con ":")
-        if (data.startsWith(':')) continue;
+      while (true) {
+        const { done, value } = await reader.read();
 
-        // Solo el parseo va en try/catch: un evento "error" del backend NO
-        // debe tragarse aquí (antes acababa en este catch como un simple warn).
-        let event: any;
-        try {
-          event = JSON.parse(data);
-        } catch (parseError) {
-          console.warn("⚠️ Error parseando línea:", line, parseError);
-          continue;
+        if (done) {
+          console.log("✅ Streaming completado");
+          break;
         }
-        console.log("📦 Evento recibido:", event.type);
 
-        if (event.type === "progress") {
-          setCurrentProgressStatus(event.status);
-        }
-        else if (event.type === "complete") {
-          recibioRespuesta = true;
-          setCurrentProgressStatus(null);
+        // Acumular en buffer: un chunk puede traer media línea
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split("\n");
+        buffer = lines.pop() || ""; // fragmento incompleto para el siguiente chunk
 
-          setMessages((prev) => {
-            const nuevosMensajes = event.messages.map((msg: any) => ({
+        for (const line of lines) {
+          if (!line.trim()) continue;
+
+          // Quitar prefijo SSE estándar
+          const data = line.startsWith("data: ") ? line.slice(6) : line;
+
+          // Ignorar líneas de keepalive (empiezan con ":")
+          if (data.startsWith(":")) continue;
+
+          // Solo el parseo va en try/catch: un evento "error" del backend NO
+          // debe tragarse aquí.
+          let event: any;
+          try {
+            event = JSON.parse(data);
+          } catch (parseError) {
+            console.warn("⚠️ Error parseando línea:", line, parseError);
+            continue;
+          }
+          console.log("📦 Evento recibido:", event.type);
+
+          if (event.type === "status") {
+            anotarPaso(event.message);
+          } else if (event.type === "progress") {
+            anotarPaso(event.status);
+          } else if (event.type === "complete") {
+            recibioRespuesta = true;
+            setPasosTurno([]);
+
+            const nuevosMensajes: Message[] = event.messages.map((msg: any) => ({
               id: msg.id,
               role: msg.role,
               content: msg.content,
               additional_kwargs: msg.additional_kwargs,
             }));
-            return [...prev, ...nuevosMensajes];
-          });
-        }
-        else if (event.type === "error") {
-          console.error("❌ Error del backend:", event.message);
-          errorBackend = true;
+            // Nueva tanda de resultados: la selección para comparar ya no vale
+            if (nuevosMensajes.some(esRecomendacion)) setComparar([]);
+            setMessages((prev) => [...prev, ...nuevosMensajes]);
+          } else if (event.type === "error") {
+            console.error("❌ Error del backend:", event.message);
+            errorBackend = true;
+          }
         }
       }
-    } // ✅ AQUÍ CIERRA EL WHILE
 
-    // Error del agente, o el stream se cortó sin traer respuesta
-    if (!recibioRespuesta) {
-      throw new Error(errorBackend ? "Error del agente" : "El stream terminó sin respuesta");
-    }
+      // Error del agente, o el stream se cortó sin traer respuesta
+      if (!recibioRespuesta) {
+        throw new Error(errorBackend ? "Error del agente" : "El stream terminó sin respuesta");
+      }
+    } catch (error: any) {
+      if (error.name === "AbortError") {
+        console.log("🛑 Streaming cancelado");
+      } else {
+        console.error("❌ Error en streaming:", error);
 
-  } catch (error: any) {
-    if (error.name === 'AbortError') {
-      console.log("🛑 Streaming cancelado");
-    } else {
-      console.error("❌ Error en streaming:", error);
-      
-      toast({
-        variant: "destructive",
-        title: "No hemos podido responder",
-        description: error.detalleUsuario
-          || "Ha habido un problema técnico. Tu mensaje sigue en la caja de texto: vuelve a enviarlo en unos segundos."
-      });
-      
-      // Quitar el mensaje de la conversación y devolverlo a la caja de texto
-      // para que el usuario pueda reenviarlo sin reescribirlo
-      setMessages(prev => 
-        prev.filter(m => m.id !== userMessage.id)
-      );
-      chatInputRef.current?.setText(content);
+        toast({
+          variant: "destructive",
+          title: "No hemos podido responder",
+          description:
+            error.detalleUsuario ||
+            "Ha habido un problema técnico. Tu mensaje sigue en la caja de texto: vuelve a enviarlo en unos segundos.",
+        });
+
+        // Quitar el mensaje de la conversación y devolverlo a la caja de texto
+        // para que el usuario pueda reenviarlo sin reescribirlo
+        setMessages((prev) => prev.filter((m) => m.id !== userMessage.id));
+        chatInputRef.current?.setText(content);
+      }
+    } finally {
+      setIsLoading(false);
+      setPasosTurno([]);
+      abortControllerRef.current = null;
     }
-  } finally {
-    setIsLoading(false);
-    setCurrentProgressStatus(null);
-    abortControllerRef.current = null;
-  }
-}; // ✅ AQUÍ CIERRA LA FUNCIÓN
+  };
+
   const handleQuickReplySelect = (option: string) => {
     console.log("🔘 Quick reply seleccionada:", option);
     handleSendMessage(option);
   };
 
+  const toggleComparar = (numero: number) => {
+    setComparar((prev) => (prev.includes(numero) ? prev.filter((n) => n !== numero) : [...prev, numero]));
+  };
+
+  const enviarComparacion = () => {
+    if (comparar.length < 2) return;
+    const texto = textoComparacion(comparar);
+    setComparar([]);
+    handleSendMessage(texto);
+  };
+
   const handleResetSession = () => {
     console.log("🔄 Reiniciando sesión");
-    
-    // ✅ Cancelar streaming si está activo
+
+    // Cancelar streaming si está activo
     if (abortControllerRef.current) {
       abortControllerRef.current.abort();
     }
-    
+
+    setConfirmarReinicio(false);
     setSessionStarted(false);
     setThreadId(null);
     guardarThread(null);
     setMessages([]);
     setIsLoading(false);
-    setCurrentProgressStatus(null);
+    setPasosTurno([]);
+    setComparar([]);
     if (inicioAutomatico()) handleStartSession();
   };
 
   // ═══════════════════════════════════════════════════════════════════
-  // RENDER (sin cambios significativos)
+  // DERIVADOS
   // ═══════════════════════════════════════════════════════════════════
-
-  const lastAgentMessage =
-    messages.length > 0 && messages[messages.length - 1].role === "agent"
-      ? messages[messages.length - 1]
-      : null;
-  const lastQuickReplyConfig =
-    lastAgentMessage?.additional_kwargs?.quick_reply_config ?? null;
-
-  // Widget de respuesta: se deriva del último mensaje del agente (antes, 5
-  // booleanos sincronizados a mano en un useEffect). Oculto mientras carga.
-  const widget = !isLoading && lastQuickReplyConfig ? lastQuickReplyConfig.type : null;
-  const opcionesBotones = widget === "buttons" ? lastQuickReplyConfig?.options ?? [] : [];
 
   // Progreso: el de la última pregunta del agente que lo traiga. Se oculta en
   // cuanto llegan recomendaciones (el cuestionario ha terminado) o si el
@@ -493,205 +444,144 @@ const handleSendMessage = async (content: string) => {
     return null;
   })();
 
+  // "Tu encargo": lo que el usuario ya ha respondido, leído de la conversación
+  const encargo = useMemo(() => derivarEncargo(messages), [messages]);
+  const hayResultados = messages.some(esRecomendacion);
+
+  // Solo la última tanda de resultados se puede comparar (el backend numera
+  // los coches de la tanda actual)
+  const indiceUltimaRecomendacion = (() => {
+    for (let i = messages.length - 1; i >= 0; i--) if (esRecomendacion(messages[i])) return i;
+    return -1;
+  })();
+
+  // ═══════════════════════════════════════════════════════════════════
+  // RENDER
+  // ═══════════════════════════════════════════════════════════════════
+
   return (
-    <main className="flex flex-col h-[100dvh] relative overflow-hidden bg-background">
-      
-      <div 
-        className="absolute inset-0 z-0" 
-        style={{
-          backgroundImage: "url('/fondo-pattern.webp')",
-          backgroundRepeat: "repeat",
-          backgroundSize: "1100px", 
-          backgroundPosition: "top left",
-          opacity: 1 
-        }}
-      />
-
-      <div className="relative z-10 flex flex-col h-full">
-        {restaurando ? (
-          <div className="flex h-full items-center justify-center">
-            <Loader2 className="h-8 w-8 animate-spin text-[#082144]" />
+    <main className="relative flex h-[100dvh] flex-col overflow-hidden bg-cb-espresso text-cb-crema">
+      {restaurando ? (
+        <div className="flex h-full items-center justify-center">
+          <Loader2 className="h-8 w-8 animate-spin text-cb-agua" />
+        </div>
+      ) : !sessionStarted ? (
+        <WelcomeScreen onStartSession={handleStartSession} isLoading={isLoading} embebido={embebido} />
+      ) : (
+        <div className="mx-auto flex h-full min-h-0 w-full max-w-[1280px]">
+          {/* Escritorio: panel lateral con el encargo */}
+          <div className="hidden lg:flex lg:w-[320px] lg:shrink-0 lg:flex-col lg:overflow-y-auto lg:border-r lg:border-cb-crema/10 lg:p-6 cb-scroll">
+            <EncargoPanel items={encargo} completo={hayResultados} />
           </div>
-        ) : !sessionStarted ? (
-          <WelcomeScreen onStartSession={handleStartSession} isLoading={isLoading} embebido={embebido} />
-        ) : (
-          <div className="flex flex-col h-full w-full max-w-3xl mx-auto">
-            
-            <div
-              className={`flex items-center border-b border-black/5 bg-transparent backdrop-blur-sm ${
-                embebido ? "justify-end px-4 py-2" : "justify-between px-4 py-3"
-              }`}
-            >
-              {!embebido && (
-                <div className="flex items-center">
-                  <img 
-                    src="/logo2.png" 
-                    alt="CarBlau Logo" 
-                    className="h-10 w-auto object-contain"
-                  />
+
+          <section className="flex h-full min-w-0 flex-1 flex-col" aria-label="Conversación">
+            <ChatHeader embebido={embebido} onReiniciar={() => setConfirmarReinicio(true)} />
+
+            {(progreso || encargo.length > 0) && (
+              <div className="border-b border-cb-crema/10">
+                {progreso && <ProgresoCuestionario progreso={progreso} />}
+                <div className="lg:hidden">
+                  <EncargoChips items={encargo} />
                 </div>
-              )}
+              </div>
+            )}
 
-              {/* Reiniciar borra toda la conversación: se confirma antes */}
-              <AlertDialog>
-                <AlertDialogTrigger asChild>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="bg-white/60 hover:bg-white/90 text-slate-900 border-slate-200 shadow-sm transition-all"
-                  >
-                    <RotateCw className="mr-2 h-4 w-4" />
-                    Reiniciar Conversación
-                  </Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent className="bg-white text-slate-900">
-                  <AlertDialogHeader>
-                    <AlertDialogTitle className="text-[#082144]">¿Empezar de cero?</AlertDialogTitle>
-                    <AlertDialogDescription className="text-slate-500">
-                      Se borrarán tus respuestas y las recomendaciones de esta conversación.
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel className="border-slate-300 text-slate-700 bg-white hover:bg-slate-50">
-                      Seguir conversando
-                    </AlertDialogCancel>
-                    <AlertDialogAction
-                      onClick={handleResetSession}
-                      className="bg-[#082144] hover:bg-[#082144]/90 text-white"
-                    >
-                      Reiniciar
-                    </AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
-            </div>
+            <div className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden cb-scroll" ref={scrollAreaRef}>
+              <div className="mx-auto flex w-full max-w-3xl flex-col gap-4 p-4 pb-6">
+                {messages.map((message, index) => {
+                  const esUltimo = index === messages.length - 1;
+                  const config =
+                    esUltimo && !isLoading && message.role === "agent"
+                      ? message.additional_kwargs?.quick_reply_config
+                      : undefined;
 
-            {progreso && <ProgresoCuestionario progreso={progreso} />}
-
-            <div
-                className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden"
-                ref={scrollAreaRef}
-              >
-              <div className="space-y-6 p-4 pb-20">
-                {messages.map((message) => {
-                  const carPayload = message.additional_kwargs?.payload;
-                  const isCarRecommendation = 
-                    message.role === 'agent' && 
-                    carPayload && 
-                    carPayload.type === 'car_recommendation';
-
-                  if (isCarRecommendation) {
+                  if (esRecomendacion(message)) {
+                    const esUltimaTanda = index === indiceUltimaRecomendacion;
                     return (
                       <div key={message.id} data-msg-id={message.id}>
                         <CarResultsMessage
-                          data={carPayload}
+                          data={message.additional_kwargs!.payload!}
                           threadId={threadId}
                           mensajeId={message.id}
+                          comparar={esUltimaTanda ? comparar : undefined}
+                          onToggleComparar={esUltimaTanda ? toggleComparar : undefined}
+                          acciones={
+                            config ? (
+                              <InlineWidget
+                                config={config}
+                                onSelect={handleQuickReplySelect}
+                                isLoading={isLoading}
+                                tono="oscuro"
+                              />
+                            ) : undefined
+                          }
                         />
-                      </div>
-                    );
-                  } else {
-                    const carComparison = message.additional_kwargs?.car_comparison;
-                    return (
-                      <div key={message.id} data-msg-id={message.id} className="flex flex-col gap-2">
-                        <ChatMessage
-                          role={message.role}
-                          content={message.content}
-                        />
-                        {carComparison && (
-                          <CarComparisonTable data={carComparison} />
-                        )}
                       </div>
                     );
                   }
+
+                  const comparacion = message.additional_kwargs?.car_comparison;
+                  return (
+                    <div key={message.id} data-msg-id={message.id}>
+                      <ChatMessage role={message.role} content={message.content}>
+                        {comparacion && <CarComparisonTable data={comparacion} />}
+                        {config && (
+                          <div className={comparacion ? "mt-4" : undefined}>
+                            <InlineWidget config={config} onSelect={handleQuickReplySelect} isLoading={isLoading} />
+                          </div>
+                        )}
+                      </ChatMessage>
+                    </div>
+                  );
                 })}
-                
-                {isLoading && (
-  currentProgressStatus ? (
-    // ✅ Mostrar mensaje de progreso específico
-    <div className="flex items-start gap-3">
-      {/* Avatar del agente */}
-      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white border border-gray-200 shadow-sm overflow-hidden">
-        <img 
-          src="/favicon_cb.webp" 
-          alt="CarBlau Agent" 
-          className="h-full w-full object-cover"
-        />
-      </div>
-      
-      {/* Burbuja con mensaje de progreso */}
-      <div className="rounded-2xl px-5 py-4 text-sm shadow-md bg-[#ECEBE7] text-slate-900 rounded-tl-none">
-        <div className="flex items-center gap-2">
-          <Loader2 className="w-4 h-4 animate-spin text-[#082144]" />
-          <span className="text-slate-700">{currentProgressStatus}</span>
-        </div>
-      </div>
-    </div>
-  ) : (
-    // ✅ Fallback: mostrar TypingIndicator genérico si no hay mensaje de progreso
-    <TypingIndicator />
-  )
-)}
+
+                {isLoading && <BuscandoEstado pasos={pasosTurno} />}
                 <div ref={messagesEndRef} />
               </div>
             </div>
-            
-            <div className="shrink-0 p-4 pb-[max(1rem,env(safe-area-inset-bottom))] border-t border-white/20 space-y-3 bg-white/10 backdrop-blur-md z-10 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
-              
-              {/* Con poco alto (iframe, móvil) los widgets hacen scroll propio en
-                  vez de comerse el área de mensajes */}
-              {(widget || opcionesBotones.length > 0) && (
-                <div className="max-h-[45dvh] overflow-y-auto overflow-x-hidden space-y-3">
-                  {widget === "distance_slider" && (
-                    <DistanceSlider
-                      onSelect={handleQuickReplySelect}
-                      isLoading={isLoading}
-                    />
-                  )}
 
-                  {widget === "km_anuales_slider" && (
-                    <KmAnualesSlider
-                      onSelect={handleQuickReplySelect}
-                      isLoading={isLoading}
-                    />
-                  )}
-
-                  {widget === "pasajeros_slider" && (
-                    <PasajerosSlider onSelect={handleQuickReplySelect} isLoading={isLoading} />
-                  )}
-              
-                  {widget === "presupuesto_slider" && (
-                    <PresupuestoSlider onSelect={handleQuickReplySelect} isLoading={isLoading} />
-                  )}
-
-                  {widget === "presupuesto_unificado" && (
-                    <PresupuestoUnificado onSelect={handleQuickReplySelect} isLoading={isLoading} />
-                  )}
-              
-                  {opcionesBotones.length > 0 && (
-                    <QuickReplies
-                      key={opcionesBotones.join(",")}
-                      options={opcionesBotones}
-                      onSelect={handleQuickReplySelect}
-                      isLoading={isLoading}
-                      multiSelect={lastQuickReplyConfig?.multi_select}
-                      submitLabel={lastQuickReplyConfig?.submit_label}
-                    />
-                  )}
-                </div>
-              )}
-
-              <ChatInput 
-                ref={chatInputRef} 
-                onSubmit={handleSendMessage} 
-                isLoading={isLoading} 
-              />
-
-              <AiDisclosure />
+            <div className="shrink-0 border-t border-cb-crema/10 bg-cb-espresso px-4 pb-[max(0.875rem,env(safe-area-inset-bottom))] pt-2.5">
+              <div className="mx-auto flex w-full max-w-3xl flex-col gap-2">
+                {comparar.length >= 2 && !isLoading && (
+                  <button
+                    type="button"
+                    onClick={enviarComparacion}
+                    className="inline-flex h-[46px] items-center justify-center gap-2 rounded-full bg-cb-agua text-[15px] font-bold text-cb-espresso transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cb-crema"
+                  >
+                    <Columns2 className="h-[18px] w-[18px]" />
+                    Comparar {comparar.length} coches
+                  </button>
+                )}
+                <ChatInput ref={chatInputRef} onSubmit={handleSendMessage} isLoading={isLoading} />
+                <AiDisclosure />
+              </div>
             </div>
-          </div>
-        )}
-      </div>
+          </section>
+        </div>
+      )}
+
+      {/* Reiniciar borra toda la conversación: se confirma antes */}
+      <AlertDialog open={confirmarReinicio} onOpenChange={setConfirmarReinicio}>
+        <AlertDialogContent className="border-cb-crema/15 bg-cb-espresso-2 text-cb-crema">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="font-headline text-xl">¿Empezar de cero?</AlertDialogTitle>
+            <AlertDialogDescription className="text-cb-crema-suave">
+              Se borrarán tus respuestas y las propuestas de esta conversación.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="rounded-full border-cb-crema/25 bg-transparent text-cb-crema hover:bg-cb-crema/10 hover:text-cb-crema">
+              Seguir conversando
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleResetSession}
+              className="rounded-full bg-cb-blau font-bold text-cb-espresso hover:bg-cb-blau/90"
+            >
+              Empezar de cero
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </main>
   );
 }

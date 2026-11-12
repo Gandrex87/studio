@@ -4,6 +4,8 @@
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack",
+    "dev:mock": "NEXT_PUBLIC_API_URL=http://localhost:8000 next dev --turbopack",
+    "mock-api": "node scripts/mock-api.mjs",
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
