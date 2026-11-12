@@ -63,7 +63,10 @@ Diseño de referencia (lienzo con las pantallas y los fundamentos de marca):
 
 Qué se pinta depende de `additional_kwargs` en cada mensaje del agente:
 
-- `payload` con `type: "car_recommendation"` → fichas de coches.
+- `payload` con `type: "car_recommendation"` → fichas de coches. Sin foto
+  (`imageUrl` null o URL rota) se enseña `public/coche-sin-foto.webp` con el
+  rótulo «Foto no disponible» (placeholder de marca, origen en el backend:
+  `docs/recursos/placeholder_coche`).
 - `car_comparison` → tabla comparativa.
 - `quick_reply_config` (solo el último mensaje) → control de respuesta, dentro
   del propio mensaje del agente: `buttons` (con `multi_select` opcional),
