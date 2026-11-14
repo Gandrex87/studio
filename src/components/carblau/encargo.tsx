@@ -103,22 +103,6 @@ export function EncargoPanel({ encargo, onCambiar, disabled = false }: EncargoPr
           ? "Pulsa «Cambiar» en cualquier dato y el asesor te lo vuelve a preguntar."
           : "¿Algo no es correcto? Díselo al asesor en el chat y lo corregirá."}
       </p>
-
-      <div className="flex flex-col gap-2 rounded-[14px] bg-cb-crema/[0.06] p-4">
-        <span className="font-headline text-base font-semibold text-cb-crema">Así trabajamos</span>
-        <p className="text-sm leading-relaxed text-cb-crema-suave">
-          Sin stock ni comisiones de concesionarios. Buscamos la unidad, la revisamos, la preparamos y
-          te la entregamos en casa con garantía. Nuestro trabajo va dentro del precio final.
-        </p>
-        <a
-          href="https://carblau.com/sobre-nosotros"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-sm font-semibold text-cb-agua underline underline-offset-[3px] hover:text-cb-crema"
-        >
-          Quiénes somos
-        </a>
-      </div>
     </aside>
   );
 }

@@ -116,7 +116,8 @@ const ITEMS_POR_PASO = [
 
 const TEMAS = ["Uso del coche", "Por dónde circulas", "Espacio", "Costes de uso", "Presupuesto"];
 
-function encargo(pasoRespondido, completo) {
+// Tema «Preferencias» (fase 2, punto 7): lo que responde en el afinado, al final
+function encargo(pasoRespondido, completo, preferencias = []) {
   const temas = TEMAS.map((tema) => {
     const items = [];
     ITEMS_POR_PASO.slice(0, pasoRespondido).forEach(([t, campo, etiqueta, texto]) => {
@@ -127,8 +128,12 @@ function encargo(pasoRespondido, completo) {
     });
     return { tema, items };
   }).filter((t) => t.items.length > 0);
+  if (preferencias.length > 0) temas.push({ tema: "Preferencias", items: preferencias });
   return { completo, temas };
 }
+
+// "🚙 SUV y 🚘 Berlina" → "SUV y Berlina"
+const sinEmojis = (texto) => texto.replace(/\p{Extended_Pictographic}️?\s*/gu, "").trim();
 
 // Guion: respuesta del agente tras cada mensaje del usuario
 const GUION = [
@@ -293,8 +298,12 @@ const GUION = [
   }),
 ];
 
+// Pregunta de carrocería del afinado: su respuesta entra en el tema «Preferencias»
+const PASO_AFINAR = GUION.findIndex((e) => typeof e !== "function" && e.content.startsWith("Perfecto, afinamos"));
+
 // «Quiero cambiar: <tema o etiqueta>» → paso del guion que vuelve a preguntarlo
 const PASO_POR_CAMBIO = {
+  preferencias: PASO_AFINAR, carrocería: PASO_AFINAR,
   "uso del coche": 0, frecuencia: 0, "trayecto habitual": 1, "km al año": 2,
   "por dónde circulas": 3, zona: 3,
   espacio: 4, pasajeros: 4,
@@ -410,6 +419,11 @@ const server = http.createServer(async (req, res) => {
           hilo.paso = indice + 1; // su respuesta continúa desde la siguiente pregunta
         }
       } else {
+        // ¿Responde a la carrocería del afinado? → «Preferencias» en el encargo
+        if ((hilo.paso - 1) % GUION.length === PASO_AFINAR && sinEmojis(texto)) {
+          const valor = sinEmojis(texto);
+          hilo.preferencias = [{ campo: "tipo_carroceria", etiqueta: "Carrocería", texto: /indiferente/i.test(valor) ? "Cualquiera" : valor }];
+        }
         const entrada = GUION[hilo.paso % GUION.length];
         respuesta = typeof entrada === "function" ? entrada(m[1]) : entrada;
         hilo.respondidos = Math.min(hilo.respondidos + 1, ITEMS_POR_PASO.length);
@@ -422,7 +436,7 @@ const server = http.createServer(async (req, res) => {
       const itemsConocidos = Math.min(hilo.respondidos, ITEMS_POR_PASO.length);
       const kwargs = {
         ...(respuesta.additional_kwargs ?? {}),
-        encargo: encargo(itemsConocidos, hayCoches || itemsConocidos >= ITEMS_POR_PASO.length),
+        encargo: encargo(itemsConocidos, hayCoches || itemsConocidos >= ITEMS_POR_PASO.length, hilo.preferencias ?? []),
       };
       const nuevo = mensaje("agent", respuesta.content, kwargs);
       hilo.messages.push(nuevo);
