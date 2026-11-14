@@ -490,12 +490,20 @@ export default function Home() {
       ) : (
         <div className="mx-auto flex h-full min-h-0 w-full max-w-[1280px]">
           {/* Escritorio: panel lateral con el encargo */}
-          <div className="hidden lg:flex lg:w-[320px] lg:shrink-0 lg:flex-col lg:overflow-y-auto lg:border-r lg:border-cb-crema/10 lg:p-6 cb-scroll">
+          <div
+            className={`hidden lg:flex lg:w-[320px] lg:shrink-0 lg:flex-col lg:overflow-y-auto lg:border-r lg:border-cb-crema/10 lg:px-6 lg:pb-6 ${embebido ? "lg:pt-6" : "lg:pt-3"} cb-scroll`}
+          >
+            {/* Marca, a la altura de la cabecera del chat. Dentro de carblau.com la pone la landing. */}
+            {!embebido && (
+              <div className="mb-5 flex h-10 items-center">
+                <img src="/logo3.png" alt="CarBlau" className="h-6 w-auto" />
+              </div>
+            )}
             <EncargoPanel encargo={encargo} onCambiar={cambiarDato} disabled={isLoading} />
           </div>
 
           <section className="flex h-full min-w-0 flex-1 flex-col" aria-label="Conversación">
-            <ChatHeader embebido={embebido} onReiniciar={() => setConfirmarReinicio(true)} />
+            <ChatHeader onReiniciar={() => setConfirmarReinicio(true)} />
 
             {(progreso || encargo.temas.length > 0) && (
               <div className="border-b border-cb-crema/10">

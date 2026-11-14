@@ -17,15 +17,16 @@ export const WHATSAPP_URL = `https://wa.me/34${CONTACT_PHONE}?text=${WHATSAPP_MS
 export const TEL_URL = `tel:+34${CONTACT_PHONE}`;
 
 interface ChatHeaderProps {
-  /** Dentro de carblau.com/asesor: la barra de la landing ya muestra el logo */
-  embebido?: boolean;
   onReiniciar: () => void;
 }
 
 const BOTON_ICONO =
   "inline-flex h-10 w-10 items-center justify-center rounded-full border border-cb-crema/20 text-cb-crema transition-colors hover:bg-cb-crema/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cb-blau";
 
-export function ChatHeader({ embebido = false, onReiniciar }: ChatHeaderProps) {
+// Cabecera de la conversación: la identidad es el icono B + «Asesor CarBlau».
+// El logotipo completo va en el panel lateral de escritorio (page.tsx) o lo
+// pone la landing cuando se embebe; aquí duplicaba la marca y quedaba suelto.
+export function ChatHeader({ onReiniciar }: ChatHeaderProps) {
   return (
     <header className="flex items-center justify-between gap-3 border-b border-cb-crema/10 px-4 py-3">
       <div className="flex min-w-0 items-center gap-3">
@@ -41,13 +42,6 @@ export function ChatHeader({ embebido = false, onReiniciar }: ChatHeaderProps) {
             IA supervisada por personas
           </span>
         </div>
-        {!embebido && (
-          <img
-            src="/logo3.png"
-            alt="CarBlau"
-            className="ml-2 hidden h-5 w-auto opacity-90 sm:block"
-          />
-        )}
       </div>
 
       <div className="flex shrink-0 items-center gap-1.5">
