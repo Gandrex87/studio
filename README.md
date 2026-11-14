@@ -119,6 +119,19 @@ y `./deploy.sh --help` muestra todas las opciones.
 
 URL actual: <https://my-frontend-app-1063747381969.europe-west1.run.app>
 
+### Probar antes de publicar (QA)
+
+```bash
+./deploy.sh --qa        # revisión SIN tráfico con la etiqueta «qa» en el mismo servicio
+./deploy.sh --publicar  # cuando esté probada: el 100 % del tráfico a esa revisión
+```
+
+La revisión de QA se prueba en `https://qa---my-frontend-app-…run.app` (el
+script imprime la URL) con el backend real; producción sigue sirviendo la
+revisión anterior. El backend tiene que admitir esa URL en CORS
+(`CORS_ORIGINS_DEFECTO` en `api/main.py`). Para probar en local contra el
+backend desplegado basta `npm run dev` (admite `http://localhost:3000`).
+
 Dominio personalizado (pendiente):
 
 ```bash
