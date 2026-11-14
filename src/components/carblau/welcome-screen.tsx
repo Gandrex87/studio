@@ -11,7 +11,7 @@ interface WelcomeScreenProps {
 }
 
 const PASOS = [
-  "Unas pocas preguntas cortas. Unos tres minutos.",
+  "Unas pocas preguntas nos ayudarán a encontrar el coche que mejor encaja contigo.",
   "Filtramos el mercado con el criterio de 20 años en el sector.",
   "Propuestas explicadas: lo bueno y lo que debes saber.",
 ];
@@ -66,7 +66,9 @@ export function WelcomeScreen({ onStartSession, isLoading, embebido = false }: W
           ))}
         </ol>
 
-        <p className="font-headline text-base italic text-cb-melocoton">Sin stock que colocar. Buscado, no vendido.</p>
+        <p className="font-headline text-base italic text-cb-melocoton">
+          No te vendemos lo que tenemos. Buscamos lo que encaja contigo.
+        </p>
 
         <div className="flex flex-col gap-3">
           <button
