@@ -67,7 +67,7 @@ export function WelcomeScreen({ onStartSession, isLoading, embebido = false }: W
         </ol>
 
         <p className="font-headline text-base italic text-cb-melocoton">
-          No te vendemos lo que tenemos. Buscamos lo que encaja contigo.
+          No te vendemos lo que tenemos. Buscamos lo que te conviene.
         </p>
 
         <div className="flex flex-col gap-3">
