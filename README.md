@@ -89,7 +89,9 @@ Qué se pinta depende de `additional_kwargs` en cada mensaje del agente:
   usuario (`/api/lead/capture` al abrir, `/api/lead/contact` al enviar con
   `canal` whatsapp | llamada | email y `franja` manana | tarde | cualquiera;
   WhatsApp y llamada exigen teléfono, email exige email). La respuesta trae
-  `contacto_previsto`, que se enseña en la confirmación.
+  `contacto_previsto` («Te escribimos por WhatsApp por la tarde, en menos de
+  24 horas.»), que se enseña tal cual en la confirmación. Al cerrar sin enviar
+  se avisa «Sin problema, no guardamos tus datos».
 - Stream: cada evento `progress` se enseña como un paso; el backend emite uno
   por nodo y sub-pasos dentro de la búsqueda.
 - `progreso` (opcional) → barra "Paso X de Y" bajo la cabecera:

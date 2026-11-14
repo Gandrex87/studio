@@ -170,10 +170,12 @@ export function ContactoSheet({ car, abierto, onOpenChange }: ContactoSheetProps
         throw error;
       }
       const data = await response.json();
+      // El backend compone la frase con canal, franja y plazo («Te escribimos por
+      // WhatsApp por la tarde, en menos de 24 horas.»): se enseña tal cual.
       setEnviado(
         typeof data?.contacto_previsto === "string" && data.contacto_previsto
           ? data.contacto_previsto
-          : "Te contactaremos pronto."
+          : "Te contactaremos en menos de 24 horas."
       );
     } catch (error: any) {
       console.error("Error:", error);
@@ -187,12 +189,20 @@ export function ContactoSheet({ car, abierto, onOpenChange }: ContactoSheetProps
     }
   };
 
-  const cerrar = () => onOpenChange(false);
+  // Cierre sin enviar («Ahora no», gesto o Escape): se le dice al usuario que no
+  // queda nada suyo guardado. El registro de interés al abrir no lleva datos personales.
+  const cambiarAbierto = (valor: boolean) => {
+    if (!valor && !enviado && !enviando) {
+      toast({ title: "Sin problema, no guardamos tus datos.", duration: 4000 });
+    }
+    onOpenChange(valor);
+  };
+  const cerrar = () => cambiarAbierto(false);
   const nombre = nombreLimpio(car.name);
   const cta = CANALES.find((c) => c.valor === canal)?.cta ?? "Que me contacten";
 
   return (
-    <Sheet open={abierto} onOpenChange={onOpenChange}>
+    <Sheet open={abierto} onOpenChange={cambiarAbierto}>
       <SheetContent
         side="bottom"
         className="mx-auto max-h-[92dvh] w-full max-w-lg overflow-y-auto rounded-t-[24px] border-0 bg-cb-crema p-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] text-cb-espresso"
@@ -206,7 +216,7 @@ export function ContactoSheet({ car, abierto, onOpenChange }: ContactoSheetProps
             </span>
             <SheetHeader className="space-y-1.5 text-left">
               <SheetTitle className="font-headline text-[26px] font-semibold leading-tight text-cb-espresso">
-                Hecho. Nos ponemos con ello.
+                ¡Hecho! Nos ponemos a buscarlo.
               </SheetTitle>
               <SheetDescription className="text-base leading-relaxed text-cb-espresso">
                 {enviado} Un asesor de CarBlau se ocupa del {nombre}.
@@ -230,10 +240,10 @@ export function ContactoSheet({ car, abierto, onOpenChange }: ContactoSheetProps
           >
             <SheetHeader className="space-y-1 text-left">
               <SheetTitle className="font-headline text-2xl font-semibold leading-tight text-cb-espresso">
-                Un asesor de CarBlau te contacta
+                ¿Quieres que CarBlau te busque este coche?
               </SheetTitle>
               <SheetDescription className="text-sm text-cb-tinta">
-                Sobre el {nombre} · {car.price}. Buscamos una unidad para ti, sin compromiso.
+                {nombre} · {car.price}. Un asesor de CarBlau te contacta, sin compromiso.
               </SheetDescription>
             </SheetHeader>
 

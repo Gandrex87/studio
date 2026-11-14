@@ -308,8 +308,10 @@ const SALUDO =
 const PASOS_TURNO = ["Leyendo tu mensaje", "Anotando tu respuesta", "Revisando lo que me has contado"];
 const PASOS_BUSQUEDA = ["Filtrando el mercado", "Comprobando fiabilidad", "Preparando las propuestas", "Propuestas listas"];
 
-const CANAL_TEXTO = { whatsapp: "Te escribimos por WhatsApp", llamada: "Te llamamos", email: "Te escribimos un email" };
+// Mismos textos que utils/leads.py (texto_contacto_previsto)
+const CANAL_TEXTO = { whatsapp: "Te escribimos por WhatsApp", llamada: "Te llamamos", email: "Te escribimos por email" };
 const FRANJA_TEXTO = { manana: " por la mañana", tarde: " por la tarde", cualquiera: "" };
+const PLAZO_CONTACTO = "en menos de 24 horas";
 
 const hilos = new Map(); // thread_id → { paso, respondidos, messages }
 
@@ -474,12 +476,14 @@ const server = http.createServer(async (req, res) => {
     if (canal === "email" && !email) return json(res, 400, { detail: "Necesitamos tu email para escribirte." });
     if (!email && !telefono) return json(res, 400, { detail: "Déjanos un email o un teléfono para poder contactarte." });
     const canalEfectivo = CANAL_TEXTO[canal] ? canal : email && !telefono ? "email" : telefono && !email ? "llamada" : null;
+    // «Te escribimos por WhatsApp por la tarde, en menos de 24 horas.»
+    const momento = FRANJA_TEXTO[franja] ?? "";
     const contacto_previsto =
-      (canalEfectivo ? CANAL_TEXTO[canalEfectivo] : "Te contactaremos pronto") + (FRANJA_TEXTO[franja] ?? "") + ".";
+      (canalEfectivo ? CANAL_TEXTO[canalEfectivo] : "Te contactaremos") + momento + (momento ? "," : "") + ` ${PLAZO_CONTACTO}.`;
     return json(res, 200, {
       success: true,
       lead_id: cuerpo.lead_id,
-      message: "Información de contacto guardada. Te contactaremos pronto.",
+      message: `Información de contacto guardada. Te contactaremos ${PLAZO_CONTACTO}.`,
       next_action: "show_confirmation",
       contacto_previsto,
     });
