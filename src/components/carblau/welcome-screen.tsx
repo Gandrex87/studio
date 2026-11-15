@@ -21,14 +21,15 @@ const PASOS = [
 export function WelcomeScreen({ onStartSession, isLoading, embebido = false }: WelcomeScreenProps) {
   return (
     <div className="relative flex h-full flex-col overflow-hidden bg-cb-espresso text-cb-crema">
-      {/* Foto de marca (paisaje) fundida hacia el espresso */}
-      <div className="absolute inset-x-0 top-0 h-[52%] max-h-[480px] overflow-hidden" aria-hidden="true">
+      {/* Foto de marca (paisaje mediterráneo) a toda pantalla, con un velo espresso
+          que crece hacia abajo solo lo justo para leer el texto: la luz se queda. */}
+      <div className="absolute inset-0 overflow-hidden" aria-hidden="true">
         <img
           src="/bienvenida.webp"
           alt=""
-          className="h-full w-full object-cover object-[60%_40%] opacity-80"
+          className="h-full w-full object-cover object-[60%_40%]"
         />
-        <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(28,23,20,0.35)_0%,rgba(28,23,20,0.15)_35%,rgba(28,23,20,0.92)_78%,#1C1714_100%)]" />
+        <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(28,23,20,0.12)_0%,rgba(28,23,20,0.30)_35%,rgba(28,23,20,0.68)_65%,rgba(28,23,20,0.84)_100%)]" />
       </div>
 
       <div className="relative flex items-center justify-between px-5 pt-5">
@@ -44,7 +45,7 @@ export function WelcomeScreen({ onStartSession, isLoading, embebido = false }: W
         </a>
       </div>
 
-      <div className="relative mx-auto flex w-full max-w-md flex-1 flex-col justify-end gap-5 px-6 pb-5 sm:justify-center">
+      <div className="relative mx-auto flex w-full max-w-md flex-1 flex-col justify-end gap-5 px-6 pb-5 [text-shadow:0_1px_14px_rgba(28,23,20,0.55)] sm:pb-10">
         <div className="flex flex-col gap-3">
           <p className="text-xs font-bold uppercase tracking-[0.14em] text-cb-agua">Asesor CarBlau</p>
           <h1 className="font-headline text-[38px] font-semibold leading-[1.08] tracking-tight">
