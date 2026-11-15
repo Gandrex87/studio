@@ -153,7 +153,7 @@ const CarCard = ({ car, posicion, total, comparando, onToggleComparar }: CarCard
   return (
     <article
       aria-label={nombre}
-      className="flex flex-col overflow-hidden rounded-[18px] bg-cb-crema text-cb-espresso"
+      className="flex flex-col overflow-hidden rounded-[20px] bg-cb-crema text-cb-espresso shadow-[0_14px_34px_rgba(0,0,0,0.38),0_2px_6px_rgba(0,0,0,0.2)]"
     >
       <div className="relative">
         <FotoCoche car={car} />
@@ -294,8 +294,8 @@ export function CarResultsMessage({
 
   return (
     <div className="flex flex-col gap-3.5">
-      <AgentFrame>
-        <ReactMarkdown className="cb-md font-headline text-[17px] leading-[1.45]">{data.introText}</ReactMarkdown>
+      <AgentFrame variante="texto">
+        <ReactMarkdown className="cb-md cb-md-claro font-headline text-[17px] leading-[1.45]">{data.introText}</ReactMarkdown>
       </AgentFrame>
 
       {data.cars.map((car, index) => {
@@ -313,8 +313,8 @@ export function CarResultsMessage({
       })}
 
       {data.outroText && (
-        <AgentFrame>
-          <ReactMarkdown className="cb-md font-headline text-[17px] leading-[1.45]">{data.outroText}</ReactMarkdown>
+        <AgentFrame variante="texto">
+          <ReactMarkdown className="cb-md cb-md-claro font-headline text-[17px] leading-[1.45]">{data.outroText}</ReactMarkdown>
         </AgentFrame>
       )}
 

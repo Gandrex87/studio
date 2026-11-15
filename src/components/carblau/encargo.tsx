@@ -1,10 +1,10 @@
 "use client";
 
-import { Pencil } from "lucide-react";
+import { ChevronDown, Pencil } from "lucide-react";
 import { itemsEncargo, type Encargo } from "@/lib/encargo";
 
-// "Tu encargo": lo que el usuario ya ha contado. En móvil, una fila de chips
-// bajo la cabecera; en escritorio, el panel lateral. Con el backend de la
+// "Tu encargo": lo que el usuario ya ha contado. En móvil, una píldora bajo la
+// cabecera que despliega los chips; en escritorio, el panel lateral. Con el backend de la
 // fase 2 cada dato se puede cambiar: se envía `Quiero cambiar: <etiqueta>`.
 
 interface EncargoProps {
@@ -16,14 +16,42 @@ interface EncargoProps {
 const CHIP =
   "inline-flex h-7 shrink-0 items-center gap-1 whitespace-nowrap rounded-full border border-cb-crema/20 bg-cb-crema/[0.06] px-2.5 text-xs font-medium text-cb-crema";
 
+// Píldora «Tu encargo · 3 datos» de la fila bajo la cabecera (móvil); al
+// tocarla se despliegan los chips.
+export function EncargoResumen({
+  encargo,
+  abierto,
+  onToggle,
+}: {
+  encargo: Encargo;
+  abierto: boolean;
+  onToggle: () => void;
+}) {
+  const n = itemsEncargo(encargo).length;
+  if (n === 0) return null;
+  return (
+    <button
+      type="button"
+      onClick={onToggle}
+      aria-expanded={abierto}
+      aria-controls="encargo-chips"
+      className="inline-flex h-8 shrink-0 items-center gap-1.5 rounded-full border border-cb-crema/[0.24] bg-cb-crema/[0.06] px-3 text-[13px] font-semibold text-cb-crema transition-colors hover:bg-cb-crema/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cb-agua"
+    >
+      Tu encargo · {n} {n === 1 ? "dato" : "datos"}
+      <ChevronDown
+        className={`h-3.5 w-3.5 transition-transform ${abierto ? "rotate-180" : ""}`}
+        aria-hidden="true"
+      />
+    </button>
+  );
+}
+
+// Los chips desplegados bajo la píldora
 export function EncargoChips({ encargo, onCambiar, disabled = false }: EncargoProps) {
   const items = itemsEncargo(encargo);
   if (items.length === 0) return null;
   return (
-    <div className="flex items-center gap-1.5 overflow-x-auto px-4 py-2 cb-scroll-x" aria-label="Tu encargo">
-      <span className="shrink-0 text-[11px] font-bold uppercase tracking-[0.08em] text-cb-crema-tenue">
-        Tu encargo
-      </span>
+    <div id="encargo-chips" className="flex items-center gap-1.5 overflow-x-auto px-4 pb-2.5 pt-1 cb-scroll-x" aria-label="Tu encargo">
       {items.map((item, i) =>
         item.cambiable ? (
           <button

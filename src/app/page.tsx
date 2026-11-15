@@ -10,9 +10,9 @@ import { CarComparisonTable } from "@/components/carblau/car-comparison-table";
 import { ChatInput, type ChatInputHandle } from "@/components/carblau/chat-input";
 import { InlineWidget } from "@/components/carblau/inline-widget";
 import { BuscandoEstado } from "@/components/carblau/buscando-estado";
-import { AiDisclosure } from "@/components/carblau/ai-disclosure";
-import { ProgresoCuestionario } from "@/components/carblau/progreso-cuestionario";
-import { EncargoChips, EncargoPanel } from "@/components/carblau/encargo";
+import { Arranque } from "@/components/carblau/arranque";
+import { ProgresoCuestionario, textoProgreso } from "@/components/carblau/progreso-cuestionario";
+import { EncargoChips, EncargoPanel, EncargoResumen } from "@/components/carblau/encargo";
 import { ContactoSheet } from "@/components/carblau/contacto-sheet";
 import { leerEncargo, textoCambio } from "@/lib/encargo";
 import type { Car, Message, Progreso } from "@/lib/tipos";
@@ -91,6 +91,8 @@ export default function Home() {
 
   // Fichas marcadas para comparar (números de la última tanda de resultados)
   const [comparar, setComparar] = useState<number[]>([]);
+  // Móvil: la píldora «Tu encargo · n datos» despliega los chips
+  const [encargoAbierto, setEncargoAbierto] = useState(false);
 
   // «Me interesa» desde la comparativa: coche para la hoja de contacto
   const [contactoCar, setContactoCar] = useState<Car | null>(null);
@@ -479,6 +481,10 @@ export default function Home() {
   // RENDER
   // ═══════════════════════════════════════════════════════════════════
 
+  // Arranque: solo el saludo del agente y nada del usuario todavía. Se enseña la
+  // pregunta inicial en grande con tres formas de empezar (components/carblau/arranque.tsx).
+  const esArranque = !isLoading && messages.length === 1 && messages[0].role === "agent";
+
   return (
     <main className="relative flex h-[100dvh] flex-col overflow-hidden bg-cb-espresso text-cb-crema">
       {restaurando ? (
@@ -502,21 +508,42 @@ export default function Home() {
             <EncargoPanel encargo={encargo} onCambiar={cambiarDato} disabled={isLoading} />
           </div>
 
-          <section className="flex h-full min-w-0 flex-1 flex-col" aria-label="Conversación">
+          <section className="relative isolate flex h-full min-w-0 flex-1 flex-col" aria-label="Conversación">
+            {/* Luz de fondo: resplandor arriba que se funde en espresso (globals.css) */}
+            <div aria-hidden="true" className="cb-luz pointer-events-none absolute inset-0 -z-10" />
             <ChatHeader onReiniciar={() => setConfirmarReinicio(true)} />
 
+            {/* Una sola fila fina: línea de progreso, píldora del encargo (móvil) y paso */}
             {(progreso || encargo.temas.length > 0) && (
-              <div className="border-b border-cb-crema/10">
+              <div className={`flex flex-col ${progreso ? "" : "lg:hidden"}`}>
                 {progreso && <ProgresoCuestionario progreso={progreso} />}
-                <div className="lg:hidden">
-                  <EncargoChips encargo={encargo} onCambiar={cambiarDato} disabled={isLoading} />
+                <div className="flex items-center justify-between gap-3 px-4 pb-1 pt-2.5">
+                  <div className="min-w-0 lg:hidden">
+                    <EncargoResumen
+                      encargo={encargo}
+                      abierto={encargoAbierto}
+                      onToggle={() => setEncargoAbierto((v) => !v)}
+                    />
+                  </div>
+                  {progreso && (
+                    <span className="ml-auto truncate text-xs text-cb-crema-suave">{textoProgreso(progreso)}</span>
+                  )}
                 </div>
+                {encargoAbierto && (
+                  <div className="lg:hidden">
+                    <EncargoChips encargo={encargo} onCambiar={cambiarDato} disabled={isLoading} />
+                  </div>
+                )}
               </div>
             )}
 
             <div className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden cb-scroll" ref={scrollAreaRef}>
-              <div className="mx-auto flex w-full max-w-3xl flex-col gap-4 p-4 pb-6">
-                {messages.map((message, index) => {
+              <div
+                className={`mx-auto flex w-full max-w-3xl flex-col gap-4 p-4 ${comparar.length >= 2 ? "pb-40" : "pb-28"} ${esArranque ? "min-h-full" : ""}`}
+              >
+                {esArranque && <Arranque onElegir={handleSendMessage} disabled={isLoading} />}
+                {!esArranque &&
+                  messages.map((message, index) => {
                   const esUltimo = index === messages.length - 1;
                   const config =
                     esUltimo && !isLoading && message.role === "agent"
@@ -553,7 +580,7 @@ export default function Home() {
                   const contenido = comparacion?.narrativa ?? message.content;
                   return (
                     <div key={message.id} data-msg-id={message.id}>
-                      <ChatMessage role={message.role} content={contenido}>
+                      <ChatMessage role={message.role} content={contenido} pendiente={Boolean(config)}>
                         {comparacion && (
                           <CarComparisonTable
                             data={comparacion}
@@ -579,20 +606,25 @@ export default function Home() {
               </div>
             </div>
 
-            <div className="shrink-0 border-t border-cb-crema/10 bg-cb-espresso px-4 pb-[max(0.875rem,env(safe-area-inset-bottom))] pt-2.5">
-              <div className="mx-auto flex w-full max-w-3xl flex-col gap-2">
+            {/* Caja de texto flotante sobre la conversación (el contenido pasa por debajo) */}
+            <div className="pointer-events-none absolute inset-x-0 bottom-0 z-10 px-3 pb-[max(0.875rem,env(safe-area-inset-bottom))]">
+              <div className="pointer-events-auto mx-auto flex w-full max-w-3xl flex-col gap-2">
                 {comparar.length >= 2 && !isLoading && (
                   <button
                     type="button"
                     onClick={enviarComparacion}
-                    className="inline-flex h-[46px] items-center justify-center gap-2 rounded-full bg-cb-agua text-[15px] font-bold text-cb-navy transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cb-crema"
+                    className="inline-flex h-[46px] items-center justify-center gap-2 rounded-full bg-cb-agua text-[15px] font-bold text-cb-navy shadow-[0_12px_30px_rgba(0,0,0,0.4)] transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cb-crema"
                   >
                     <Columns2 className="h-[18px] w-[18px]" />
                     Comparar {comparar.length} coches
                   </button>
                 )}
-                <ChatInput ref={chatInputRef} onSubmit={handleSendMessage} isLoading={isLoading} />
-                <AiDisclosure />
+                <ChatInput
+                  ref={chatInputRef}
+                  onSubmit={handleSendMessage}
+                  isLoading={isLoading}
+                  placeholder={esArranque ? "Escríbelo con tus palabras…" : undefined}
+                />
               </div>
             </div>
           </section>

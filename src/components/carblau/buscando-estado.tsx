@@ -5,18 +5,19 @@ import { AgentFrame } from "@/components/carblau/agent-frame";
 
 // Mientras el agente trabaja: los pasos que ha ido anunciando por el stream
 // (eventos `progress`, uno por nodo del grafo). Los ya pasados quedan marcados
-// y el último respira. Sin pasos todavía, tres puntos.
+// y el último respira. Sin pasos todavía, tres puntos. Va sobre el fondo, como
+// el resto de lo que dice el asesor.
 export function BuscandoEstado({ pasos }: { pasos: string[] }) {
   const esBusqueda = pasos.some((p) => /buscando|vehículos|coches/i.test(p));
 
   return (
-    <AgentFrame>
+    <AgentFrame variante="texto">
       <div role="status" aria-live="polite" className="flex flex-col gap-3">
         {pasos.length === 0 ? (
           <div className="flex items-center gap-1.5 py-1" aria-label="El asesor está escribiendo">
-            <span className="cb-pulse h-2 w-2 rounded-full bg-cb-espresso/60" />
-            <span className="cb-pulse h-2 w-2 rounded-full bg-cb-espresso/60 [animation-delay:0.2s]" />
-            <span className="cb-pulse h-2 w-2 rounded-full bg-cb-espresso/60 [animation-delay:0.4s]" />
+            <span className="cb-pulse h-2 w-2 rounded-full bg-cb-crema/70" />
+            <span className="cb-pulse h-2 w-2 rounded-full bg-cb-crema/70 [animation-delay:0.2s]" />
+            <span className="cb-pulse h-2 w-2 rounded-full bg-cb-crema/70 [animation-delay:0.4s]" />
           </div>
         ) : (
           <ol className="flex flex-col gap-2">
@@ -31,7 +32,7 @@ export function BuscandoEstado({ pasos }: { pasos: string[] }) {
                       <Check className="h-3.5 w-3.5" strokeWidth={3} />
                     </span>
                   )}
-                  <span className={`text-[15px] ${actual ? "font-semibold text-cb-espresso" : "text-cb-tinta"}`}>
+                  <span className={`text-[15px] ${actual ? "font-semibold text-cb-crema" : "text-cb-crema-suave"}`}>
                     {paso}
                   </span>
                 </li>
@@ -40,7 +41,7 @@ export function BuscandoEstado({ pasos }: { pasos: string[] }) {
           </ol>
         )}
         {esBusqueda && (
-          <p className="border-t border-cb-espresso/10 pt-2.5 text-[13px] text-cb-tinta">
+          <p className="border-t border-cb-crema/15 pt-2.5 text-[13px] text-cb-crema-suave">
             Buscamos con calma y con criterio. Suele tardar menos de un minuto.
           </p>
         )}

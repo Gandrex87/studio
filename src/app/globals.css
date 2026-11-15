@@ -97,3 +97,11 @@
 
 /* Sobre navy (burbuja del usuario) */
 .cb-md-claro hr { border-top-color: rgba(243, 235, 221, 0.2); }
+
+/* Luz de fondo del chat: resplandor aguamarina y melocotón que se funde en espresso */
+.cb-luz {
+  background:
+    radial-gradient(70% 42% at 22% -6%, rgba(173, 212, 211, 0.46) 0%, rgba(173, 212, 211, 0) 70%),
+    radial-gradient(58% 36% at 92% 6%, rgba(255, 173, 100, 0.3) 0%, rgba(255, 173, 100, 0) 70%),
+    linear-gradient(180deg, #2e2721 0%, #1c1714 58%);
+}
