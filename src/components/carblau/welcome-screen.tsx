@@ -25,15 +25,19 @@ export function WelcomeScreen({ onStartSession, isLoading, embebido = false }: W
           que crece hacia abajo solo lo justo para leer el texto: la luz se queda. */}
       <div className="absolute inset-0 overflow-hidden" aria-hidden="true">
         <img
-          src="/bienvenida.webp"
+          src="/bienvenida_2.webp"
           alt=""
-          className="h-full w-full object-cover object-[60%_40%]"
+          className="h-full w-full object-cover object-[56%_50%]"
         />
-        <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(28,23,20,0.12)_0%,rgba(28,23,20,0.30)_35%,rgba(28,23,20,0.68)_65%,rgba(28,23,20,0.84)_100%)]" />
+        <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(28,23,20,0)_0%,rgba(28,23,20,0.08)_40%,rgba(28,23,20,0.55)_68%,rgba(28,23,20,0.82)_100%)]" />
       </div>
 
       <div className="relative flex items-center justify-between px-5 pt-5">
-        {embebido ? <span /> : <img src="/logo3.png" alt="CarBlau" className="h-6 w-auto" />}
+        {embebido ? (
+          <span />
+        ) : (
+          <img src="/logo3.png" alt="CarBlau" className="h-6 w-auto drop-shadow-[0_1px_6px_rgba(28,23,20,0.6)]" />
+        )}
         <a
           href={WHATSAPP_URL}
           target="_blank"
@@ -45,7 +49,8 @@ export function WelcomeScreen({ onStartSession, isLoading, embebido = false }: W
         </a>
       </div>
 
-      <div className="relative mx-auto flex w-full max-w-md flex-1 flex-col justify-end gap-5 px-6 pb-5 [text-shadow:0_1px_14px_rgba(28,23,20,0.55)] sm:pb-10">
+      {/* En escritorio el bloque va a la izquierda: el coche de la foto queda a la vista */}
+      <div className="relative mx-auto flex w-full max-w-md flex-1 flex-col justify-end gap-5 px-6 pb-5 [text-shadow:0_1px_14px_rgba(28,23,20,0.55)] sm:pb-10 lg:mx-0 lg:ml-[9%]">
         <div className="flex flex-col gap-3">
           <p className="text-xs font-bold uppercase tracking-[0.14em] text-cb-agua">Asesor CarBlau</p>
           <h1 className="font-headline text-[38px] font-semibold leading-[1.08] tracking-tight">
