@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { Check } from "lucide-react";
+import { Check, CirclePlus, Columns2, RotateCcw, SlidersHorizontal, TrendingUp, Wallet } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import { sinEmoji } from "@/lib/texto";
 
 interface QuickRepliesProps {
@@ -16,9 +17,24 @@ interface QuickRepliesProps {
 
 const INDIFERENTE = "🤷 Indiferente";
 
-// Chips sobre el fondo espresso (acciones tras los resultados)
+// Acciones sobre el fondo espresso (tras los resultados): la misma forma que las
+// tarjetas del arranque, con un icono aguamarina cuando la acción tiene uno
 export const CHIP_OSCURO =
-  "inline-flex min-h-[40px] items-center justify-center gap-1.5 rounded-full border border-cb-crema/25 px-3.5 py-1.5 text-sm font-medium text-cb-crema transition-colors hover:bg-cb-crema/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cb-agua disabled:cursor-not-allowed disabled:opacity-50";
+  "flex min-h-[54px] items-center gap-2.5 rounded-2xl border border-cb-crema/[0.18] bg-cb-crema/[0.07] px-3.5 py-3 text-left text-[15px] font-semibold leading-snug text-cb-crema transition-colors hover:bg-cb-crema/[0.12] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cb-agua disabled:cursor-not-allowed disabled:opacity-50";
+
+// Icono por acción (el texto llega del backend con emoji: se compara sin él)
+const ICONOS_ACCION: [RegExp, LucideIcon][] = [
+  [/comparar/i, Columns2],
+  [/más opciones|ver más/i, CirclePlus],
+  [/afinar/i, SlidersHorizontal],
+  [/presupuesto/i, Wallet],
+  [/ampliar|subir/i, TrendingUp],
+  [/empezar de nuevo|de cero|reiniciar/i, RotateCcw],
+];
+function iconoAccion(texto: string): LucideIcon | null {
+  const limpio = sinEmoji(texto);
+  return ICONOS_ACCION.find(([patron]) => patron.test(limpio))?.[1] ?? null;
+}
 
 // Estilos de los chips dentro de la tarjeta crema del asesor
 export const CHIP =
@@ -45,6 +61,21 @@ export function QuickReplies({
   if (!options || options.length === 0) return null;
 
   if (!multiSelect) {
+    if (tono === "oscuro") {
+      return (
+        <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
+          {options.map((option) => {
+            const Icono = iconoAccion(option);
+            return (
+              <button key={option} type="button" onClick={() => onSelect(option)} disabled={isLoading} className={CHIP_OSCURO}>
+                {Icono && <Icono className="h-[18px] w-[18px] shrink-0 text-cb-agua" strokeWidth={2} aria-hidden="true" />}
+                {sinEmoji(option)}
+              </button>
+            );
+          })}
+        </div>
+      );
+    }
     return (
       <div className="flex flex-wrap gap-2">
         {options.map((option) => (
@@ -53,7 +84,7 @@ export function QuickReplies({
             type="button"
             onClick={() => onSelect(option)}
             disabled={isLoading}
-            className={tono === "oscuro" ? CHIP_OSCURO : CHIP_NORMAL}
+            className={CHIP_NORMAL}
           >
             {sinEmoji(option)}
           </button>
