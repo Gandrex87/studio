@@ -585,7 +585,7 @@ export default function Home() {
                   <button
                     type="button"
                     onClick={enviarComparacion}
-                    className="inline-flex h-[46px] items-center justify-center gap-2 rounded-full bg-cb-agua text-[15px] font-bold text-cb-espresso transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cb-crema"
+                    className="inline-flex h-[46px] items-center justify-center gap-2 rounded-full bg-cb-agua text-[15px] font-bold text-cb-navy transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cb-crema"
                   >
                     <Columns2 className="h-[18px] w-[18px]" />
                     Comparar {comparar.length} coches
@@ -626,7 +626,7 @@ export default function Home() {
             </AlertDialogCancel>
             <AlertDialogAction
               onClick={handleResetSession}
-              className="rounded-full bg-cb-blau font-bold text-cb-espresso hover:bg-cb-blau/90"
+              className="rounded-full bg-cb-agua font-bold text-cb-navy hover:bg-cb-agua/90"
             >
               Empezar de cero
             </AlertDialogAction>

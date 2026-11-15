@@ -26,9 +26,9 @@ function parsearPrecio(precio: string): number | null {
 }
 
 const CAMPO =
-  "h-12 w-full rounded-xl border border-cb-espresso/25 bg-cb-crema-2 px-3.5 text-base text-cb-espresso placeholder:text-cb-tinta/70 focus:outline-none focus:ring-2 focus:ring-cb-blau";
+  "h-12 w-full rounded-xl border border-cb-espresso/25 bg-cb-crema-2 px-3.5 text-base text-cb-espresso placeholder:text-cb-tinta/70 focus:outline-none focus:ring-2 focus:ring-cb-agua";
 const SEGMENTO =
-  "h-10 rounded-[9px] text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cb-blau disabled:opacity-50";
+  "h-10 rounded-[9px] text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cb-agua disabled:opacity-50";
 
 const CANALES: { valor: CanalContacto; etiqueta: string; cta: string }[] = [
   { valor: "whatsapp", etiqueta: "WhatsApp", cta: "Que me escriban por WhatsApp" },

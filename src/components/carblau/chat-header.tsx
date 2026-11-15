@@ -21,7 +21,7 @@ interface ChatHeaderProps {
 }
 
 const BOTON_ICONO =
-  "inline-flex h-10 w-10 items-center justify-center rounded-full border border-cb-crema/20 text-cb-crema transition-colors hover:bg-cb-crema/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cb-blau";
+  "inline-flex h-10 w-10 items-center justify-center rounded-full border border-cb-crema/20 text-cb-crema transition-colors hover:bg-cb-crema/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cb-agua";
 
 // Cabecera de la conversación: la identidad es el icono B + «Asesor CarBlau».
 // El logotipo completo va en el panel lateral de escritorio (page.tsx) o lo

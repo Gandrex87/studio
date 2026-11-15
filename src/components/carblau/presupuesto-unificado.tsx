@@ -44,7 +44,7 @@ export function textoPresupuesto(tipo: TipoPago, importe: number): string {
 }
 
 const SEGMENTO =
-  "h-10 rounded-[9px] text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cb-blau disabled:opacity-50";
+  "h-10 rounded-[9px] text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cb-agua disabled:opacity-50";
 
 export function PresupuestoUnificado({ onSelect, isLoading }: PresupuestoUnificadoProps) {
   const [tipo, setTipo] = useState<TipoPago>("contado");

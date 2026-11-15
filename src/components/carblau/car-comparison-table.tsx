@@ -45,7 +45,7 @@ export function CarComparisonTable({ data, onInteresa, disabled = false }: CarCo
                   type="button"
                   onClick={() => onInteresa(coche.carId as string)}
                   disabled={disabled}
-                  className="mt-1 inline-flex h-9 items-center justify-center self-start rounded-full bg-cb-blau px-3.5 text-[13px] font-bold text-cb-espresso transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cb-espresso disabled:opacity-50"
+                  className="mt-1 inline-flex h-9 items-center justify-center self-start rounded-full bg-cb-agua px-3.5 text-[13px] font-bold text-cb-navy transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cb-espresso disabled:opacity-50"
                 >
                   Me interesa
                 </button>
@@ -78,7 +78,7 @@ export function CarComparisonTable({ data, onInteresa, disabled = false }: CarCo
                     <div
                       key={i}
                       className={`flex min-h-[36px] items-center gap-1.5 rounded-[10px] px-2.5 py-1.5 text-[13px] leading-snug ${
-                        gana ? "bg-cb-agua font-bold text-cb-espresso" : "text-cb-espresso"
+                        gana ? "bg-cb-agua font-bold text-cb-navy" : "text-cb-navy"
                       }`}
                     >
                       {gana && <Check className="h-3.5 w-3.5 shrink-0" strokeWidth={3} aria-label="Mejor" />}

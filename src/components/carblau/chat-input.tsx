@@ -86,7 +86,7 @@ export const ChatInput = forwardRef<ChatInputHandle, ChatInputProps>(
                       rows={1}
                       maxLength={1000}  // mismo límite que el backend (MAX_CARACTERES_MENSAJE)
                       enterKeyHint="send"
-                      className="min-h-[48px] max-h-[120px] resize-none overflow-y-auto rounded-[24px] border-cb-crema/20 bg-cb-crema/[0.06] px-[18px] py-3 text-base text-cb-crema placeholder:text-cb-crema-tenue focus-visible:ring-2 focus-visible:ring-cb-blau focus-visible:ring-offset-0 cb-scroll"
+                      className="min-h-[48px] max-h-[120px] resize-none overflow-y-auto rounded-[24px] border-cb-crema/20 bg-cb-crema/[0.06] px-[18px] py-3 text-base text-cb-crema placeholder:text-cb-crema-tenue focus-visible:ring-2 focus-visible:ring-cb-agua focus-visible:ring-offset-0 cb-scroll"
                       {...restOfField}
                       onChange={(e) => {
                         // 1. Actualizamos el estado del formulario de React Hook Form
@@ -110,7 +110,7 @@ export const ChatInput = forwardRef<ChatInputHandle, ChatInputProps>(
             type="submit"
             disabled={isLoading || !form.formState.isValid}
             aria-label="Enviar"
-            className="inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-cb-blau text-cb-espresso transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cb-crema disabled:opacity-40"
+            className="inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-cb-agua text-cb-navy transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cb-crema disabled:opacity-40"
           >
             <ArrowUp className="h-5 w-5" strokeWidth={2.5} />
           </button>

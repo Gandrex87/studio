@@ -18,15 +18,15 @@ const INDIFERENTE = "🤷 Indiferente";
 
 // Chips sobre el fondo espresso (acciones tras los resultados)
 export const CHIP_OSCURO =
-  "inline-flex min-h-[40px] items-center justify-center gap-1.5 rounded-full border border-cb-crema/25 px-3.5 py-1.5 text-sm font-medium text-cb-crema transition-colors hover:bg-cb-crema/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cb-blau disabled:cursor-not-allowed disabled:opacity-50";
+  "inline-flex min-h-[40px] items-center justify-center gap-1.5 rounded-full border border-cb-crema/25 px-3.5 py-1.5 text-sm font-medium text-cb-crema transition-colors hover:bg-cb-crema/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cb-agua disabled:cursor-not-allowed disabled:opacity-50";
 
 // Estilos de los chips dentro de la tarjeta crema del asesor
 export const CHIP =
-  "inline-flex min-h-[44px] items-center justify-center gap-1.5 rounded-xl px-3.5 py-2 text-left text-sm font-semibold leading-snug transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cb-blau disabled:cursor-not-allowed disabled:opacity-50";
+  "inline-flex min-h-[44px] items-center justify-center gap-1.5 rounded-xl px-3.5 py-2 text-left text-sm font-semibold leading-snug transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cb-agua disabled:cursor-not-allowed disabled:opacity-50";
 export const CHIP_NORMAL = `${CHIP} border border-cb-espresso/[0.22] bg-cb-crema-2 text-cb-espresso hover:border-cb-espresso/50`;
-export const CHIP_ACTIVO = `${CHIP} border-2 border-cb-blau bg-cb-blau/[0.12] text-cb-espresso`;
+export const CHIP_ACTIVO = `${CHIP} border-2 border-cb-navy bg-cb-agua/40 text-cb-navy`;
 export const BOTON_PRIMARIO =
-  "inline-flex h-12 items-center justify-center rounded-full bg-cb-blau px-6 text-base font-bold text-cb-espresso transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cb-espresso disabled:cursor-not-allowed disabled:bg-cb-espresso/10 disabled:text-cb-tinta";
+  "inline-flex h-12 items-center justify-center rounded-full bg-cb-agua px-6 text-base font-bold text-cb-navy transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cb-espresso disabled:cursor-not-allowed disabled:bg-cb-espresso/10 disabled:text-cb-tinta";
 export const ENLACE_SECUNDARIO =
   "inline-flex min-h-[40px] items-center justify-center text-sm font-semibold text-cb-tinta underline underline-offset-[3px] hover:text-cb-espresso disabled:opacity-50";
 

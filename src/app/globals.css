@@ -15,8 +15,8 @@
     --card-foreground: 22 17% 9%;
     --popover: 40 100% 99%;           /* #FFFDF9 */
     --popover-foreground: 22 17% 9%;
-    --primary: 197 100% 47%;          /* blau #00ADEF */
-    --primary-foreground: 22 17% 9%;
+    --primary: 178 31% 75%;           /* aguamarina #ADD4D3, como los botones de carblau.com */
+    --primary-foreground: 216 79% 15%; /* navy #082144 */
     --secondary: 178 31% 75%;         /* aguamarina #ADD4D3 */
     --secondary-foreground: 22 17% 9%;
     --muted: 28 18% 14%;              /* espresso-2 #2A231D */
@@ -27,7 +27,7 @@
     --destructive-foreground: 38 48% 91%;
     --border: 28 15% 20%;
     --input: 28 15% 20%;
-    --ring: 197 100% 47%;
+    --ring: 178 31% 75%;
     --chart-1: 197 100% 47%;
     --chart-2: 178 31% 75%;
     --chart-3: 28 100% 70%;

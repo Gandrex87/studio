@@ -33,7 +33,7 @@ export function EncargoChips({ encargo, onCambiar, disabled = false }: EncargoPr
             disabled={disabled}
             title={`Cambiar ${item.etiqueta.toLowerCase()}`}
             aria-label={`${item.etiqueta}: ${item.texto}. Cambiar`}
-            className={`${CHIP} transition-colors hover:border-cb-crema/50 hover:bg-cb-crema/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cb-blau disabled:opacity-50`}
+            className={`${CHIP} transition-colors hover:border-cb-crema/50 hover:bg-cb-crema/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cb-agua disabled:opacity-50`}
           >
             {item.texto}
             <Pencil className="h-3 w-3 opacity-60" aria-hidden="true" />
@@ -85,7 +85,7 @@ export function EncargoPanel({ encargo, onCambiar, disabled = false }: EncargoPr
                         onClick={() => onCambiar(item.etiqueta)}
                         disabled={disabled}
                         aria-label={`Cambiar ${item.etiqueta.toLowerCase()}`}
-                        className="inline-flex h-7 shrink-0 items-center rounded-full border border-cb-crema/20 px-2.5 text-xs font-semibold text-cb-crema-suave transition-colors hover:border-cb-crema/50 hover:text-cb-crema focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cb-blau disabled:opacity-50"
+                        className="inline-flex h-7 shrink-0 items-center rounded-full border border-cb-crema/20 px-2.5 text-xs font-semibold text-cb-crema-suave transition-colors hover:border-cb-crema/50 hover:text-cb-crema focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cb-agua disabled:opacity-50"
                       >
                         Cambiar
                       </button>

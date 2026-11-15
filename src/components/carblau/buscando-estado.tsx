@@ -25,9 +25,9 @@ export function BuscandoEstado({ pasos }: { pasos: string[] }) {
               return (
                 <li key={`${i}-${paso}`} className="flex items-center gap-3">
                   {actual ? (
-                    <span className="cb-pulse inline-block h-6 w-6 shrink-0 rounded-full bg-cb-blau" />
+                    <span className="cb-pulse inline-block h-6 w-6 shrink-0 rounded-full bg-cb-agua" />
                   ) : (
-                    <span className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-cb-agua text-cb-espresso">
+                    <span className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-cb-agua text-cb-navy">
                       <Check className="h-3.5 w-3.5" strokeWidth={3} />
                     </span>
                   )}

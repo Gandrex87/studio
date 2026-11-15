@@ -33,7 +33,7 @@ export function ProgresoCuestionario({ progreso }: { progreso: Progreso }) {
           <span
             key={i}
             className={`h-1 rounded-sm transition-colors duration-500 ${
-              i < paso ? "bg-cb-blau" : "bg-cb-crema/20"
+              i < paso ? "bg-cb-agua" : "bg-cb-crema/20"
             }`}
           />
         ))}

@@ -47,7 +47,7 @@ function guardarVoto(threadId: string, mensajeId: string, voto: Voto) {
 }
 
 const BOTON_VOTO =
-  "inline-flex h-10 w-10 items-center justify-center rounded-full border transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cb-blau disabled:cursor-default";
+  "inline-flex h-10 w-10 items-center justify-center rounded-full border transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cb-agua disabled:cursor-default";
 
 // ═══════════════════════════════════════════════════════════════════
 // 👍/👎 SOBRE LAS RECOMENDACIONES (métricas de satisfacción)
@@ -89,7 +89,7 @@ const FeedbackRecomendaciones = ({ threadId, mensajeId }: { threadId: string | n
         onClick={() => enviar("up")}
         className={`${BOTON_VOTO} ${
           enviado === "up"
-            ? "border-cb-agua bg-cb-agua text-cb-espresso"
+            ? "border-cb-agua bg-cb-agua text-cb-navy"
             : "border-cb-crema/25 text-cb-crema hover:bg-cb-crema/10"
         } ${enviado === "down" ? "opacity-40" : ""}`}
       >
@@ -103,7 +103,7 @@ const FeedbackRecomendaciones = ({ threadId, mensajeId }: { threadId: string | n
         onClick={() => enviar("down")}
         className={`${BOTON_VOTO} ${
           enviado === "down"
-            ? "border-cb-agua bg-cb-agua text-cb-espresso"
+            ? "border-cb-agua bg-cb-agua text-cb-navy"
             : "border-cb-crema/25 text-cb-crema hover:bg-cb-crema/10"
         } ${enviado === "up" ? "opacity-40" : ""}`}
       >
@@ -163,7 +163,7 @@ const CarCard = ({ car, posicion, total, comparando, onToggleComparar }: CarCard
               <button
                 type="button"
                 aria-label={`Encaje ${encaje}. Qué significa`}
-                className="absolute left-3 top-3 inline-flex h-7 items-center gap-1.5 rounded-full bg-cb-agua px-2.5 text-[13px] font-bold text-cb-espresso shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cb-espresso"
+                className="absolute left-3 top-3 inline-flex h-7 items-center gap-1.5 rounded-full bg-cb-agua px-2.5 text-[13px] font-bold text-cb-navy shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cb-espresso"
               >
                 <Check className="h-3.5 w-3.5" strokeWidth={3} />
                 Encaje {encaje}
@@ -262,7 +262,7 @@ const CarCard = ({ car, posicion, total, comparando, onToggleComparar }: CarCard
               type="button"
               aria-pressed={comparando}
               onClick={onToggleComparar}
-              className={`inline-flex h-[46px] items-center justify-center rounded-full px-4 text-[15px] font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cb-blau ${
+              className={`inline-flex h-[46px] items-center justify-center rounded-full px-4 text-[15px] font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cb-agua ${
                 comparando
                   ? "border-2 border-cb-espresso bg-cb-espresso text-cb-crema"
                   : "border-[1.5px] border-cb-espresso/35 text-cb-espresso hover:border-cb-espresso"
