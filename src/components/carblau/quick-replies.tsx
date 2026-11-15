@@ -36,6 +36,13 @@ function iconoAccion(texto: string): LucideIcon | null {
   return ICONOS_ACCION.find(([patron]) => patron.test(limpio))?.[1] ?? null;
 }
 
+// ¿Es un grupo de acciones («qué hacemos ahora») y no las respuestas a una
+// pregunta? Si todas las opciones tienen icono de acción, se pintan sobre el
+// fondo, fuera de la tarjeta.
+export function sonAcciones(options: string[] | undefined): boolean {
+  return Boolean(options && options.length > 0 && options.every((o) => iconoAccion(o) !== null));
+}
+
 // Estilos de los chips dentro de la tarjeta crema del asesor
 export const CHIP =
   "inline-flex min-h-[44px] items-center justify-center gap-1.5 rounded-xl px-3.5 py-2 text-left text-sm font-semibold leading-snug transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cb-agua disabled:cursor-not-allowed disabled:opacity-50";

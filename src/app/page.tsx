@@ -9,6 +9,7 @@ import { CarResultsMessage } from "@/components/carblau/car-results-message";
 import { CarComparisonTable } from "@/components/carblau/car-comparison-table";
 import { ChatInput, type ChatInputHandle } from "@/components/carblau/chat-input";
 import { InlineWidget } from "@/components/carblau/inline-widget";
+import { sonAcciones } from "@/components/carblau/quick-replies";
 import { BuscandoEstado } from "@/components/carblau/buscando-estado";
 import { Arranque } from "@/components/carblau/arranque";
 import { ProgresoCuestionario, textoProgreso } from "@/components/carblau/progreso-cuestionario";
@@ -578,9 +579,12 @@ export default function Home() {
                   const comparacion = message.additional_kwargs?.car_comparison;
                   // Con comparativa, `content` repite el veredicto que ya pinta la tabla
                   const contenido = comparacion?.narrativa ?? message.content;
+                  // Acciones («qué hacemos ahora») tras la comparativa o sin resultados:
+                  // sobre el fondo, como tras las fichas; las respuestas a una pregunta, en la tarjeta
+                  const esAccion = config?.type === "buttons" && !config.multi_select && sonAcciones(config.options);
                   return (
-                    <div key={message.id} data-msg-id={message.id}>
-                      <ChatMessage role={message.role} content={contenido} pendiente={Boolean(config)}>
+                    <div key={message.id} data-msg-id={message.id} className="flex flex-col gap-4">
+                      <ChatMessage role={message.role} content={contenido} pendiente={Boolean(config) && !esAccion}>
                         {comparacion && (
                           <CarComparisonTable
                             data={comparacion}
@@ -591,12 +595,20 @@ export default function Home() {
                             }}
                           />
                         )}
-                        {config && (
+                        {config && !esAccion && (
                           <div className={comparacion ? "mt-4" : undefined}>
                             <InlineWidget config={config} onSelect={handleQuickReplySelect} isLoading={isLoading} />
                           </div>
                         )}
                       </ChatMessage>
+                      {config && esAccion && (
+                        <div className="flex flex-col gap-2">
+                          <span className="pl-0.5 text-[11px] font-bold uppercase tracking-[0.08em] text-cb-crema-tenue">
+                            ¿Qué hacemos ahora?
+                          </span>
+                          <InlineWidget config={config} onSelect={handleQuickReplySelect} isLoading={isLoading} tono="oscuro" />
+                        </div>
+                      )}
                     </div>
                   );
                 })}
