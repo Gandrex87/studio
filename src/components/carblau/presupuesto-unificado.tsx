@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { BOTON_PRIMARIO, CHIP_ACTIVO, CHIP_NORMAL, ENLACE_SECUNDARIO } from "@/components/carblau/quick-replies";
+import { BOTON_PRIMARIO, CHIP_COMPACTO_ACTIVO, CHIP_COMPACTO_NORMAL, ENLACE_SECUNDARIO } from "@/components/carblau/quick-replies";
 import { miles } from "@/lib/texto";
 
 interface PresupuestoUnificadoProps {
@@ -105,7 +105,7 @@ export function PresupuestoUnificado({ onSelect, isLoading }: PresupuestoUnifica
                 aria-pressed={activo}
                 onClick={() => !isLoading && setSeleccion(rango.valor)}
                 disabled={isLoading}
-                className={`${activo ? CHIP_ACTIVO : CHIP_NORMAL} px-2`}
+                className={activo ? CHIP_COMPACTO_ACTIVO : CHIP_COMPACTO_NORMAL}
               >
                 {rango.etiqueta}
               </button>

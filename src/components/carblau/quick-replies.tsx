@@ -43,11 +43,19 @@ export function sonAcciones(options: string[] | undefined): boolean {
   return Boolean(options && options.length > 0 && options.every((o) => iconoAccion(o) !== null));
 }
 
-// Estilos de los chips dentro de la tarjeta crema del asesor
-export const CHIP =
-  "inline-flex min-h-[44px] items-center justify-center gap-1.5 rounded-xl px-3.5 py-2 text-left text-sm font-semibold leading-snug transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cb-agua disabled:cursor-not-allowed disabled:opacity-50";
-export const CHIP_NORMAL = `${CHIP} border border-cb-espresso/[0.22] bg-cb-crema-2 text-cb-espresso hover:border-cb-espresso/50`;
-export const CHIP_ACTIVO = `${CHIP} border-2 border-cb-navy bg-cb-agua/40 text-cb-navy`;
+// Respuestas dentro de la tarjeta crema: la misma forma de tarjeta que las
+// acciones y el arranque (esquinas de 16 px, texto a la izquierda)
+const CHIP_BASE =
+  "inline-flex min-h-[48px] items-center rounded-2xl font-semibold leading-snug transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cb-agua disabled:cursor-not-allowed disabled:opacity-50";
+const RELLENO_NORMAL = "border border-cb-espresso/[0.22] bg-cb-crema-2 text-cb-espresso hover:border-cb-espresso/50";
+const RELLENO_ACTIVO = "border-2 border-cb-navy bg-cb-agua/40 text-cb-navy";
+export const CHIP = `${CHIP_BASE} gap-2 px-3.5 py-2.5 text-left text-[15px]`;
+export const CHIP_NORMAL = `${CHIP} ${RELLENO_NORMAL}`;
+export const CHIP_ACTIVO = `${CHIP} ${RELLENO_ACTIVO}`;
+// Rejillas compactas (rangos de presupuesto, distancia, kilómetros): centrado y más pequeño
+export const CHIP_COMPACTO = `${CHIP_BASE} justify-center gap-0.5 px-2 py-2 text-center text-sm`;
+export const CHIP_COMPACTO_NORMAL = `${CHIP_COMPACTO} ${RELLENO_NORMAL}`;
+export const CHIP_COMPACTO_ACTIVO = `${CHIP_COMPACTO} ${RELLENO_ACTIVO}`;
 export const BOTON_PRIMARIO =
   "inline-flex h-12 items-center justify-center rounded-full bg-cb-agua px-6 text-base font-bold text-cb-navy transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cb-espresso disabled:cursor-not-allowed disabled:bg-cb-espresso/10 disabled:text-cb-tinta";
 export const ENLACE_SECUNDARIO =
@@ -83,15 +91,16 @@ export function QuickReplies({
         </div>
       );
     }
+    // En móvil, una opción por fila a todo el ancho; en escritorio, en fila
     return (
-      <div className="flex flex-wrap gap-2">
+      <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
         {options.map((option) => (
           <button
             key={option}
             type="button"
             onClick={() => onSelect(option)}
             disabled={isLoading}
-            className={CHIP_NORMAL}
+            className={`${CHIP_NORMAL} w-full sm:w-auto`}
           >
             {sinEmoji(option)}
           </button>

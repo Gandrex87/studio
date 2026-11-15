@@ -5,7 +5,7 @@ import { Check } from "lucide-react";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
-import { BOTON_PRIMARIO, CHIP_ACTIVO, CHIP_NORMAL } from "@/components/carblau/quick-replies";
+import { BOTON_PRIMARIO, CHIP_COMPACTO_ACTIVO, CHIP_COMPACTO_NORMAL } from "@/components/carblau/quick-replies";
 import type { CanalContacto, Car, FranjaContacto } from "@/lib/tipos";
 import { nombreLimpio } from "@/lib/texto";
 import { API_BASE_URL, PRIVACY_URL } from "@/lib/config";
@@ -326,7 +326,7 @@ export function ContactoSheet({ car, abierto, onOpenChange }: ContactoSheetProps
                     aria-pressed={franja === f.valor}
                     onClick={() => setFranja(f.valor)}
                     disabled={enviando}
-                    className={`${franja === f.valor ? CHIP_ACTIVO : CHIP_NORMAL} min-h-[40px] flex-1 rounded-full px-2`}
+                    className={`${franja === f.valor ? CHIP_COMPACTO_ACTIVO : CHIP_COMPACTO_NORMAL} min-h-[40px] flex-1 rounded-full`}
                   >
                     {f.etiqueta}
                   </button>

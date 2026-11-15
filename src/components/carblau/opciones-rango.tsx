@@ -1,6 +1,6 @@
 "use client";
 
-import { CHIP_NORMAL, ENLACE_SECUNDARIO } from "@/components/carblau/quick-replies";
+import { CHIP_COMPACTO_NORMAL, ENLACE_SECUNDARIO } from "@/components/carblau/quick-replies";
 import type { TipoWidget } from "@/lib/tipos";
 
 // Preguntas de rango (distancia, km al año, pasajeros, presupuesto). Antes eran
@@ -94,7 +94,7 @@ export function OpcionesRango({ tipo, onSelect, isLoading }: OpcionesRangoProps)
             type="button"
             onClick={() => onSelect(opcion.valor)}
             disabled={isLoading}
-            className={`${CHIP_NORMAL} flex-col gap-0 px-2`}
+            className={`${CHIP_COMPACTO_NORMAL} flex-col`}
           >
             <span>{opcion.etiqueta}</span>
             {opcion.detalle && <span className="text-[11px] font-normal text-cb-tinta">{opcion.detalle}</span>}
