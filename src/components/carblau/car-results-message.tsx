@@ -2,7 +2,7 @@
 
 import { useEffect, useState, type ReactNode } from "react";
 import ReactMarkdown from "react-markdown";
-import { AlertTriangle, Check, Info, ThumbsDown, ThumbsUp } from "lucide-react";
+import { AlertTriangle, Check, ChevronDown, Info, Quote, ThumbsDown, ThumbsUp } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { AgentFrame } from "@/components/carblau/agent-frame";
 import { ContactoSheet } from "@/components/carblau/contacto-sheet";
@@ -195,10 +195,10 @@ const CarCard = ({ car, posicion, total, comparando, onToggleComparar }: CarCard
               <button
                 type="button"
                 aria-label="Qué significa este precio"
-                className="inline-flex items-center gap-1 text-right text-xs leading-tight text-cb-tinta underline decoration-dotted underline-offset-[3px] hover:text-cb-espresso"
+                className="inline-flex h-8 shrink-0 items-center gap-1.5 rounded-full border border-cb-navy/25 bg-cb-agua/40 px-3 text-xs font-semibold text-cb-navy transition-colors hover:bg-cb-agua/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cb-agua"
               >
+                <Info className="h-3.5 w-3.5 shrink-0" strokeWidth={2.2} />
                 {car.priceLabel ?? "Precio"}
-                <Info className="h-3 w-3 shrink-0" />
               </button>
             </PopoverTrigger>
             <PopoverContent align="end" className="w-72 border-cb-espresso/10 bg-cb-crema-2 text-xs leading-relaxed text-cb-espresso">
@@ -234,13 +234,19 @@ const CarCard = ({ car, posicion, total, comparando, onToggleComparar }: CarCard
 
         {car.analysis &&
           (razones.length > 0 ? (
-            <details className="group">
-              <summary className="cursor-pointer list-none text-xs font-bold uppercase tracking-[0.08em] text-cb-tinta hover:text-cb-espresso [&::-webkit-details-marker]:hidden">
-                Nuestro criterio{" "}
-                <span className="font-normal normal-case tracking-normal group-open:hidden">· ver más</span>
-                <span className="hidden font-normal normal-case tracking-normal group-open:inline">· ver menos</span>
+            <details className="group rounded-xl border border-cb-espresso/[0.14] bg-cb-crema-2">
+              <summary className="flex cursor-pointer list-none items-center justify-between gap-3 rounded-xl px-3.5 py-2.5 transition-colors hover:bg-cb-espresso/[0.04] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cb-agua [&::-webkit-details-marker]:hidden">
+                <span className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-[0.08em] text-cb-espresso">
+                  <Quote className="h-3.5 w-3.5 text-cb-navy" strokeWidth={2.2} aria-hidden="true" />
+                  Nuestro criterio
+                </span>
+                <span className="inline-flex items-center gap-1 text-[13px] font-semibold text-cb-navy">
+                  <span className="group-open:hidden">Ver más</span>
+                  <span className="hidden group-open:inline">Ver menos</span>
+                  <ChevronDown className="h-4 w-4 transition-transform group-open:rotate-180" aria-hidden="true" />
+                </span>
               </summary>
-              <p className="pt-1.5 text-sm leading-relaxed">{car.analysis}</p>
+              <p className="px-3.5 pb-3 text-sm leading-relaxed">{car.analysis}</p>
             </details>
           ) : (
             <div className="flex flex-col gap-1">
