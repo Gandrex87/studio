@@ -50,9 +50,6 @@ export function WelcomeScreen({ onStartSession, isLoading, embebido = false }: W
           <h1 className="font-headline text-[38px] font-semibold leading-[1.08] tracking-tight">
             Encuentra el coche que encaja contigo.
           </h1>
-          <p className="text-[17px] leading-relaxed text-cb-crema-suave">
-            Cuéntanos cómo vives y cómo usas el coche. Nosotros ponemos el criterio.
-          </p>
         </div>
 
         <ol className="flex flex-col gap-2.5">
@@ -75,7 +72,7 @@ export function WelcomeScreen({ onStartSession, isLoading, embebido = false }: W
             type="button"
             onClick={onStartSession}
             disabled={isLoading}
-            className="inline-flex h-14 items-center justify-center gap-2.5 rounded-full bg-cb-blau text-[17px] font-bold text-cb-espresso transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cb-crema disabled:opacity-70"
+            className="inline-flex h-14 items-center justify-center gap-2.5 rounded-full bg-cb-agua text-[17px] font-bold text-cb-navy shadow-xl shadow-cb-agua/20 transition-colors hover:bg-cb-agua/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cb-crema disabled:opacity-70"
           >
             {isLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : null}
             Empezar
