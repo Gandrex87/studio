@@ -43,7 +43,10 @@ const FRANJAS: { valor: FranjaContacto; etiqueta: string }[] = [
 ];
 
 interface ContactoSheetProps {
-  car: Car;
+  /** «Me interesa»: el coche. Sin coche, es la petición de un especialista */
+  car?: Car;
+  /** Petición de especialista: la conversación (el backend lee de ella el encargo) */
+  sessionId?: string | null;
   abierto: boolean;
   onOpenChange: (abierto: boolean) => void;
 }
@@ -53,8 +56,13 @@ interface ContactoSheetProps {
 // se registra el interés (lead) en segundo plano; el envío espera al lead_id.
 // Reglas del backend (utils/leads.py:validar_contacto): WhatsApp y llamada
 // exigen teléfono; email exige email; siempre hace falta uno de los dos.
-export function ContactoSheet({ car, abierto, onOpenChange }: ContactoSheetProps) {
+// Dos usos: «Me interesa» (lead con coche) y «Hablar con un especialista» (lead sin
+// coche, tipo «especialista»: el backend saca el encargo y los coches vistos de la
+// conversación). El formulario y el envío son los mismos; cambian los textos.
+export function ContactoSheet({ car, sessionId, abierto, onOpenChange }: ContactoSheetProps) {
   const { toast } = useToast();
+  const esEspecialista = !car;
+  const clave = car?.carId ?? "especialista";
   // Registro del interés (lead_id) en curso o ya hecho: compartido entre la
   // apertura y el envío para no duplicar leads
   const capturaRef = useRef<Promise<string | null> | null>(null);
@@ -68,22 +76,25 @@ export function ContactoSheet({ car, abierto, onOpenChange }: ContactoSheetProps
   const [consentimiento, setConsentimiento] = useState(false);
 
   const capturarLead = async (): Promise<string | null> => {
-    if (!car.carId || !car.sessionId) {
-      console.error("Faltan datos del coche para capturar lead");
-      return null;
-    }
-    try {
-      const response = await fetch(`${API_BASE_URL}/api/lead/capture`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
+    const cuerpo = car
+      ? {
           car_id: car.carId,
           session_id: car.sessionId,
           car_nombre: car.name,
           // Precio típico que envía el backend; `price` es un rango y no se puede parsear
           car_precio: car.priceValue ?? parsearPrecio(car.price),
           action: "view_details",
-        }),
+        }
+      : { session_id: sessionId, tipo: "especialista" };
+    if (car ? !car.carId || !car.sessionId : !sessionId) {
+      console.error("Faltan datos para capturar el lead");
+      return null;
+    }
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/lead/capture`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(cuerpo),
       });
       if (!response.ok) throw new Error("Error capturando interés");
       const data = await response.json();
@@ -198,7 +209,7 @@ export function ContactoSheet({ car, abierto, onOpenChange }: ContactoSheetProps
     onOpenChange(valor);
   };
   const cerrar = () => cambiarAbierto(false);
-  const nombre = nombreLimpio(car.name);
+  const nombre = car ? nombreLimpio(car.name) : "";
   const cta = CANALES.find((c) => c.valor === canal)?.cta ?? "Que me contacten";
 
   return (
@@ -219,7 +230,10 @@ export function ContactoSheet({ car, abierto, onOpenChange }: ContactoSheetProps
                 ¡Hecho! Nos ponemos a buscarlo.
               </SheetTitle>
               <SheetDescription className="text-base leading-relaxed text-cb-espresso">
-                {enviado} Un asesor de CarBlau se ocupa del {nombre}.
+                {enviado}{" "}
+                {esEspecialista
+                  ? "Un especialista de CarBlau sigue con tu búsqueda."
+                  : `Un asesor de CarBlau se ocupa del ${nombre}.`}
               </SheetDescription>
             </SheetHeader>
             <p className="text-sm leading-relaxed text-cb-tinta">
@@ -240,10 +254,14 @@ export function ContactoSheet({ car, abierto, onOpenChange }: ContactoSheetProps
           >
             <SheetHeader className="space-y-1 text-left">
               <SheetTitle className="font-headline text-2xl font-semibold leading-tight text-cb-espresso">
-                ¿Quieres que CarBlau te busque este coche?
+                {esEspecialista
+                  ? "Un especialista de CarBlau te ayuda a encontrarlo"
+                  : "¿Quieres que CarBlau te busque este coche?"}
               </SheetTitle>
               <SheetDescription className="text-sm text-cb-tinta">
-                {nombre} · {car.price}. Un asesor de CarBlau te contacta, sin compromiso.
+                {esEspecialista
+                  ? "Con todo lo que nos has contado. Déjanos cómo contactarte, sin compromiso."
+                  : `${nombre} · ${car?.price}. Un asesor de CarBlau te contacta, sin compromiso.`}
               </SheetDescription>
             </SheetHeader>
 
@@ -267,11 +285,11 @@ export function ContactoSheet({ car, abierto, onOpenChange }: ContactoSheetProps
 
             <div className="flex flex-col gap-2.5">
               <div className="flex flex-col gap-1">
-                <label htmlFor={`nombre-${car.carId}`} className="text-[13px] font-semibold">
+                <label htmlFor={`nombre-${clave}`} className="text-[13px] font-semibold">
                   Nombre
                 </label>
                 <input
-                  id={`nombre-${car.carId}`}
+                  id={`nombre-${clave}`}
                   type="text"
                   autoComplete="name"
                   placeholder="Cómo te llamas"
@@ -281,12 +299,12 @@ export function ContactoSheet({ car, abierto, onOpenChange }: ContactoSheetProps
                 />
               </div>
               <div className="flex flex-col gap-1">
-                <label htmlFor={`telefono-${car.carId}`} className="text-[13px] font-semibold">
+                <label htmlFor={`telefono-${clave}`} className="text-[13px] font-semibold">
                   Teléfono{" "}
                   <span className="font-normal text-cb-tinta">{necesitaTelefono ? "(obligatorio)" : "(opcional)"}</span>
                 </label>
                 <input
-                  id={`telefono-${car.carId}`}
+                  id={`telefono-${clave}`}
                   type="tel"
                   autoComplete="tel"
                   inputMode="tel"
@@ -298,12 +316,12 @@ export function ContactoSheet({ car, abierto, onOpenChange }: ContactoSheetProps
                 />
               </div>
               <div className="flex flex-col gap-1">
-                <label htmlFor={`email-${car.carId}`} className="text-[13px] font-semibold">
+                <label htmlFor={`email-${clave}`} className="text-[13px] font-semibold">
                   Email{" "}
                   <span className="font-normal text-cb-tinta">{necesitaEmail ? "(obligatorio)" : "(opcional)"}</span>
                 </label>
                 <input
-                  id={`email-${car.carId}`}
+                  id={`email-${clave}`}
                   type="email"
                   autoComplete="email"
                   inputMode="email"
@@ -336,17 +354,19 @@ export function ContactoSheet({ car, abierto, onOpenChange }: ContactoSheetProps
 
             <div className="flex items-start gap-2.5">
               <Checkbox
-                id={`consentimiento-${car.carId}`}
+                id={`consentimiento-${clave}`}
                 checked={consentimiento}
                 onCheckedChange={(v) => setConsentimiento(v === true)}
                 className="mt-0.5 h-5 w-5 border-cb-espresso/50 data-[state=checked]:border-cb-espresso data-[state=checked]:bg-cb-espresso data-[state=checked]:text-cb-crema"
               />
               <label
-                htmlFor={`consentimiento-${car.carId}`}
+                htmlFor={`consentimiento-${clave}`}
                 className="text-[13px] leading-snug text-cb-espresso"
               >
-                Acepto que CarBlau me contacte sobre la búsqueda de este coche. Mis datos no se ceden a
-                terceros.{" "}
+                {esEspecialista
+                  ? "Acepto que CarBlau me contacte sobre mi búsqueda."
+                  : "Acepto que CarBlau me contacte sobre la búsqueda de este coche."}{" "}
+                Mis datos no se ceden a terceros.{" "}
                 {PRIVACY_URL && (
                   <a
                     href={PRIVACY_URL}

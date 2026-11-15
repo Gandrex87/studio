@@ -120,6 +120,8 @@ export interface Message {
     car_comparison?: CarComparisonData;
     progreso?: Progreso;
     encargo?: EncargoApi;
+    /** El agente acepta «Hablar con un especialista»: el front crea el lead sin coche y pide el contacto */
+    solicitud_especialista?: { motivo: string | null };
   };
 }
 

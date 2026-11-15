@@ -92,6 +92,13 @@ Qué se pinta depende de `additional_kwargs` en cada mensaje del agente:
   `contacto_previsto` («Te escribimos por WhatsApp por la tarde, en menos de
   24 horas.»), que se enseña tal cual en la confirmación. Al cerrar sin enviar
   se avisa «Sin problema, no guardamos tus datos».
+- «Hablar con un especialista» (tras el afinado): cuando un mensaje del agente
+  trae `additional_kwargs.solicitud_especialista`, el front llama a
+  `/api/lead/capture` con `{ session_id, tipo: "especialista" }` (sin coche) y
+  abre la misma hoja de contacto con los textos del especialista; el envío a
+  `/api/lead/contact` no cambia. Los botones «No me convencen» y «Hablar con
+  un especialista», y la pregunta de marcas (selección múltiple con las marcas
+  mostradas), se envían como texto igual que el resto.
 - Stream: cada evento `progress` se enseña como un paso; el backend emite uno
   por nodo y sub-pasos dentro de la búsqueda.
 - `progreso` (opcional) → barra "Paso X de Y" bajo la cabecera:

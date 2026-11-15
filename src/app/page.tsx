@@ -97,6 +97,9 @@ export default function Home() {
 
   // «Me interesa» desde la comparativa: coche para la hoja de contacto
   const [contactoCar, setContactoCar] = useState<Car | null>(null);
+  // «Hablar con un especialista»: el agente respondió con solicitud_especialista y
+  // se abre el formulario de contacto sin coche (una vez por mensaje)
+  const [especialistaMsgId, setEspecialistaMsgId] = useState<string | null>(null);
 
   const [confirmarReinicio, setConfirmarReinicio] = useState(false);
 
@@ -361,6 +364,10 @@ export default function Home() {
             // Nueva tanda de resultados: la selección para comparar ya no vale
             if (nuevosMensajes.some(esRecomendacion)) setComparar([]);
             setMessages((prev) => [...prev, ...nuevosMensajes]);
+            const pideEspecialista = nuevosMensajes.find(
+              (m) => m.role === "agent" && m.additional_kwargs?.solicitud_especialista
+            );
+            if (pideEspecialista) setEspecialistaMsgId(pideEspecialista.id);
           } else if (event.type === "error") {
             console.error("❌ Error del backend:", event.message);
             errorBackend = true;
@@ -651,6 +658,18 @@ export default function Home() {
           abierto
           onOpenChange={(abierto) => {
             if (!abierto) setContactoCar(null);
+          }}
+        />
+      )}
+
+      {/* «Hablar con un especialista»: lead sin coche con el encargo de la conversación */}
+      {especialistaMsgId && threadId && (
+        <ContactoSheet
+          key={especialistaMsgId}
+          sessionId={threadId}
+          abierto
+          onOpenChange={(abierto) => {
+            if (!abierto) setEspecialistaMsgId(null);
           }}
         />
       )}

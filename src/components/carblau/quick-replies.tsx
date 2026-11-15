@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Check, CirclePlus, Columns2, RotateCcw, SlidersHorizontal, TrendingUp, Wallet } from "lucide-react";
+import { Check, CirclePlus, Columns2, RotateCcw, SlidersHorizontal, ThumbsDown, TrendingUp, UserRound, Wallet } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { sinEmoji } from "@/lib/texto";
 
@@ -30,6 +30,8 @@ const ICONOS_ACCION: [RegExp, LucideIcon][] = [
   [/presupuesto/i, Wallet],
   [/ampliar|subir/i, TrendingUp],
   [/empezar de nuevo|de cero|reiniciar/i, RotateCcw],
+  [/no me convence/i, ThumbsDown],
+  [/especialista|una persona/i, UserRound],
 ];
 function iconoAccion(texto: string): LucideIcon | null {
   const limpio = sinEmoji(texto);

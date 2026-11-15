@@ -18,6 +18,11 @@ const PORT = Number(process.env.MOCK_PORT || 8000);
 const DELAY = Number(process.env.MOCK_DELAY_MS || 350);
 
 const POST_RESULTADOS = ["⚖️ Comparar coches", "➕ Ver más opciones", "🎯 Afinar búsqueda", "💰 Cambiar presupuesto"];
+// Tras el afinado (Sprint 41-42): «No me convencen» en vez de «Afinar» y el especialista
+const POST_RESULTADOS_AFINADO = ["⚖️ Comparar coches", "➕ Ver más opciones", "🤔 No me convencen", "💰 Cambiar presupuesto", "🙋 Hablar con un especialista"];
+const POST_RESULTADOS_RONDA = ["⚖️ Comparar coches", "➕ Ver más opciones", "💰 Cambiar presupuesto", "🙋 Hablar con un especialista"];
+const MOTIVOS = ["💰 Son caros", "📅 Quiero algo más nuevo", "🏷️ No me gustan estas marcas", "📦 Me falta espacio", "📏 Son grandes para aparcar", "🏁 Quiero algo más potente", "💎 Que conserve su valor"];
+const TEXTO_ESPECIALISTA = "Perfecto. Un especialista de CarBlau buscará contigo el coche que encaje, con todo lo que me has contado. Déjanos cómo contactarte y te escribimos en menos de 24 horas.";
 
 const progreso = (paso, etiqueta, campo) => ({ paso, total: 5, etiqueta, campo });
 
@@ -293,9 +298,37 @@ const GUION = [
           "He actualizado la selección con lo que me has dicho:\n\n**¿Qué te gustaría hacer ahora?**\n* **Comparar** dos o más coches entre sí\n* **Afinar la búsqueda** con más detalles\n* **Cambiar el presupuesto**",
         cars: coches(threadId, "-b"),
       },
-      quick_reply_config: { type: "buttons", options: POST_RESULTADOS },
+      quick_reply_config: { type: "buttons", options: POST_RESULTADOS_AFINADO },
     },
   }),
+  // «🤔 No me convencen» → motivo (ronda «¿Qué no te convence?», Sprint 41)
+  {
+    content: "Vamos a ajustarlo. ¿Qué es lo que no te convence de estos coches?",
+    additional_kwargs: { quick_reply_config: { type: "buttons", options: MOTIVOS } },
+  },
+  // «🏷️ No me gustan estas marcas» → marcas mostradas, selección múltiple
+  {
+    content: "¿Qué marcas prefieres que descarte?",
+    additional_kwargs: {
+      quick_reply_config: { type: "buttons", options: ["Toyota", "Kia", "Mercedes-Benz"], multi_select: true, submit_label: "Continuar" },
+    },
+  },
+  (threadId) => ({
+    content: "He descartado Toyota y Kia. Estos son los que mejor encajan ahora:",
+    additional_kwargs: {
+      payload: {
+        type: "car_recommendation",
+        introText: "He descartado Toyota y Kia. Estos son los que mejor encajan ahora:",
+        cars: coches(threadId, "-c"),
+      },
+      quick_reply_config: { type: "buttons", options: POST_RESULTADOS_RONDA },
+    },
+  }),
+  // «🙋 Hablar con un especialista» (Sprint 42): el front crea el lead sin coche y abre el contacto
+  {
+    content: TEXTO_ESPECIALISTA,
+    additional_kwargs: { solicitud_especialista: { motivo: "marcas" } },
+  },
 ];
 
 // Pregunta de carrocería del afinado: su respuesta entra en el tema «Preferencias»
@@ -463,6 +496,12 @@ const server = http.createServer(async (req, res) => {
   if (req.method === "POST" && ruta === "/api/lead/capture") {
     const cuerpo = await leerCuerpo(req);
     console.log("  lead/capture", cuerpo);
+    // Petición de especialista: sin coche; el backend lee el encargo de la conversación
+    if (cuerpo.tipo === "especialista") {
+      if (!cuerpo.session_id) return json(res, 422, { detail: "Falta session_id" });
+      return json(res, 200, { success: true, lead_id: randomUUID(), message: "Petición registrada correctamente", next_action: "show_contact_form" });
+    }
+    if (!cuerpo.car_id) return json(res, 400, { detail: "Falta el coche (car_id)." });
     return json(res, 200, {
       success: true,
       lead_id: randomUUID(),
