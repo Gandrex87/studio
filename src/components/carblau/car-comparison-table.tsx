@@ -45,7 +45,7 @@ export function CarComparisonTable({ data, onInteresa, disabled = false }: CarCo
                   type="button"
                   onClick={() => onInteresa(coche.carId as string)}
                   disabled={disabled}
-                  className="mt-1 inline-flex h-9 items-center justify-center self-start rounded-full bg-cb-agua px-3.5 text-[13px] font-bold text-cb-navy transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cb-espresso disabled:opacity-50"
+                  className="mt-auto inline-flex h-9 items-center justify-center self-start rounded-full bg-cb-agua px-3.5 text-[13px] font-bold text-cb-navy transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cb-espresso disabled:opacity-50"
                 >
                   Me interesa
                 </button>
