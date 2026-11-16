@@ -283,7 +283,7 @@ const GUION = [
     additional_kwargs: {
       quick_reply_config: {
         type: "buttons",
-        options: ["🚙 SUV", "🏔️ Todoterreno", "🚘 Berlina", "🚐 Monovolumen", "🚚 Furgoneta", "🤷 Indiferente"],
+        options: ["🚙 SUV", "🏔️ Todoterreno", "🚘 Berlina", "🧳 Familiar", "🚐 Monovolumen", "🚚 Furgoneta", "🤷 Indiferente"],
         multi_select: true,
         submit_label: "Continuar",
       },
