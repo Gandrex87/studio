@@ -16,6 +16,7 @@ import { ProgresoCuestionario, textoProgreso } from "@/components/carblau/progre
 import { EncargoChips, EncargoPanel, EncargoResumen } from "@/components/carblau/encargo";
 import { ContactoSheet } from "@/components/carblau/contacto-sheet";
 import { leerEncargo, textoCambio } from "@/lib/encargo";
+import { numeroFicha } from "@/lib/texto";
 import type { Car, Message, Progreso } from "@/lib/tipos";
 import { useToast } from "@/hooks/use-toast";
 import {
@@ -69,11 +70,19 @@ const inicioAutomatico = () =>
 const esRecomendacion = (m: Message) =>
   m.role === "agent" && m.additional_kwargs?.payload?.type === "car_recommendation";
 
-// "Compara el 1 y el 3": la ruta consulta_coches_mostrados del backend lo entiende
-function textoComparacion(numeros: number[]): string {
-  const n = [...numeros].sort((a, b) => a - b);
-  if (n.length === 2) return `Compara el ${n[0]} y el ${n[1]}`;
-  return `Compara el ${n.slice(0, -1).join(", el ")} y el ${n[n.length - 1]}`;
+// «⚖️ Compara el 2 y el 7», el menor primero: con este texto exacto el backend
+// responde sin pasar por el router y lo cuenta como uso del botón
+function textoComparacion(a: number, b: number): string {
+  const [n, m] = a < b ? [a, b] : [b, a];
+  return `⚖️ Compara el ${n} y el ${m}`;
+}
+
+// Números de ficha ya enseñados (el prefijo «1.» del nombre, que continúa tras «Ver más»)
+function numerosMostrados(messages: Message[]): number[] {
+  return messages
+    .filter(esRecomendacion)
+    .flatMap((m) => m.additional_kwargs!.payload!.cars.map((c) => numeroFicha(c.name)))
+    .filter((n): n is number => n !== null);
 }
 
 // ═══════════════════════════════════════════════════════════════════
@@ -90,8 +99,9 @@ export default function Home() {
   // `progress`): "Analizando tu respuesta", "Buscando vehículos…"
   const [pasosTurno, setPasosTurno] = useState<string[]>([]);
 
-  // Fichas marcadas para comparar (números de la última tanda de resultados)
-  const [comparar, setComparar] = useState<number[]>([]);
+  // Ficha marcada para comparar (número de ficha): al marcar la segunda se
+  // envía la comparación y se desmarcan las dos
+  const [comparar, setComparar] = useState<number | null>(null);
   // Móvil: la píldora «Tu encargo · n datos» despliega los chips
   const [encargoAbierto, setEncargoAbierto] = useState(false);
 
@@ -361,8 +371,14 @@ export default function Home() {
               content: msg.content,
               additional_kwargs: msg.additional_kwargs,
             }));
-            // Nueva tanda de resultados: la selección para comparar ya no vale
-            if (nuevosMensajes.some(esRecomendacion)) setComparar([]);
+            // Resultados nuevos (afinado, presupuesto…): la numeración vuelve a
+            // empezar y la ficha marcada ya no vale. Tras «Ver más» continúa y se mantiene.
+            const tanda = nuevosMensajes.find(esRecomendacion);
+            if (tanda) {
+              const primero = numeroFicha(tanda.additional_kwargs!.payload!.cars[0]?.name ?? "") ?? 1;
+              const previos = numerosMostrados(messages);
+              if (previos.length === 0 || primero <= Math.max(...previos)) setComparar(null);
+            }
             setMessages((prev) => [...prev, ...nuevosMensajes]);
             const pideEspecialista = nuevosMensajes.find(
               (m) => m.role === "agent" && m.additional_kwargs?.solicitud_especialista
@@ -410,14 +426,13 @@ export default function Home() {
     handleSendMessage(option);
   };
 
+  // «Comparar» en una ficha: la primera queda marcada; la misma otra vez la
+  // desmarca; la segunda envía la comparación al momento
   const toggleComparar = (numero: number) => {
-    setComparar((prev) => (prev.includes(numero) ? prev.filter((n) => n !== numero) : [...prev, numero]));
-  };
-
-  const enviarComparacion = () => {
-    if (comparar.length < 2) return;
-    const texto = textoComparacion(comparar);
-    setComparar([]);
+    if (comparar === null) return setComparar(numero);
+    if (comparar === numero) return setComparar(null);
+    const texto = textoComparacion(comparar, numero);
+    setComparar(null);
     handleSendMessage(texto);
   };
 
@@ -436,7 +451,7 @@ export default function Home() {
     setMessages([]);
     setIsLoading(false);
     setPasosTurno([]);
-    setComparar([]);
+    setComparar(null);
     setContactoCar(null);
     if (inicioAutomatico()) handleStartSession();
   };
@@ -477,13 +492,6 @@ export default function Home() {
 
   // "Tu encargo": del backend (fase 2) o, si no llega, leído de la conversación
   const encargo = useMemo(() => leerEncargo(messages), [messages]);
-
-  // Solo la última tanda de resultados se puede comparar (el backend numera
-  // los coches de la tanda actual)
-  const indiceUltimaRecomendacion = (() => {
-    for (let i = messages.length - 1; i >= 0; i--) if (esRecomendacion(messages[i])) return i;
-    return -1;
-  })();
 
   // ═══════════════════════════════════════════════════════════════════
   // RENDER
@@ -547,7 +555,7 @@ export default function Home() {
 
             <div className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden cb-scroll" ref={scrollAreaRef}>
               <div
-                className={`mx-auto flex w-full max-w-3xl flex-col gap-4 p-4 ${comparar.length >= 2 ? "pb-40" : "pb-28"} ${esArranque ? "min-h-full" : ""}`}
+                className={`mx-auto flex w-full max-w-3xl flex-col gap-4 p-4 ${comparar !== null ? "pb-40" : "pb-28"} ${esArranque ? "min-h-full" : ""}`}
               >
                 {esArranque && <Arranque onElegir={handleSendMessage} disabled={isLoading} />}
                 {!esArranque &&
@@ -559,15 +567,16 @@ export default function Home() {
                       : undefined;
 
                   if (esRecomendacion(message)) {
-                    const esUltimaTanda = index === indiceUltimaRecomendacion;
+                    // Se puede comparar entre tandas (la numeración continúa tras «Ver más»)
                     return (
                       <div key={message.id} data-msg-id={message.id}>
                         <CarResultsMessage
                           data={message.additional_kwargs!.payload!}
                           threadId={threadId}
                           mensajeId={message.id}
-                          comparar={esUltimaTanda ? comparar : undefined}
-                          onToggleComparar={esUltimaTanda ? toggleComparar : undefined}
+                          comparar={comparar}
+                          onToggleComparar={toggleComparar}
+                          compararDisabled={isLoading}
                           acciones={
                             config ? (
                               <InlineWidget
@@ -628,15 +637,21 @@ export default function Home() {
             {/* Caja de texto flotante sobre la conversación (el contenido pasa por debajo) */}
             <div className="pointer-events-none absolute inset-x-0 bottom-0 z-10 px-3 pb-[max(0.875rem,env(safe-area-inset-bottom))]">
               <div className="pointer-events-auto mx-auto flex w-full max-w-3xl flex-col gap-2">
-                {comparar.length >= 2 && !isLoading && (
-                  <button
-                    type="button"
-                    onClick={enviarComparacion}
-                    className="inline-flex h-[46px] items-center justify-center gap-2 rounded-full bg-cb-agua text-[15px] font-bold text-cb-navy shadow-[0_12px_30px_rgba(0,0,0,0.4)] transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cb-crema"
+                {comparar !== null && !isLoading && (
+                  <div
+                    role="status"
+                    className="flex h-[44px] items-center gap-2.5 rounded-full border border-cb-agua/40 bg-cb-espresso-2/90 pl-4 pr-1.5 text-[14px] font-semibold text-cb-crema shadow-[0_12px_30px_rgba(0,0,0,0.4)] backdrop-blur-xl"
                   >
-                    <Columns2 className="h-[18px] w-[18px]" />
-                    Comparar {comparar.length} coches
-                  </button>
+                    <Columns2 className="h-[18px] w-[18px] shrink-0 text-cb-agua" aria-hidden="true" />
+                    <span className="min-w-0 flex-1 truncate">Elige otro coche para comparar</span>
+                    <button
+                      type="button"
+                      onClick={() => setComparar(null)}
+                      className="inline-flex h-8 shrink-0 items-center rounded-full px-3 text-[13px] font-semibold text-cb-crema-suave hover:bg-cb-crema/10 hover:text-cb-crema focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cb-agua"
+                    >
+                      Quitar
+                    </button>
+                  </div>
                 )}
                 <ChatInput
                   ref={chatInputRef}

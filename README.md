@@ -80,8 +80,13 @@ Qué se pinta depende de `additional_kwargs` en cada mensaje del agente:
   usuario, sin poder cambiarlo.
 - Fichas: `encaje` (0–99) como «Encaje N» (sin él, la puntuación redondeada),
   `razones` como «Por qué encaja contigo», `aviso` como «Ten en cuenta» y
-  `datos` como línea de características (sin ellos, `specs`). «Comparar» en
-  dos o más fichas envía al agente `Compara el 1 y el 2`.
+  `datos` como línea de características (sin ellos, `specs`). «Comparar»:
+  la primera ficha queda marcada («Seleccionado» y el aviso «Elige otro
+  coche para comparar»); al marcar la segunda se envía `⚖️ Compara el 1 y el
+  2` (el número es el prefijo del nombre, el menor primero; se puede comparar
+  entre tandas porque tras «Ver más» la numeración continúa). Si llegan
+  resultados con la numeración reiniciada, la marca se borra; mientras se
+  espera una respuesta, «Comparar» queda desactivado.
 - `car_comparison`: `veredicto` destacado sobre la tabla, `narrativa` como
   texto del mensaje (si no llega, `content`) y «Me interesa» por coche cuando
   traen `carId`.

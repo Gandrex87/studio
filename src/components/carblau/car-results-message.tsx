@@ -16,9 +16,11 @@ interface CarResultsMessageProps {
   data: CarRecommendationPayload;
   threadId: string | null;
   mensajeId: string;   // id del mensaje de resultados: identifica la tanda valorada
-  /** Números de ficha marcados para comparar (solo en la última tanda) */
-  comparar?: number[];
+  /** Número de la ficha marcada para comparar (la segunda marcada envía la comparación) */
+  comparar?: number | null;
   onToggleComparar?: (numero: number) => void;
+  /** Mientras se espera la respuesta de una comparación */
+  compararDisabled?: boolean;
   /** Acciones tras los resultados (botones del backend), sobre el fondo oscuro */
   acciones?: ReactNode;
 }
@@ -122,6 +124,7 @@ interface CarCardProps {
   total: number;
   comparando?: boolean;
   onToggleComparar?: () => void;
+  compararDisabled?: boolean;
 }
 
 // "Híbrido · 2019 · Berlina · 5 plazas · Automático · Tracción delantera"
@@ -142,7 +145,7 @@ function lineaDatos(car: Car): string {
   return car.specs.filter(Boolean).join(" · ");
 }
 
-const CarCard = ({ car, posicion, total, comparando, onToggleComparar }: CarCardProps) => {
+const CarCard = ({ car, posicion, total, comparando, onToggleComparar, compararDisabled = false }: CarCardProps) => {
   const [contactoAbierto, setContactoAbierto] = useState(false);
   const nombre = nombreLimpio(car.name);
   // Fase 2: `encaje` (0–99) del backend; si no llega, la puntuación redondeada
@@ -268,13 +271,15 @@ const CarCard = ({ car, posicion, total, comparando, onToggleComparar }: CarCard
               type="button"
               aria-pressed={comparando}
               onClick={onToggleComparar}
-              className={`inline-flex h-[46px] items-center justify-center rounded-full px-4 text-[15px] font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cb-agua ${
+              disabled={compararDisabled}
+              className={`inline-flex h-[46px] items-center justify-center gap-1.5 rounded-full px-4 text-[15px] font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cb-agua disabled:cursor-not-allowed disabled:opacity-50 ${
                 comparando
-                  ? "border-2 border-cb-espresso bg-cb-espresso text-cb-crema"
+                  ? "border-2 border-cb-navy bg-cb-navy text-cb-crema"
                   : "border-[1.5px] border-cb-espresso/35 text-cb-espresso hover:border-cb-espresso"
               }`}
             >
-              {comparando ? "Comparando" : "Comparar"}
+              {comparando && <Check className="h-4 w-4" strokeWidth={3} aria-hidden="true" />}
+              {comparando ? "Seleccionado" : "Comparar"}
             </button>
           )}
         </div>
@@ -294,6 +299,7 @@ export function CarResultsMessage({
   mensajeId,
   comparar,
   onToggleComparar,
+  compararDisabled = false,
   acciones,
 }: CarResultsMessageProps) {
   const total = data.cars.length;
@@ -312,8 +318,9 @@ export function CarResultsMessage({
             car={car}
             posicion={index + 1}
             total={total}
-            comparando={comparar?.includes(numero)}
+            comparando={comparar === numero}
             onToggleComparar={onToggleComparar ? () => onToggleComparar(numero) : undefined}
+            compararDisabled={compararDisabled}
           />
         );
       })}

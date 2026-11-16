@@ -436,8 +436,21 @@ const server = http.createServer(async (req, res) => {
 
       // Corrección por tema (fase 2): se vuelve a hacer esa pregunta
       const cambio = texto.match(/^\s*quiero\s+cambiar\s*:\s*(.+?)\s*[.!]?\s*$/i);
+      // «⚖️ Compara el n y el m» (botón de las fichas, Sprint 44): la comparativa
+      // del guion con esos números, sin pasar por el router
+      const compara = texto.match(/compara\s+el\s+(\d+)\s+y\s+el\s+(\d+)/i);
       let respuesta;
-      if (cambio) {
+      if (compara) {
+        const indice = GUION.findIndex((e) => typeof e !== "function" && e.additional_kwargs?.car_comparison);
+        const base = JSON.parse(JSON.stringify(GUION[indice]));
+        const [n, k] = [Number(compara[1]), Number(compara[2])];
+        base.additional_kwargs.car_comparison.coches.forEach((c, i) => {
+          c.indice = i === 0 ? n : k;
+          c.nombre = c.nombre.replace(/^#\d+/, `#${c.indice}`);
+        });
+        respuesta = base;
+        if (hilo.paso % GUION.length === indice) hilo.paso += 1; // el guion sigue en orden
+      } else if (cambio) {
         const pedido = cambio[1].trim().toLowerCase();
         const indice = PASO_POR_CAMBIO[pedido];
         if (indice === undefined) {
