@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Check, CirclePlus, Columns2, RotateCcw, SlidersHorizontal, ThumbsDown, TrendingUp, UserRound, Wallet } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { sinEmoji } from "@/lib/texto";
+import { iconosDeOpciones } from "@/lib/iconos";
 
 interface QuickRepliesProps {
   options: string[];
@@ -45,6 +46,22 @@ export function sonAcciones(options: string[] | undefined): boolean {
   return Boolean(options && options.length > 0 && options.every((o) => iconoAccion(o) !== null));
 }
 
+// Icono de una respuesta: el emoji del backend traducido a icono de línea,
+// en marino sobre un cuadrado aguamarina suave (como «Rango típico» en las
+// fichas). Marcada (selección múltiple), el cuadrado pasa a marino con un check.
+function IconoRespuesta({ Icono, activo = false }: { Icono: LucideIcon; activo?: boolean }) {
+  return (
+    <span
+      aria-hidden="true"
+      className={`inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-[10px] ${
+        activo ? "bg-cb-navy text-cb-crema" : "bg-cb-agua/40 text-cb-navy"
+      }`}
+    >
+      {activo ? <Check className="h-4 w-4" strokeWidth={3} /> : <Icono className="h-[17px] w-[17px]" strokeWidth={2} />}
+    </span>
+  );
+}
+
 // Respuestas dentro de la tarjeta crema: la misma forma de tarjeta que las
 // acciones y el arranque (esquinas de 16 px, texto a la izquierda)
 const CHIP_BASE =
@@ -52,6 +69,8 @@ const CHIP_BASE =
 const RELLENO_NORMAL = "border border-cb-espresso/[0.22] bg-cb-crema-2 text-cb-espresso hover:border-cb-espresso/50";
 const RELLENO_ACTIVO = "border-2 border-cb-navy bg-cb-agua/40 text-cb-navy";
 export const CHIP = `${CHIP_BASE} gap-2 px-3.5 py-2.5 text-left text-[15px]`;
+// Con icono: el cuadrado del icono pide menos relleno a la izquierda
+const CHIP_CON_ICONO = `${CHIP_BASE} gap-3 py-2 pl-2 pr-3.5 text-left text-[15px]`;
 export const CHIP_NORMAL = `${CHIP} ${RELLENO_NORMAL}`;
 export const CHIP_ACTIVO = `${CHIP} ${RELLENO_ACTIVO}`;
 // Rejillas compactas (rangos de presupuesto, distancia, kilómetros): centrado y más pequeño
@@ -94,19 +113,24 @@ export function QuickReplies({
       );
     }
     // En móvil, una opción por fila a todo el ancho; en escritorio, en fila
+    const iconos = iconosDeOpciones(options);
     return (
       <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
-        {options.map((option) => (
-          <button
-            key={option}
-            type="button"
-            onClick={() => onSelect(option)}
-            disabled={isLoading}
-            className={`${CHIP_NORMAL} w-full sm:w-auto`}
-          >
-            {sinEmoji(option)}
-          </button>
-        ))}
+        {options.map((option, i) => {
+          const Icono = iconos?.[i];
+          return (
+            <button
+              key={option}
+              type="button"
+              onClick={() => onSelect(option)}
+              disabled={isLoading}
+              className={`${Icono ? CHIP_CON_ICONO : CHIP} ${RELLENO_NORMAL} w-full sm:w-auto`}
+            >
+              {Icono && <IconoRespuesta Icono={Icono} />}
+              {sinEmoji(option)}
+            </button>
+          );
+        })}
       </div>
     );
   }
@@ -129,14 +153,18 @@ export function QuickReplies({
     onSelect(selected.join(" y "));
   };
 
+  // Con iconos (carrocería, tamaño…), una opción por fila en móvil; sin ellos
+  // (marcas), en fila con un check al marcar
+  const iconos = iconosDeOpciones(options);
   return (
     <div className="flex flex-col gap-3">
       <p className="text-xs font-semibold uppercase tracking-[0.06em] text-cb-tinta">
         Elige una o varias opciones
       </p>
-      <div className="flex flex-wrap gap-2">
-        {options.map((option) => {
+      <div className={iconos ? "flex flex-col gap-2 sm:flex-row sm:flex-wrap" : "flex flex-wrap gap-2"}>
+        {options.map((option, i) => {
           const activo = selected.includes(option);
+          const Icono = iconos?.[i];
           return (
             <button
               key={option}
@@ -144,9 +172,19 @@ export function QuickReplies({
               aria-pressed={activo}
               onClick={() => toggle(option)}
               disabled={isLoading}
-              className={activo ? CHIP_ACTIVO : CHIP_NORMAL}
+              className={
+                Icono
+                  ? `${CHIP_CON_ICONO} ${activo ? RELLENO_ACTIVO : RELLENO_NORMAL} w-full sm:w-auto`
+                  : activo
+                    ? CHIP_ACTIVO
+                    : CHIP_NORMAL
+              }
             >
-              {activo && <Check className="h-3.5 w-3.5 shrink-0" strokeWidth={3} />}
+              {Icono ? (
+                <IconoRespuesta Icono={Icono} activo={activo} />
+              ) : (
+                activo && <Check className="h-3.5 w-3.5 shrink-0" strokeWidth={3} />
+              )}
               {sinEmoji(option)}
             </button>
           );
