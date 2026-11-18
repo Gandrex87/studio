@@ -9,9 +9,9 @@
 #
 # Pruebas (QA) sin tocar producción:
 #   ./deploy.sh --qa            → misma imagen, pero como revisión SIN tráfico con la
-#                                 etiqueta «qa»: se prueba en https://qa---<servicio>…
+#                                 etiqueta «pruebas»: se prueba en https://pruebas---<servicio>…
 #                                 (el backend debe admitir esa URL en CORS)
-#   ./deploy.sh --publicar      → pasa el 100 % del tráfico a la revisión «qa» ya probada
+#   ./deploy.sh --publicar      → pasa el 100 % del tráfico a la revisión «pruebas» ya probada
 #
 # Variables del bundle (se fijan AL COMPILAR; vacías = valor por defecto del código):
 #   NEXT_PUBLIC_API_URL  NEXT_PUBLIC_PRIVACY_URL  NEXT_PUBLIC_CONTACT_PHONE
@@ -83,10 +83,10 @@ desplegar() {
     "$@"
 }
 
-# URL de la revisión etiquetada «qa» (vacía si no hay)
+# URL de la revisión etiquetada «pruebas» (vacía si no hay). Cloud Run exige etiquetas de 3+ caracteres
 url_qa() {
   gcloud run services describe "$SERVICE" --project="$PROJECT" --region="$REGION" --format=json \
-    | python3 -c 'import json,sys; t=json.load(sys.stdin).get("status",{}).get("traffic",[]); print(next((x["url"] for x in t if x.get("tag")=="qa"),""))'
+    | python3 -c 'import json,sys; t=json.load(sys.stdin).get("status",{}).get("traffic",[]); print(next((x["url"] for x in t if x.get("tag")=="pruebas"),""))'
 }
 
 # ── Requisitos ──────────────────────────────────────────────────────
@@ -94,10 +94,10 @@ command -v gcloud >/dev/null || error "Falta gcloud."
 
 if $PUBLICAR; then
   URL_QA="$(url_qa)"
-  [[ -n "$URL_QA" ]] || error "No hay ninguna revisión con la etiqueta «qa». Despliega primero con ./deploy.sh --qa"
-  confirmar "¿Pasar el 100 % del tráfico de $SERVICE a la revisión «qa» ($URL_QA)?"
-  paso "Publicando la revisión «qa»"
-  gcloud run services update-traffic "$SERVICE" --project="$PROJECT" --region="$REGION" --to-tags=qa=100
+  [[ -n "$URL_QA" ]] || error "No hay ninguna revisión con la etiqueta «pruebas». Despliega primero con ./deploy.sh --qa"
+  confirmar "¿Pasar el 100 % del tráfico de $SERVICE a la revisión «pruebas» ($URL_QA)?"
+  paso "Publicando la revisión «pruebas»"
+  gcloud run services update-traffic "$SERVICE" --project="$PROJECT" --region="$REGION" --to-tags=pruebas=100
   URL="$(gcloud run services describe "$SERVICE" --project="$PROJECT" --region="$REGION" --format='value(status.url)')"
   paso "Listo: $URL sirve ahora la revisión probada en QA"
   exit 0
@@ -144,7 +144,7 @@ fi
 # ── Resumen ─────────────────────────────────────────────────────────
 cat <<EOF
 
-  Servicio : $SERVICE ($REGION)$($QA && echo "  · revisión de PRUEBAS sin tráfico, etiqueta «qa»")
+  Servicio : $SERVICE ($REGION)$($QA && echo "  · revisión de PRUEBAS sin tráfico, etiqueta «pruebas»")
   Imagen   : ${IMAGE}:${TAG}
   Commit   : $COMMIT  $(git log -1 --format=%s)
   API      : ${NEXT_PUBLIC_API_URL:-(por defecto en src/lib/config.ts)}
@@ -175,7 +175,7 @@ docker buildx build --platform linux/amd64 \
 # ── Deploy ──────────────────────────────────────────────────────────
 if $QA; then
   paso "Desplegando la revisión de pruebas (sin tráfico)"
-  desplegar "$TAG" --no-traffic --tag=qa
+  desplegar "$TAG" --no-traffic --tag=pruebas
   paso "Listo para QA: $(url_qa)  (imagen :$TAG)"
   echo "Producción no cambia. Cuando esté probado: ./deploy.sh --publicar"
   exit 0
