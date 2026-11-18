@@ -1,11 +1,12 @@
 "use client";
 
-import { ChevronDown, Pencil } from "lucide-react";
+import { useEffect, useRef } from "react";
+import { Pencil } from "lucide-react";
 import { itemsEncargo, type Encargo } from "@/lib/encargo";
 
-// "Tu encargo": lo que el usuario ya ha contado. En móvil, una píldora bajo la
-// cabecera que despliega los chips; en escritorio, el panel lateral. Con el backend de la
-// fase 2 cada dato se puede cambiar: se envía `Quiero cambiar: <etiqueta>`.
+// "Tu encargo": lo que el usuario ya ha contado. En móvil, una fila de chips bajo la
+// cabecera que se va rellenando con cada respuesta; en escritorio, el panel lateral.
+// Con el backend de la fase 2 cada dato se puede cambiar: se envía `Quiero cambiar: <etiqueta>`.
 
 interface EncargoProps {
   encargo: Encargo;
@@ -16,42 +17,22 @@ interface EncargoProps {
 const CHIP =
   "inline-flex h-7 shrink-0 items-center gap-1 whitespace-nowrap rounded-full border border-cb-crema/20 bg-cb-crema/[0.06] px-2.5 text-xs font-medium text-cb-crema";
 
-// Píldora «Tu encargo · 3 datos» de la fila bajo la cabecera (móvil); al
-// tocarla se despliegan los chips.
-export function EncargoResumen({
-  encargo,
-  abierto,
-  onToggle,
-}: {
-  encargo: Encargo;
-  abierto: boolean;
-  onToggle: () => void;
-}) {
-  const n = itemsEncargo(encargo).length;
-  if (n === 0) return null;
-  return (
-    <button
-      type="button"
-      onClick={onToggle}
-      aria-expanded={abierto}
-      aria-controls="encargo-chips"
-      className="inline-flex h-8 shrink-0 items-center gap-1.5 rounded-full border border-cb-crema/[0.24] bg-cb-crema/[0.06] px-3 text-[13px] font-semibold text-cb-crema transition-colors hover:bg-cb-crema/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cb-agua"
-    >
-      Tu encargo · {n} {n === 1 ? "dato" : "datos"}
-      <ChevronDown
-        className={`h-3.5 w-3.5 transition-transform ${abierto ? "rotate-180" : ""}`}
-        aria-hidden="true"
-      />
-    </button>
-  );
-}
-
-// Los chips desplegados bajo la píldora
+// La fila de chips bajo la cabecera (móvil). Siempre a la vista: cada respuesta
+// añade un chip y la fila se desplaza sola hasta el último.
 export function EncargoChips({ encargo, onCambiar, disabled = false }: EncargoProps) {
   const items = itemsEncargo(encargo);
+  const fila = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    fila.current?.scrollTo({ left: fila.current.scrollWidth, behavior: "smooth" });
+  }, [items.length]);
   if (items.length === 0) return null;
   return (
-    <div id="encargo-chips" className="flex items-center gap-1.5 overflow-x-auto px-4 pb-2.5 pt-1 cb-scroll-x" aria-label="Tu encargo">
+    <div
+      ref={fila}
+      role="group"
+      aria-label="Tu encargo"
+      className="flex items-center gap-1.5 overflow-x-auto px-4 pb-2.5 pt-1 cb-scroll-x [mask-image:linear-gradient(to_right,transparent,#000_16px,#000_calc(100%-16px),transparent)]"
+    >
       {items.map((item, i) =>
         item.cambiable ? (
           <button

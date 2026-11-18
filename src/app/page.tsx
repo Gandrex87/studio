@@ -13,9 +13,9 @@ import { sonAcciones } from "@/components/carblau/quick-replies";
 import { BuscandoEstado } from "@/components/carblau/buscando-estado";
 import { Arranque } from "@/components/carblau/arranque";
 import { ProgresoCuestionario, textoProgreso } from "@/components/carblau/progreso-cuestionario";
-import { EncargoChips, EncargoPanel, EncargoResumen } from "@/components/carblau/encargo";
+import { EncargoChips, EncargoPanel } from "@/components/carblau/encargo";
 import { ContactoSheet } from "@/components/carblau/contacto-sheet";
-import { leerEncargo, textoCambio } from "@/lib/encargo";
+import { itemsEncargo, leerEncargo, textoCambio } from "@/lib/encargo";
 import { numeroFicha } from "@/lib/texto";
 import type { Car, Message, Progreso } from "@/lib/tipos";
 import { useToast } from "@/hooks/use-toast";
@@ -103,7 +103,6 @@ export default function Home() {
   // envía la comparación y se desmarcan las dos
   const [comparar, setComparar] = useState<number | null>(null);
   // Móvil: la píldora «Tu encargo · n datos» despliega los chips
-  const [encargoAbierto, setEncargoAbierto] = useState(false);
 
   // «Me interesa» desde la comparativa: coche para la hoja de contacto
   const [contactoCar, setContactoCar] = useState<Car | null>(null);
@@ -492,6 +491,7 @@ export default function Home() {
 
   // "Tu encargo": del backend (fase 2) o, si no llega, leído de la conversación
   const encargo = useMemo(() => leerEncargo(messages), [messages]);
+  const hayEncargo = itemsEncargo(encargo).length > 0;
 
   // ═══════════════════════════════════════════════════════════════════
   // RENDER
@@ -529,27 +529,18 @@ export default function Home() {
             <div aria-hidden="true" className="cb-luz pointer-events-none absolute inset-0 -z-10" />
             <ChatHeader onReiniciar={() => setConfirmarReinicio(true)} />
 
-            {/* Una sola fila fina: línea de progreso, píldora del encargo (móvil) y paso */}
-            {(progreso || encargo.temas.length > 0) && (
+            {/* Una sola barra fina: línea de progreso, paso y, en móvil, los chips del encargo
+                siempre a la vista (se van rellenando con cada respuesta) */}
+            {(progreso || hayEncargo) && (
               <div className={`flex flex-col ${progreso ? "" : "lg:hidden"}`}>
                 {progreso && <ProgresoCuestionario progreso={progreso} />}
-                <div className="flex items-center justify-between gap-3 px-4 pb-1 pt-2.5">
-                  <div className="min-w-0 lg:hidden">
-                    <EncargoResumen
-                      encargo={encargo}
-                      abierto={encargoAbierto}
-                      onToggle={() => setEncargoAbierto((v) => !v)}
-                    />
-                  </div>
-                  {progreso && (
-                    <span className="ml-auto truncate text-xs text-cb-crema-suave">{textoProgreso(progreso)}</span>
-                  )}
+                <div className="flex items-center justify-between gap-3 px-4 pb-1 pt-2.5 text-xs text-cb-crema-suave">
+                  {hayEncargo && <span className="font-semibold lg:hidden">Tu encargo</span>}
+                  {progreso && <span className="ml-auto truncate">{textoProgreso(progreso)}</span>}
                 </div>
-                {encargoAbierto && (
-                  <div className="lg:hidden">
-                    <EncargoChips encargo={encargo} onCambiar={cambiarDato} disabled={isLoading} />
-                  </div>
-                )}
+                <div className="lg:hidden">
+                  <EncargoChips encargo={encargo} onCambiar={cambiarDato} disabled={isLoading} />
+                </div>
               </div>
             )}
 
