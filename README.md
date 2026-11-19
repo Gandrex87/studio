@@ -73,6 +73,12 @@ Qué se pinta depende de `additional_kwargs` en cada mensaje del agente:
   `distance_slider`, `km_anuales_slider`, `pasajeros_slider`,
   `presupuesto_slider` o `presupuesto_unificado`. Todos responden al agente
   como texto; las opciones se enseñan sin su emoji y se envían tal cual.
+  En selección múltiple (carrocería, motor, marcas) las marcadas se envían
+  unidas con « y » («⛽ Gasolina y 🔋 Híbrido»). El emoji se traduce a un
+  icono de línea (`src/lib/iconos.ts`) cuando toda la lista lo tiene; los
+  botones de acción tras los resultados («Comparar coches», «Quitar filtro:
+  motor», «Incluir todos los motores»…) se pintan fuera de la tarjeta, con
+  icono aguamarina (`sonAcciones` en `quick-replies.tsx`).
 - `encargo` (fase 2, en cada mensaje del agente) → chips «Tu encargo» y panel
   lateral en escritorio. Cada dato se puede cambiar: el front envía
   `Quiero cambiar: <etiqueta>` y el agente vuelve a preguntarlo. Sin `encargo`

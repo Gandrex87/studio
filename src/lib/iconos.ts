@@ -13,6 +13,7 @@ import {
   CircleHelp,
   Clock,
   CreditCard,
+  Droplet,
   Expand,
   Feather,
   Footprints,
@@ -21,11 +22,13 @@ import {
   Gem,
   Home,
   Joystick,
+  Leaf,
   Lightbulb,
   Luggage,
   Minus,
   Mountain,
   Package,
+  PlugZap,
   RefreshCw,
   Route,
   Ruler,
@@ -38,6 +41,7 @@ import {
   ThumbsUp,
   TreePine,
   Truck,
+  Undo2,
   UserRound,
   Users,
   Wallet,
@@ -83,9 +87,12 @@ const POR_EMOJI: Record<string, LucideIcon> = {
   "💳": CreditCard,
   "💎": Gem,
   "⚖️": Scale,
-  // Motor y cambio
+  // Motor y cambio («¿Qué motor prefieres?»: gasolina, diésel, híbrido, enchufable, eléctrico)
   "⚡": BatteryCharging,
   "⛽": Fuel,
+  "🛢️": Droplet,
+  "🔋": Leaf,
+  "🔌": PlugZap,
   "⚙️": Settings2,
   "🕹️": Joystick,
   // Tamaño y carrocería
@@ -107,6 +114,9 @@ const POR_EMOJI: Record<string, LucideIcon> = {
   "🏷️": Tag,
   "🏁": Gauge,
   "🚫": Ban,
+  // Tras los resultados
+  "↩️": Undo2,
+  "🙋": UserRound,
 };
 
 // La secuencia de emojis con la que empieza el texto («👥🧳 Acompañado…» → «👥🧳»)

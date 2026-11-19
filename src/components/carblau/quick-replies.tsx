@@ -1,7 +1,21 @@
 "use client";
 
 import { useState } from "react";
-import { Check, CirclePlus, Columns2, RotateCcw, SlidersHorizontal, ThumbsDown, TrendingUp, UserRound, Wallet } from "lucide-react";
+import {
+  Check,
+  CirclePlus,
+  Columns2,
+  FilterX,
+  RefreshCw,
+  RotateCcw,
+  SlidersHorizontal,
+  ThumbsDown,
+  ThumbsUp,
+  TrendingUp,
+  Undo2,
+  UserRound,
+  Wallet,
+} from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { sinEmoji } from "@/lib/texto";
 import { iconosDeOpciones } from "@/lib/iconos";
@@ -28,11 +42,17 @@ const ICONOS_ACCION: [RegExp, LucideIcon][] = [
   [/comparar/i, Columns2],
   [/más opciones|ver más/i, CirclePlus],
   [/afinar/i, SlidersHorizontal],
-  [/presupuesto/i, Wallet],
   [/ampliar|subir/i, TrendingUp],
+  [/presupuesto/i, Wallet],
   [/empezar de nuevo|de cero|reiniciar/i, RotateCcw],
   [/no me convence/i, ThumbsDown],
   [/especialista|una persona/i, UserRound],
+  // Sin resultados tras afinar, o resultados iguales: relajar un filtro
+  [/quitar filtro/i, FilterX],
+  [/^incluir /i, CirclePlus],
+  [/tipos similares/i, RefreshCw],
+  [/volver a los resultados/i, Undo2],
+  [/me quedo con/i, ThumbsUp],
 ];
 function iconoAccion(texto: string): LucideIcon | null {
   const limpio = sinEmoji(texto);

@@ -21,6 +21,9 @@ const POST_RESULTADOS = ["⚖️ Comparar coches", "➕ Ver más opciones", "�
 // Tras el afinado (Sprint 41-42): «No me convencen» en vez de «Afinar» y el especialista
 const POST_RESULTADOS_AFINADO = ["⚖️ Comparar coches", "➕ Ver más opciones", "🤔 No me convencen", "💰 Cambiar presupuesto", "🙋 Hablar con un especialista"];
 const POST_RESULTADOS_RONDA = ["⚖️ Comparar coches", "➕ Ver más opciones", "💰 Cambiar presupuesto", "🙋 Hablar con un especialista"];
+// Motor del afinado (backend d9e5d8d): selección múltiple; marcar todas = «Indiferente»
+const MOTORES = ["⛽ Gasolina", "🛢️ Diésel", "🔋 Híbrido", "🔌 Híbrido enchufable", "⚡ Eléctrico", "🤷 Indiferente"];
+const FAMILIAS_MOTOR = ["Gasolina", "Diésel", "Híbrido", "Híbrido enchufable", "Eléctrico"];
 const MOTIVOS = ["💰 Son caros", "📅 Quiero algo más nuevo", "🏷️ No me gustan estas marcas", "📦 Me falta espacio", "📏 Son grandes para aparcar", "🏁 Quiero algo más potente", "💎 Que conserve su valor"];
 const TEXTO_ESPECIALISTA = "Perfecto. Un especialista de CarBlau buscará contigo el coche que encaje, con todo lo que me has contado. Déjanos cómo contactarte y te escribimos en menos de 24 horas.";
 
@@ -135,6 +138,30 @@ function encargo(pasoRespondido, completo, preferencias = []) {
   }).filter((t) => t.items.length > 0);
   if (preferencias.length > 0) temas.push({ tema: "Preferencias", items: preferencias });
   return { completo, temas };
+}
+
+// Familias marcadas en «⛽ Gasolina y 🔋 Híbrido» → ["Gasolina", "Híbrido"] (vacío = cualquiera)
+function familiasMotor(respuesta) {
+  const partes = respuesta.split(/\s+y\s+|,\s*/).map((p) => sinEmojis(p).toLowerCase());
+  if (partes.some((p) => /indiferente/.test(p))) return [];
+  const elegidas = FAMILIAS_MOTOR.filter((f) => partes.includes(f.toLowerCase()));
+  return elegidas.length === FAMILIAS_MOTOR.length ? [] : elegidas;
+}
+
+// Texto del item «Motor» del encargo, como config/combustibles.texto del backend:
+// «Gasolina», «Gasolina o híbrido», «Todos menos diésel», «Cualquiera»
+function textoMotor(familias) {
+  if (familias.length === 0) return "Cualquiera";
+  const fuera = FAMILIAS_MOTOR.filter((f) => !familias.includes(f));
+  if (fuera.length === 1) return `Todos menos ${fuera[0].toLowerCase()}`;
+  const nombres = [familias[0], ...familias.slice(1).map((n) => n.toLowerCase())];
+  return nombres.length === 1 ? nombres[0] : `${nombres.slice(0, -1).join(", ")} o ${nombres.at(-1)}`;
+}
+
+// Añade o sustituye un item del tema «Preferencias» (texto null = lo quita)
+function preferencia(hilo, campo, etiqueta, texto) {
+  hilo.preferencias = (hilo.preferencias ?? []).filter((p) => p.campo !== campo);
+  if (texto) hilo.preferencias.push({ campo, etiqueta, texto });
 }
 
 // "🚙 SUV y 🚘 Berlina" → "SUV y Berlina"
@@ -289,6 +316,13 @@ const GUION = [
       },
     },
   },
+  {
+    content:
+      "¿Qué motor prefieres: gasolina, diésel, híbrido, enchufable o eléctrico?\n\n*Puedes seleccionar **una o varias opciones** y pulsar **Continuar** cuando termines.*",
+    additional_kwargs: {
+      quick_reply_config: { type: "buttons", options: MOTORES, multi_select: true, submit_label: "Continuar" },
+    },
+  },
   (threadId) => ({
     content: "He actualizado la selección con lo que me has dicho:",
     additional_kwargs: {
@@ -331,12 +365,23 @@ const GUION = [
   },
 ];
 
-// Pregunta de carrocería del afinado: su respuesta entra en el tema «Preferencias»
+// Preguntas del afinado: sus respuestas entran en el tema «Preferencias»
 const PASO_AFINAR = GUION.findIndex((e) => typeof e !== "function" && e.content.startsWith("Perfecto, afinamos"));
+const PASO_MOTOR = PASO_AFINAR + 1;
+const PASO_RESULTADOS_AFINADO = PASO_MOTOR + 1;
+
+// Solo eléctricos tras afinar: sin coches, se ofrece relajar el filtro (busqueda.py)
+const SIN_RESULTADOS_AFINADO = {
+  content:
+    "Con los detalles que añadiste no he encontrado coches que encajen.\nEstás filtrando por: motor eléctrico.\n¿Qué prefieres ajustar?",
+  additional_kwargs: {
+    quick_reply_config: { type: "buttons", options: ["↩️ Volver a los resultados anteriores", "🚫 Quitar filtro: motor"] },
+  },
+};
 
 // «Quiero cambiar: <tema o etiqueta>» → paso del guion que vuelve a preguntarlo
 const PASO_POR_CAMBIO = {
-  preferencias: PASO_AFINAR, carrocería: PASO_AFINAR,
+  preferencias: PASO_AFINAR, carrocería: PASO_AFINAR, motor: PASO_MOTOR,
   "uso del coche": 0, frecuencia: 0, "trayecto habitual": 1, "km al año": 2,
   "por dónde circulas": 3, zona: 3,
   espacio: 4, pasajeros: 4,
@@ -439,8 +484,15 @@ const server = http.createServer(async (req, res) => {
       // «⚖️ Compara el n y el m» (botón de las fichas, Sprint 44): la comparativa
       // del guion con esos números, sin pasar por el router
       const compara = texto.match(/compara\s+el\s+(\d+)\s+y\s+el\s+(\d+)/i);
+      // Potencia escrita tras los resultados («al menos 150 cv»): filtro duro, se vuelve a buscar
+      const potencia = hilo.messages.some((msg) => msg.additional_kwargs?.payload) && texto.match(/(\d{2,3})\s*cv/i);
       let respuesta;
-      if (compara) {
+      if (potencia) {
+        preferencia(hilo, "potencia_minima_cv", "Potencia mínima", `Desde ${potencia[1]} CV`);
+        const base = GUION[PASO_RESULTADOS_AFINADO](m[1]);
+        const hecho = `Hecho: al menos ${potencia[1]} CV. Estos son los que mejor encajan ahora:`;
+        respuesta = { ...base, content: hecho, additional_kwargs: { ...base.additional_kwargs, payload: { ...base.additional_kwargs.payload, introText: hecho } } };
+      } else if (compara) {
         const indice = GUION.findIndex((e) => typeof e !== "function" && e.additional_kwargs?.car_comparison);
         const base = JSON.parse(JSON.stringify(GUION[indice]));
         const [n, k] = [Number(compara[1]), Number(compara[2])];
@@ -465,15 +517,29 @@ const server = http.createServer(async (req, res) => {
           hilo.paso = indice + 1; // su respuesta continúa desde la siguiente pregunta
         }
       } else {
+        const pasoActual = (hilo.paso - 1) % GUION.length;
         // ¿Responde a la carrocería del afinado? → «Preferencias» en el encargo
-        if ((hilo.paso - 1) % GUION.length === PASO_AFINAR && sinEmojis(texto)) {
+        if (pasoActual === PASO_AFINAR && sinEmojis(texto)) {
           const valor = sinEmojis(texto);
-          hilo.preferencias = [{ campo: "tipo_carroceria", etiqueta: "Carrocería", texto: /indiferente/i.test(valor) ? "Cualquiera" : valor }];
+          preferencia(hilo, "tipo_carroceria", "Carrocería", /indiferente/i.test(valor) ? "Cualquiera" : valor);
         }
-        const entrada = GUION[hilo.paso % GUION.length];
-        respuesta = typeof entrada === "function" ? entrada(m[1]) : entrada;
-        hilo.respondidos = Math.min(hilo.respondidos + 1, ITEMS_POR_PASO.length);
-        hilo.paso += 1;
+        // ¿Responde al motor? → item «Motor»; solo eléctricos → sin resultados y botones de relajar
+        let soloElectricos = false;
+        if (pasoActual === PASO_MOTOR) {
+          const familias = familiasMotor(texto);
+          preferencia(hilo, "combustibles", "Motor", textoMotor(familias));
+          soloElectricos = familias.length === 1 && familias[0] === "Eléctrico";
+        }
+        if (/^🚫 Quitar filtro: motor/.test(texto)) preferencia(hilo, "combustibles", "Motor", null);
+        if (/^🚫 Quitar filtro: potencia/.test(texto)) preferencia(hilo, "potencia_minima_cv", "Potencia mínima", null);
+        if (soloElectricos) {
+          respuesta = SIN_RESULTADOS_AFINADO; // el guion no avanza: «Quitar filtro» o «Volver» llevan a los resultados
+        } else {
+          const entrada = GUION[hilo.paso % GUION.length];
+          respuesta = typeof entrada === "function" ? entrada(m[1]) : entrada;
+          hilo.respondidos = Math.min(hilo.respondidos + 1, ITEMS_POR_PASO.length);
+          hilo.paso += 1;
+        }
       }
 
       const esBusqueda = Boolean(respuesta.additional_kwargs?.payload);

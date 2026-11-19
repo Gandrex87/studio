@@ -8,9 +8,15 @@ const PICTO =
   "(?:\\p{Extended_Pictographic}|[\\u{1F3FB}-\\u{1F3FF}]|[\\u{1F1E6}-\\u{1F1FF}]|\\u200D|\\uFE0F)";
 const EMOJI_INICIAL = new RegExp(`^(?:${PICTO}|\\s)+`, "u");
 const EMOJI_FINAL = new RegExp(`(?:${PICTO}|\\s)+$`, "u");
+// Respuestas de selección múltiple («⛽ Gasolina y 🔋 Híbrido»): el emoji de cada opción
+const EMOJI_TRAS_SEPARADOR = new RegExp(`(\\s+y\\s+|,\\s*)(?:${PICTO})+\\s*`, "gu");
 
 export function sinEmoji(texto: string): string {
-  const limpio = texto.replace(EMOJI_INICIAL, "").replace(EMOJI_FINAL, "").trim();
+  const limpio = texto
+    .replace(EMOJI_INICIAL, "")
+    .replace(EMOJI_FINAL, "")
+    .replace(EMOJI_TRAS_SEPARADOR, "$1")
+    .trim();
   return limpio || texto.trim();
 }
 
