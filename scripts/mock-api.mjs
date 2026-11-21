@@ -124,17 +124,18 @@ const ITEMS_POR_PASO = [
 
 const TEMAS = ["Uso del coche", "Por dónde circulas", "Espacio", "Costes de uso", "Presupuesto"];
 
-// Tema «Preferencias» (fase 2, punto 7): lo que responde en el afinado, al final
-function encargo(pasoRespondido, completo, preferencias = []) {
+// `items`: lo anotado hasta ahora ([tema, campo, etiqueta, texto], el último de
+// cada etiqueta manda). Tema «Preferencias» (fase 2, punto 7): el afinado, al final
+function encargo(items, completo, preferencias = []) {
   const temas = TEMAS.map((tema) => {
-    const items = [];
-    ITEMS_POR_PASO.slice(0, pasoRespondido).forEach(([t, campo, etiqueta, texto]) => {
+    const lista = [];
+    items.forEach(([t, campo, etiqueta, texto]) => {
       if (t !== tema) return;
-      const previo = items.find((it) => it.etiqueta === etiqueta);
+      const previo = lista.find((it) => it.etiqueta === etiqueta);
       if (previo) previo.texto = texto;
-      else items.push({ campo, etiqueta, texto });
+      else lista.push({ campo, etiqueta, texto });
     });
-    return { tema, items };
+    return { tema, items: lista };
   }).filter((t) => t.items.length > 0);
   if (preferencias.length > 0) temas.push({ tema: "Preferencias", items: preferencias });
   return { completo, temas };
@@ -166,6 +167,69 @@ function preferencia(hilo, campo, etiqueta, texto) {
 
 // "🚙 SUV y 🚘 Berlina" → "SUV y Berlina"
 const sinEmojis = (texto) => texto.replace(/\p{Extended_Pictographic}️?\s*/gu, "").trim();
+
+// Atajos del arranque (backend: frases fijas que rellenan varios datos sin LLM;
+// `saltar` = preguntas del guion que ya no se hacen, `siguiente` = la primera
+// pendiente). «Campo y caminos» pregunta antes el terreno, con sus dos botones.
+const TERRENO = {
+  content: "**¿Por qué tipo de terreno te mueves?**",
+  additional_kwargs: {
+    quick_reply_config: {
+      type: "buttons",
+      options: ["🌲 También por pistas sin asfaltar, de forma ocasional", "🏔️ Frecuentemente por terrenos complicados o en condiciones extremas"],
+    },
+    progreso: progreso(2, "Por dónde circulas", "terreno"),
+  },
+  item: ["Por dónde circulas", "terreno", "Terreno", "Pistas y caminos"],
+};
+const ATAJOS = [
+  {
+    frase: "Lo quiero para el día a día en ciudad: trayectos cortos y que sea fácil de aparcar.",
+    confirmacion: "Anotado: a diario, trayectos cortos y en ciudad.",
+    items: [["Uso del coche", "frecuencia_uso", "Frecuencia", "A diario"], ["Uso del coche", "distancia_trayecto", "Trayecto habitual", "Menos de 10 km"], ["Por dónde circulas", "circula_principalmente_ciudad", "Zona", "Ciudad"]],
+    saltar: [0, 1, 3], siguiente: 2,
+  },
+  {
+    frase: "Lo quiero para viajar en familia: espacio, maletero amplio y bastante carretera.",
+    confirmacion: "Anotado: viajes en familia, con maletero amplio y bastante carretera.",
+    items: [["Uso del coche", "distancia_trayecto", "Trayecto habitual", "Viajes largos"], ["Por dónde circulas", "circula_principalmente_ciudad", "Zona", "Carretera"], ["Espacio", "suele_llevar_acompanantes", "Pasajeros", "Sueles ir acompañado"], ["Espacio", "equipaje", "Equipaje", "Maletero amplio"]],
+    saltar: [1, 3, 4], siguiente: 0,
+  },
+  {
+    frase: "Lo uso a diario con niños pequeños: colegio, sillas infantiles y maletero para el carrito.",
+    confirmacion: "Anotado: a diario, con los niños y sitio para el carrito.",
+    items: [["Uso del coche", "frecuencia_uso", "Frecuencia", "A diario"], ["Espacio", "suele_llevar_acompanantes", "Pasajeros", "Sueles ir acompañado"], ["Espacio", "equipaje", "Equipaje", "Maletero amplio"]],
+    saltar: [0, 4], siguiente: 1,
+  },
+  {
+    frase: "Hago muchos kilómetros por carretera, casi todos los días.",
+    confirmacion: "Anotado: a diario y por carretera.",
+    items: [["Uso del coche", "frecuencia_uso", "Frecuencia", "A diario"], ["Por dónde circulas", "circula_principalmente_ciudad", "Zona", "Carretera"]],
+    saltar: [0, 3], siguiente: 1,
+  },
+  {
+    frase: "Lo necesito para campo y caminos sin asfaltar, no solo ciudad.",
+    confirmacion: "Anotado: no solo ciudad.",
+    items: [["Por dónde circulas", "circula_principalmente_ciudad", "Zona", "No solo ciudad"]],
+    saltar: [3], siguiente: 0, pregunta: TERRENO,
+  },
+  {
+    frase: "Es mi primer coche: lo quiero sencillo, fiable y barato de mantener.",
+    alias: ["Es mi primer coche: lo quiero sencillo, fiable y sin complicaciones."],
+    confirmacion: "Anotado: tu primer coche, barato de mantener.",
+    items: [["Costes de uso", "rating_costes_uso", "Gasto de uso", "Muy importante"]],
+    saltar: [6], siguiente: 0,
+  },
+];
+// La frase se compara sin tildes, mayúsculas ni puntuación, como hace el backend
+const clave = (t) => t.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^a-z0-9 ]+/g, " ").replace(/\s+/g, " ").trim();
+const atajoDe = (texto) => ATAJOS.find((a) => [a.frase, ...(a.alias ?? [])].some((f) => clave(f) === clave(texto)));
+// Confirmación del atajo y la siguiente pregunta del guion en el mismo mensaje
+const tras = (confirmacion, indice) => ({
+  content: `${confirmacion} ${GUION[indice].content.replace(/^[^*]*\*\*(¿?)(\p{L})/u, (_, q, l) => `**${q}${l.toUpperCase()}`)}`,
+  additional_kwargs: { quick_reply_config: GUION[indice].additional_kwargs?.quick_reply_config, progreso: GUION[indice].additional_kwargs?.progreso },
+});
+const anotar = (hilo, item) => hilo.items.push(item);
 
 // Guion: respuesta del agente tras cada mensaje del usuario
 const GUION = [
@@ -400,7 +464,7 @@ const CANAL_TEXTO = { whatsapp: "Te escribimos por WhatsApp", llamada: "Te llama
 const FRANJA_TEXTO = { manana: " por la mañana", tarde: " por la tarde", cualquiera: "" };
 const PLAZO_CONTACTO = "en menos de 24 horas";
 
-const hilos = new Map(); // thread_id → { paso, respondidos, messages }
+const hilos = new Map(); // thread_id → { paso, items, saltar, pendiente?, preferencias?, messages }
 
 const mensaje = (role, content, additional_kwargs) => ({
   id: randomUUID(),
@@ -451,8 +515,8 @@ const server = http.createServer(async (req, res) => {
 
   if (req.method === "POST" && ruta === "/start") {
     const thread_id = randomUUID();
-    const saludo = mensaje("agent", SALUDO, { encargo: encargo(0, false) });
-    hilos.set(thread_id, { paso: 0, respondidos: 0, messages: [saludo] });
+    const saludo = mensaje("agent", SALUDO, { encargo: encargo([], false) });
+    hilos.set(thread_id, { paso: 0, items: [], saltar: new Set(), messages: [saludo] });
     return json(res, 201, { thread_id, messages: [saludo] });
   }
 
@@ -532,23 +596,43 @@ const server = http.createServer(async (req, res) => {
         }
         if (/^🚫 Quitar filtro: motor/.test(texto)) preferencia(hilo, "combustibles", "Motor", null);
         if (/^🚫 Quitar filtro: potencia/.test(texto)) preferencia(hilo, "potencia_minima_cv", "Potencia mínima", null);
+        const atajo = hilo.paso === 0 ? atajoDe(texto) : undefined;
         if (soloElectricos) {
           respuesta = SIN_RESULTADOS_AFINADO; // el guion no avanza: «Quitar filtro» o «Volver» llevan a los resultados
+        } else if (atajo) {
+          // Atajo del arranque: rellena varios datos y sigue con la primera pregunta pendiente
+          atajo.items.forEach((item) => anotar(hilo, item));
+          hilo.saltar = new Set(atajo.saltar);
+          if (atajo.pregunta) {
+            respuesta = { content: `${atajo.confirmacion} ${atajo.pregunta.content}`, additional_kwargs: atajo.pregunta.additional_kwargs };
+            hilo.pendiente = { item: atajo.pregunta.item, siguiente: atajo.siguiente };
+          } else {
+            respuesta = tras(atajo.confirmacion, atajo.siguiente);
+            hilo.paso = atajo.siguiente + 1;
+          }
+        } else if (hilo.pendiente) {
+          // Respuesta a la pregunta propia de un atajo («Campo y caminos» → terreno)
+          anotar(hilo, hilo.pendiente.item);
+          respuesta = GUION[hilo.pendiente.siguiente];
+          hilo.paso = hilo.pendiente.siguiente + 1;
+          delete hilo.pendiente;
         } else {
-          const entrada = GUION[hilo.paso % GUION.length];
+          // La respuesta a la pregunta anterior entra en el encargo; las saltadas por un atajo no se hacen
+          if (hilo.paso >= 1 && ITEMS_POR_PASO[hilo.paso - 1]) anotar(hilo, ITEMS_POR_PASO[hilo.paso - 1]);
+          let siguiente = hilo.paso;
+          while (hilo.saltar.has(siguiente)) siguiente += 1;
+          const entrada = GUION[siguiente % GUION.length];
           respuesta = typeof entrada === "function" ? entrada(m[1]) : entrada;
-          hilo.respondidos = Math.min(hilo.respondidos + 1, ITEMS_POR_PASO.length);
-          hilo.paso += 1;
+          hilo.paso = siguiente + 1;
         }
       }
 
       const esBusqueda = Boolean(respuesta.additional_kwargs?.payload);
       const hayCoches = hilo.messages.some((msg) => msg.additional_kwargs?.payload) || esBusqueda;
-      // Hasta las 8 respuestas del cuestionario, el encargo crece; después está completo
-      const itemsConocidos = Math.min(hilo.respondidos, ITEMS_POR_PASO.length);
+      // El encargo crece con cada respuesta; con coches enseñados (o todo el cuestionario) está completo
       const kwargs = {
         ...(respuesta.additional_kwargs ?? {}),
-        encargo: encargo(itemsConocidos, hayCoches || itemsConocidos >= ITEMS_POR_PASO.length, hilo.preferencias ?? []),
+        encargo: encargo(hilo.items, hayCoches || hilo.items.length >= ITEMS_POR_PASO.length, hilo.preferencias ?? []),
       };
       const nuevo = mensaje("agent", respuesta.content, kwargs);
       hilo.messages.push(nuevo);

@@ -491,7 +491,8 @@ export default function Home() {
 
   // "Tu encargo": del backend (fase 2) o, si no llega, leído de la conversación
   const encargo = useMemo(() => leerEncargo(messages), [messages]);
-  const hayEncargo = itemsEncargo(encargo).length > 0;
+  const datosEncargo = itemsEncargo(encargo).length;
+  const hayEncargo = datosEncargo > 0;
 
   // ═══════════════════════════════════════════════════════════════════
   // RENDER
@@ -533,7 +534,7 @@ export default function Home() {
                 siempre a la vista (se van rellenando con cada respuesta) */}
             {(progreso || hayEncargo) && (
               <div className={`flex flex-col ${progreso ? "" : "lg:hidden"}`}>
-                {progreso && <ProgresoCuestionario progreso={progreso} />}
+                {progreso && <ProgresoCuestionario progreso={progreso} datos={datosEncargo} />}
                 <div className="flex items-center justify-between gap-3 px-4 pb-1 pt-2.5 text-xs text-cb-crema-suave">
                   {hayEncargo && <span className="font-semibold lg:hidden">Tu encargo</span>}
                   {progreso && <span className="ml-auto truncate">{textoProgreso(progreso)}</span>}
