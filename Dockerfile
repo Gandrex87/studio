@@ -67,6 +67,10 @@ ENV NEXT_PUBLIC_PRIVACY_URL=$NEXT_PUBLIC_PRIVACY_URL
 ARG NEXT_PUBLIC_CONTACT_PHONE
 ENV NEXT_PUBLIC_CONTACT_PHONE=$NEXT_PUBLIC_CONTACT_PHONE
 
+# Tipo de evento de Cal.com para reservar la llamada («carblau/15min»; «off» lo oculta)
+ARG NEXT_PUBLIC_CALCOM_EVENT
+ENV NEXT_PUBLIC_CALCOM_EVENT=$NEXT_PUBLIC_CALCOM_EVENT
+
 # Construye la aplicación para producción.
 # Next.js detectará automáticamente la configuración 'output: standalone' en next.config.js
 RUN npm run build

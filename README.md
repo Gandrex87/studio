@@ -79,6 +79,11 @@ Qué se pinta depende de `additional_kwargs` en cada mensaje del agente:
   botones de acción tras los resultados («Comparar coches», «Quitar filtro:
   motor», «Incluir todos los motores»…) se pintan fuera de la tarjeta, con
   icono aguamarina (`sonAcciones` en `quick-replies.tsx`).
+- Arranque (solo el saludo del agente): seis tarjetas (`SUGERENCIAS` en
+  `arranque.tsx`) que envían una frase fija que el backend reconoce sin LLM y
+  que rellena varios datos del encargo de una vez; la frase debe coincidir con
+  la suya carácter a carácter. La barra de progreso avanza por etapas o por
+  datos anotados, lo que vaya más adelante, y nunca retrocede.
 - `encargo` (fase 2, en cada mensaje del agente) → chips «Tu encargo» y panel
   lateral en escritorio. Cada dato se puede cambiar: el front envía
   `Quiero cambiar: <etiqueta>` y el agente vuelve a preguntarlo. Sin `encargo`
@@ -96,13 +101,23 @@ Qué se pinta depende de `additional_kwargs` en cada mensaje del agente:
 - `car_comparison`: `veredicto` destacado sobre la tabla, `narrativa` como
   texto del mensaje (si no llega, `content`) y «Me interesa» por coche cuando
   traen `carId`.
-- «Me interesa» abre la hoja de contacto: un asesor de CarBlau contacta al
-  usuario (`/api/lead/capture` al abrir, `/api/lead/contact` al enviar con
+- «Me interesa» abre la hoja de contacto: un especialista de CarBlau contacta
+  al usuario (`/api/lead/capture` al abrir, `/api/lead/contact` al enviar con
   `canal` whatsapp | llamada | email y `franja` manana | tarde | cualquiera;
   WhatsApp y llamada exigen teléfono, email exige email). La respuesta trae
   `contacto_previsto` («Te escribimos por WhatsApp por la tarde, en menos de
   24 horas.»), que se enseña tal cual en la confirmación. Al cerrar sin enviar
   se avisa «Sin problema, no guardamos tus datos».
+- Reservar la llamada (Cal.com, `src/lib/calcom.ts` y `cita-calendario.tsx`):
+  con «Llamada» elegido se ofrece «Elige día y hora» además de la franja. Al
+  enviar se guarda el lead como siempre (`canal: "llamada"`, `franja: null`) y
+  se abre el calendario de Cal.com (`NEXT_PUBLIC_CALCOM_EVENT`, por defecto
+  `carblau/15min`; `off` lo oculta) a pantalla completa en móvil y como diálogo
+  en escritorio, con nombre, email y teléfono rellenos y «Lead: <id>» en las
+  notas. Al reservar, la confirmación pasa a «¡Hecho! Te llamamos el martes 24
+  de noviembre a las 17:30.»; si cierra sin reservar, queda la de siempre. El
+  tipo de evento debe tener la pregunta «Phone number» para que el teléfono
+  vaya relleno (`attendeePhoneNumber`).
 - «Hablar con un especialista» (tras el afinado): cuando un mensaje del agente
   trae `additional_kwargs.solicitud_especialista`, el front llama a
   `/api/lead/capture` con `{ session_id, tipo: "especialista" }` (sin coche) y

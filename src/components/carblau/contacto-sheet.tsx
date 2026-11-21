@@ -1,14 +1,16 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Check } from "lucide-react";
+import { CalendarDays, Check } from "lucide-react";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { BOTON_PRIMARIO, CHIP_COMPACTO_ACTIVO, CHIP_COMPACTO_NORMAL } from "@/components/carblau/quick-replies";
 import type { CanalContacto, Car, FranjaContacto } from "@/lib/tipos";
 import { nombreLimpio } from "@/lib/texto";
-import { API_BASE_URL, PRIVACY_URL } from "@/lib/config";
+import { API_BASE_URL, CALCOM_EVENT, PRIVACY_URL } from "@/lib/config";
+import { CitaCalendario } from "@/components/carblau/cita-calendario";
+import { textoCita } from "@/lib/calcom";
 
 const EMAIL_VALIDO = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 const TELEFONO_VALIDO = /^\+?[\d\s().-]{9,}$/;
@@ -51,8 +53,9 @@ interface ContactoSheetProps {
   onOpenChange: (abierto: boolean) => void;
 }
 
-// "Me interesa": un asesor de CarBlau contacta al usuario sobre ese coche por
-// el canal y en la franja que elija. Hoja inferior en vez de modal. Al abrirse
+// "Me interesa": un especialista de CarBlau contacta al usuario sobre ese coche
+// por el canal y en la franja que elija. Textos iguales a los de Telegram y
+// WhatsApp (backend, 21-11-2026): nunca «concesionario», «sin coste» ni «sin compromiso». Hoja inferior en vez de modal. Al abrirse
 // se registra el interés (lead) en segundo plano; el envío espera al lead_id.
 // Reglas del backend (utils/leads.py:validar_contacto): WhatsApp y llamada
 // exigen teléfono; email exige email; siempre hace falta uno de los dos.
@@ -74,6 +77,15 @@ export function ContactoSheet({ car, sessionId, abierto, onOpenChange }: Contact
   // RGPD: CarBlau usa los datos para contactar al usuario sobre la búsqueda del
   // coche (sin cesión a terceros); consentimiento explícito, casilla sin marcar
   const [consentimiento, setConsentimiento] = useState(false);
+  // Reserva de la llamada con Cal.com (si hay tipo de evento): con «Llamada» se
+  // ofrece elegir día y hora en vez de la franja. El lead se guarda antes de abrir
+  // el calendario, así no se pierde aunque no termine de reservar.
+  const puedeCita = Boolean(CALCOM_EVENT);
+  const [conCita, setConCita] = useState(true);
+  const [calendario, setCalendario] = useState(false);
+  const [leadIdEnviado, setLeadIdEnviado] = useState<string | null>(null);
+  const [cita, setCita] = useState<Date | null>(null);
+  const eligeCita = puedeCita && canal === "llamada" && conCita;
 
   const capturarLead = async (): Promise<string | null> => {
     const cuerpo = car
@@ -163,7 +175,7 @@ export function ContactoSheet({ car, sessionId, abierto, onOpenChange }: Contact
           nombre: datos.nombre.trim() || null,
           telefono: telefono || null,
           canal,
-          franja,
+          franja: eligeCita ? null : franja,
           consentimiento: true,
         }),
       });
@@ -188,6 +200,10 @@ export function ContactoSheet({ car, sessionId, abierto, onOpenChange }: Contact
           ? data.contacto_previsto
           : "Te contactaremos en menos de 24 horas."
       );
+      if (eligeCita) {
+        setLeadIdEnviado(leadId);
+        setCalendario(true);
+      }
     } catch (error: any) {
       console.error("Error:", error);
       toast({
@@ -227,13 +243,13 @@ export function ContactoSheet({ car, sessionId, abierto, onOpenChange }: Contact
             </span>
             <SheetHeader className="space-y-1.5 text-left">
               <SheetTitle className="font-headline text-[26px] font-semibold leading-tight text-cb-espresso">
-                ¡Hecho! Nos ponemos a buscarlo.
+                {cita ? `¡Hecho! Te llamamos ${textoCita(cita)}.` : "¡Hecho! Nos ponemos a buscarlo."}
               </SheetTitle>
               <SheetDescription className="text-base leading-relaxed text-cb-espresso">
-                {enviado}{" "}
+                {cita ? "Tienes la cita en tu email por si quieres cambiarla." : enviado}{" "}
                 {esEspecialista
                   ? "Un especialista de CarBlau sigue con tu búsqueda."
-                  : `Un asesor de CarBlau se ocupa del ${nombre}.`}
+                  : `Un especialista de CarBlau se ocupa del ${nombre}.`}
               </SheetDescription>
             </SheetHeader>
             <p className="text-sm leading-relaxed text-cb-tinta">
@@ -255,13 +271,13 @@ export function ContactoSheet({ car, sessionId, abierto, onOpenChange }: Contact
             <SheetHeader className="space-y-1 text-left">
               <SheetTitle className="font-headline text-2xl font-semibold leading-tight text-cb-espresso">
                 {esEspecialista
-                  ? "Un especialista de CarBlau te ayuda a encontrarlo"
-                  : "¿Quieres que CarBlau te busque este coche?"}
+                  ? "Un especialista de CarBlau busca contigo tu coche"
+                  : "Un especialista de CarBlau te ayuda con este coche"}
               </SheetTitle>
               <SheetDescription className="text-sm text-cb-tinta">
                 {esEspecialista
-                  ? "Con todo lo que nos has contado. Déjanos cómo contactarte, sin compromiso."
-                  : `${nombre} · ${car?.price}. Un asesor de CarBlau te contacta, sin compromiso.`}
+                  ? "Te contactaremos en menos de 24 horas."
+                  : `${nombre} · ${car?.price}. Te contactaremos en menos de 24 horas.`}
               </SheetDescription>
             </SheetHeader>
 
@@ -336,15 +352,49 @@ export function ContactoSheet({ car, sessionId, abierto, onOpenChange }: Contact
 
             <div className="flex flex-col gap-2">
               <span className="text-xs font-bold uppercase tracking-[0.08em] text-cb-tinta">¿Cuándo te va bien?</span>
-              <div className="flex gap-2">
+              {puedeCita && canal === "llamada" && (
+                <button
+                  type="button"
+                  aria-pressed={conCita}
+                  onClick={() => setConCita(true)}
+                  disabled={enviando}
+                  className={`flex min-h-[64px] items-center gap-3 rounded-2xl border-2 bg-cb-crema-2 px-3 py-2.5 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cb-agua disabled:opacity-50 ${
+                    conCita ? "border-cb-navy" : "border-cb-espresso/[0.18] hover:border-cb-espresso/40"
+                  }`}
+                >
+                  <span
+                    className={`inline-flex h-[38px] w-[38px] shrink-0 items-center justify-center rounded-[11px] ${
+                      conCita ? "bg-cb-navy text-cb-crema" : "bg-cb-agua/40 text-cb-navy"
+                    }`}
+                  >
+                    <CalendarDays className="h-5 w-5" aria-hidden="true" />
+                  </span>
+                  <span className="flex flex-1 flex-col gap-0.5">
+                    <span className="text-[15px] font-bold">Elige día y hora</span>
+                    <span className="text-[13px] text-cb-tinta">Una llamada corta, cuando mejor te venga</span>
+                  </span>
+                  {conCita && (
+                    <span className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-cb-navy text-cb-crema">
+                      <Check className="h-3.5 w-3.5" strokeWidth={3} aria-hidden="true" />
+                    </span>
+                  )}
+                </button>
+              )}
+              <div className="flex items-center gap-2">
+                {puedeCita && canal === "llamada" && (
+                  <span className="shrink-0 text-[13px] text-cb-tinta">o una franja:</span>
+                )}
                 {FRANJAS.map((f) => (
                   <button
                     key={f.valor}
                     type="button"
-                    aria-pressed={franja === f.valor}
-                    onClick={() => setFranja(f.valor)}
+                    aria-pressed={!eligeCita && franja === f.valor}
+                    onClick={() => {
+                      setFranja(f.valor);
+                      setConCita(false);
+                    }}
                     disabled={enviando}
-                    className={`${franja === f.valor ? CHIP_COMPACTO_ACTIVO : CHIP_COMPACTO_NORMAL} min-h-[40px] flex-1 rounded-full`}
+                    className={`${!eligeCita && franja === f.valor ? CHIP_COMPACTO_ACTIVO : CHIP_COMPACTO_NORMAL} min-h-[40px] flex-1 rounded-full`}
                   >
                     {f.etiqueta}
                   </button>
@@ -363,10 +413,7 @@ export function ContactoSheet({ car, sessionId, abierto, onOpenChange }: Contact
                 htmlFor={`consentimiento-${clave}`}
                 className="text-[13px] leading-snug text-cb-espresso"
               >
-                {esEspecialista
-                  ? "Acepto que CarBlau me contacte sobre mi búsqueda."
-                  : "Acepto que CarBlau me contacte sobre la búsqueda de este coche."}{" "}
-                Mis datos no se ceden a terceros.{" "}
+                Acepto que CarBlau me contacte sobre mi búsqueda. No cedemos tus datos a terceros.{" "}
                 {PRIVACY_URL && (
                   <a
                     href={PRIVACY_URL}
@@ -386,7 +433,7 @@ export function ContactoSheet({ car, sessionId, abierto, onOpenChange }: Contact
                 disabled={enviando || !consentimiento}
                 className={`${BOTON_PRIMARIO} h-[52px] w-full`}
               >
-                {enviando ? "Enviando…" : cta}
+                {enviando ? "Enviando…" : eligeCita ? "Elegir día y hora" : cta}
               </button>
               <button
                 type="button"
@@ -398,6 +445,20 @@ export function ContactoSheet({ car, sessionId, abierto, onOpenChange }: Contact
               </button>
             </div>
           </form>
+        )}
+
+        {puedeCita && (
+          <CitaCalendario
+            abierto={calendario}
+            onOpenChange={setCalendario}
+            datos={datos}
+            leadId={leadIdEnviado}
+            cocheNombre={nombre || undefined}
+            onReservada={(inicio) => {
+              setCita(inicio);
+              setCalendario(false);
+            }}
+          />
         )}
       </SheetContent>
     </Sheet>

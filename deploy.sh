@@ -14,7 +14,7 @@
 #   ./deploy.sh --publicar      → pasa el 100 % del tráfico a la revisión «pruebas» ya probada
 #
 # Variables del bundle (se fijan AL COMPILAR; vacías = valor por defecto del código):
-#   NEXT_PUBLIC_API_URL  NEXT_PUBLIC_PRIVACY_URL  NEXT_PUBLIC_CONTACT_PHONE
+#   NEXT_PUBLIC_API_URL  NEXT_PUBLIC_PRIVACY_URL  NEXT_PUBLIC_CONTACT_PHONE  NEXT_PUBLIC_CALCOM_EVENT
 #   NEXT_PUBLIC_API_URL=https://otro-backend ./deploy.sh
 #
 # Volver a una versión anterior: ./deploy.sh --rollback <etiqueta>
@@ -150,6 +150,7 @@ cat <<EOF
   API      : ${NEXT_PUBLIC_API_URL:-(por defecto en src/lib/config.ts)}
   Privacidad: ${NEXT_PUBLIC_PRIVACY_URL:-(por defecto en src/lib/config.ts)}
   Teléfono : ${NEXT_PUBLIC_CONTACT_PHONE:-(por defecto en src/lib/config.ts)}
+  Cal.com  : ${NEXT_PUBLIC_CALCOM_EVENT:-(por defecto en src/lib/config.ts)}
 EOF
 if $QA; then
   confirmar "¿Desplegar la revisión de pruebas (producción sigue igual)?"
@@ -168,6 +169,7 @@ docker buildx build --platform linux/amd64 \
   --build-arg NEXT_PUBLIC_API_URL="${NEXT_PUBLIC_API_URL:-}" \
   --build-arg NEXT_PUBLIC_PRIVACY_URL="${NEXT_PUBLIC_PRIVACY_URL:-}" \
   --build-arg NEXT_PUBLIC_CONTACT_PHONE="${NEXT_PUBLIC_CONTACT_PHONE:-}" \
+  --build-arg NEXT_PUBLIC_CALCOM_EVENT="${NEXT_PUBLIC_CALCOM_EVENT:-}" \
   --label "org.opencontainers.image.revision=$(git rev-parse HEAD)" \
   -t "${IMAGE}:${TAG}" \
   --push .
