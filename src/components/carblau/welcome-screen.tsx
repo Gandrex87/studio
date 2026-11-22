@@ -21,15 +21,19 @@ const PASOS = [
 export function WelcomeScreen({ onStartSession, isLoading, embebido = false }: WelcomeScreenProps) {
   return (
     <div className="relative flex h-full flex-col overflow-hidden bg-cb-espresso text-cb-crema">
-      {/* Foto de marca (paisaje mediterráneo) a toda pantalla, con un velo espresso
-          que crece hacia abajo solo lo justo para leer el texto: la luz se queda. */}
+      {/* Foto de marca (paisaje mediterráneo) a toda pantalla. El coche va en la
+          franja inferior de la foto, así que el recorte se ancla abajo (en pantallas
+          anchas se pierde cielo, nunca el coche; en móvil el foco horizontal es el
+          coche). Un velo espresso leve hacia abajo y, en escritorio, un poco más a
+          la izquierda, bajo el texto: la luz se queda. */}
       <div className="absolute inset-0 overflow-hidden" aria-hidden="true">
         <img
           src="/bienvenida_2.webp"
           alt=""
-          className="h-full w-full object-cover object-[56%_50%]"
+          className="h-full w-full object-cover object-[56%_100%]"
         />
-        <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(28,23,20,0)_0%,rgba(28,23,20,0.08)_40%,rgba(28,23,20,0.55)_68%,rgba(28,23,20,0.82)_100%)]" />
+        <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(28,23,20,0)_0%,rgba(28,23,20,0.04)_38%,rgba(28,23,20,0.3)_64%,rgba(28,23,20,0.6)_100%)]" />
+        <div className="absolute inset-0 hidden bg-[linear-gradient(90deg,rgba(28,23,20,0.42)_0%,rgba(28,23,20,0.18)_36%,rgba(28,23,20,0)_60%)] lg:block" />
       </div>
 
       <div className="relative flex items-center justify-between px-5 pt-5">
