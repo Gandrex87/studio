@@ -28,6 +28,7 @@ export function InlineWidget({ config, onSelect, isLoading, tono = "papel" }: In
           isLoading={isLoading}
           multiSelect={config.multi_select}
           submitLabel={config.submit_label}
+          detalles={config.option_details}
           tono={tono}
         />
       );

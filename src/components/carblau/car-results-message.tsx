@@ -174,8 +174,8 @@ const CarCard = ({ car, posicion, total, comparando, onToggleComparar, compararD
               </button>
             </PopoverTrigger>
             <PopoverContent className="w-64 border-cb-espresso/10 bg-cb-crema-2 text-xs leading-relaxed text-cb-espresso">
-              De 0 a 99: mide cuánto encaja este coche con lo que nos has contado (uso, pasajeros,
-              presupuesto y prioridades). Un mismo coche tiene el mismo encaje en cualquier búsqueda.
+              De 0 a 99: cuánto encaja este coche con lo que nos has contado. Cuanto más alto, mejor
+              para ti.
             </PopoverContent>
           </Popover>
         )}

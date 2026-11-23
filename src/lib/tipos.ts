@@ -60,6 +60,8 @@ export interface QuickReplyConfig {
   field?: string;
   multi_select?: boolean;
   submit_label?: string;
+  // Texto pequeño bajo un botón (opción → detalle), p. ej. la medida de cada tamaño
+  option_details?: Record<string, string>;
 }
 
 // Progreso del cuestionario inicial: pasos por TEMA (5), no por pregunta

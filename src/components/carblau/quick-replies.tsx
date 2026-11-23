@@ -26,6 +26,8 @@ interface QuickRepliesProps {
   isLoading: boolean;
   multiSelect?: boolean;
   submitLabel?: string;
+  /** Texto pequeño bajo un botón (opción → detalle), p. ej. «Hasta 4,1 m». No se envía */
+  detalles?: Record<string, string>;
   /** "papel": dentro de la tarjeta crema (por defecto). "oscuro": sobre el fondo espresso */
   tono?: "papel" | "oscuro";
 }
@@ -102,6 +104,17 @@ export const BOTON_PRIMARIO =
 export const ENLACE_SECUNDARIO =
   "inline-flex min-h-[40px] items-center justify-center text-sm font-semibold text-cb-tinta underline underline-offset-[3px] hover:text-cb-espresso disabled:opacity-50";
 
+// Nombre de la opción y, si lo hay, su detalle en pequeño debajo (la medida de cada tamaño)
+function TextoOpcion({ option, detalle }: { option: string; detalle?: string }) {
+  if (!detalle) return <>{sinEmoji(option)}</>;
+  return (
+    <span className="flex flex-col leading-tight">
+      <span>{sinEmoji(option)}</span>
+      <span className="text-xs font-medium opacity-70">{detalle}</span>
+    </span>
+  );
+}
+
 // Botones de respuesta rápida. Se enseñan sin el emoji y se envían tal cual
 // (el backend compara el texto completo de la opción).
 export function QuickReplies({
@@ -110,6 +123,7 @@ export function QuickReplies({
   isLoading,
   multiSelect,
   submitLabel,
+  detalles,
   tono = "papel",
 }: QuickRepliesProps) {
   const [selected, setSelected] = useState<string[]>([]);
@@ -147,7 +161,7 @@ export function QuickReplies({
               className={`${Icono ? CHIP_CON_ICONO : CHIP} ${RELLENO_NORMAL} w-full sm:w-auto`}
             >
               {Icono && <IconoRespuesta Icono={Icono} />}
-              {sinEmoji(option)}
+              <TextoOpcion option={option} detalle={detalles?.[option]} />
             </button>
           );
         })}
@@ -205,7 +219,7 @@ export function QuickReplies({
               ) : (
                 activo && <Check className="h-3.5 w-3.5 shrink-0" strokeWidth={3} />
               )}
-              {sinEmoji(option)}
+              <TextoOpcion option={option} detalle={detalles?.[option]} />
             </button>
           );
         })}
